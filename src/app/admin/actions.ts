@@ -124,6 +124,7 @@ export async function saveEventAction(_prev: FormState, fd: FormData): Promise<F
       image_status: imageStatus,
       checks: { rights: cb(fd, "check_rights"), facts: cb(fd, "check_facts"), photoMatchesEvent: cb(fd, "check_photo") },
       knowledge_enabled: cb(fd, "knowledge_enabled"),
+      homepage_showcase: cb(fd, "homepage_showcase"),
       is_demo: existing ? existing.is_demo : false,
     } as EventInput;
     // nur editierbare Felder weitergeben

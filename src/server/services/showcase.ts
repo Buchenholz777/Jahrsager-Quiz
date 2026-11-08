@@ -43,13 +43,18 @@ export async function getShowcase(db: Db, at: Date = clockNow()): Promise<{ hero
     image_ext: string;
     image_width: number;
     image_height: number;
+    past: boolean;
   }>(
     `select e.slug, e.public_title, e.correct_year, e.category, e.knowledge_enabled, e.image_alt, e.image_credit_short,
-            e.image_license, e.image_license_url, e.image_id, e.image_ext, e.image_width, e.image_height
+            e.image_license, e.image_license_url, e.image_id, e.image_ext, e.image_width, e.image_height,
+            exists (select 1 from daily_pack_events pe join daily_packs p on p.id = pe.pack_id where pe.event_id = e.id and p.pack_date < $1) as past
      from events e
-     where e.status = 'veroeffentlicht' and e.image_id is not null and not e.image_is_placeholder
+     where e.image_id is not null and not e.image_is_placeholder
        and ((not e.is_demo and e.image_status = 'freigegeben') or (e.is_demo and $2::boolean))
-       and exists (select 1 from daily_pack_events pe join daily_packs p on p.id = pe.pack_id where pe.event_id = e.id and p.pack_date < $1)
+       and (
+         (e.status = 'veroeffentlicht' and exists (select 1 from daily_pack_events pe join daily_packs p on p.id = pe.pack_id where pe.event_id = e.id and p.pack_date < $1))
+         or (e.homepage_showcase and e.status in ('freigegeben', 'veroeffentlicht'))
+       )
        and not exists (select 1 from daily_pack_events pe join daily_packs p on p.id = pe.pack_id where pe.event_id = e.id and p.pack_date >= $1)`,
     [today, demoAllowed()],
   );
@@ -58,7 +63,7 @@ export async function getShowcase(db: Db, at: Date = clockNow()): Promise<{ hero
     title: r.public_title,
     year: r.correct_year,
     category: r.category,
-    knowledge: r.knowledge_enabled,
+    knowledge: r.knowledge_enabled && r.past, // Wissensseite gibt es erst nach einem vergangenen Tagesrätsel
     alt: r.image_alt,
     creditShort: r.image_credit_short,
     license: r.image_license,

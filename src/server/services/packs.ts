@@ -103,6 +103,7 @@ export function validatePack(events: EventRow[], packId?: string): { errors: str
     if (e.status !== "freigegeben" && !(packId && e.status === "eingeplant"))
       errors.push(`„${e.neutral_title}“ ist nicht freigegeben (Status: ${e.status}).`);
   }
+  for (const e of events) if (e.homepage_showcase) errors.push(`„${e.neutral_title}“ ist für die Startseite freigegeben und darf nicht im Tagesrätsel vorkommen.`);
   if (new Set(events.map((e) => e.is_demo)).size > 1) errors.push("Demo- und Produktionsinhalte dürfen nicht gemischt werden.");
   if (new Set(events.map((e) => e.correct_year)).size < events.length) warnings.push("Mehrere Ereignisse haben dasselbe Jahr.");
   const years = events.map((e) => e.correct_year);

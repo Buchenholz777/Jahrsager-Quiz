@@ -228,6 +228,7 @@ export function mapRedaktionEvent(r: RedaktionEvent): EventInput {
       },
     } as unknown as EventRow["research"],
     knowledge_enabled: false,
+    homepage_showcase: false,
     is_demo: false,
   };
 }

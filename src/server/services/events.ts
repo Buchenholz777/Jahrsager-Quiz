@@ -52,6 +52,10 @@ export async function createEvent(db: Queryable, input: EventInput, note = "Ange
 export async function updateEvent(db: Queryable, id: string, input: EventInput, note = ""): Promise<EventRow> {
   const current = await getEvent(db, id);
   if (!current) throw new AppError("NICHT_GEFUNDEN", "Ereignis nicht gefunden", 404);
+  if (input.homepage_showcase && !current.homepage_showcase) {
+    const inPack = await db.one("select 1 from daily_pack_events where event_id = $1", [id]);
+    if (inPack) throw new AppError("IN_PAKET", "Das Ereignis steckt in einem Tagespaket und kann nicht für die Startseite freigegeben werden.", 409);
+  }
   const before = JSON.stringify(pickInput(current));
   const after = JSON.stringify(pickInput(input));
   if (before === after) return current;
@@ -197,6 +201,7 @@ export function emptyEventInput(): EventInput {
     image_status: "platzhalter",
     research: {},
     knowledge_enabled: false,
+    homepage_showcase: false,
     is_demo: false,
   };
 }

@@ -92,6 +92,10 @@ export function EventForm({ event }: { event: EventRow | null }) {
           <input type="checkbox" name="knowledge_enabled" defaultChecked={e?.knowledge_enabled} className="size-5" />
           <span className="text-sm">Eigene Wissensseite (/geschichte/…) nach Ende des Tagesrätsels veröffentlichen</span>
         </label>
+        <label className="flex items-center gap-3">
+          <input type="checkbox" name="homepage_showcase" defaultChecked={e?.homepage_showcase} className="size-5" />
+          <span className="text-sm">Für die Startseite freigegeben (Bildkomposition/Teaser; Ereignis darf dann <strong>nicht</strong> im Tagesrätsel vorkommen)</span>
+        </label>
       </fieldset>
 
       <fieldset className="space-y-4 rounded-card border border-line bg-card p-5">

@@ -82,6 +82,7 @@ export interface EventRow {
   image_status: ImageStatus;
   research: Research;
   knowledge_enabled: boolean;
+  homepage_showcase: boolean;
   created_at: Date | string;
   updated_at: Date | string;
   published_at: Date | string | null;
@@ -121,6 +122,7 @@ export const EDITABLE_FIELDS = [
   "image_status",
   "research",
   "knowledge_enabled",
+  "homepage_showcase",
   "is_demo",
 ] as const;
 export type EditableField = (typeof EDITABLE_FIELDS)[number];
