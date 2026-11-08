@@ -1,0 +1,89 @@
+import type { Metadata, Viewport } from "next";
+import localFont from "next/font/local";
+import { SiteFooter } from "@/components/site-footer";
+import { SiteHeader } from "@/components/site-header";
+import { absoluteUrl, SITE_DESCRIPTION, SITE_TITLE, siteUrl } from "@/lib/site";
+import { JsonLd } from "@/components/json-ld";
+import { Beacon } from "@/components/beacon";
+import "./globals.css";
+
+// Schriften werden beim Build lokal eingebunden (keine Anfragen an Google Fonts, datenschutzfreundlich).
+const outfit = localFont({
+  variable: "--font-outfit",
+  display: "swap",
+  src: [
+    { path: "../../node_modules/@fontsource/outfit/files/outfit-latin-500-normal.woff2", weight: "500", style: "normal" },
+    { path: "../../node_modules/@fontsource/outfit/files/outfit-latin-600-normal.woff2", weight: "600", style: "normal" },
+    { path: "../../node_modules/@fontsource/outfit/files/outfit-latin-700-normal.woff2", weight: "700", style: "normal" },
+    { path: "../../node_modules/@fontsource/outfit/files/outfit-latin-800-normal.woff2", weight: "800", style: "normal" },
+  ],
+});
+
+const inter = localFont({
+  variable: "--font-inter",
+  display: "swap",
+  src: [
+    { path: "../../node_modules/@fontsource/inter/files/inter-latin-400-normal.woff2", weight: "400", style: "normal" },
+    { path: "../../node_modules/@fontsource/inter/files/inter-latin-500-normal.woff2", weight: "500", style: "normal" },
+    { path: "../../node_modules/@fontsource/inter/files/inter-latin-600-normal.woff2", weight: "600", style: "normal" },
+    { path: "../../node_modules/@fontsource/inter/files/inter-latin-700-normal.woff2", weight: "700", style: "normal" },
+  ],
+});
+
+export const metadata: Metadata = {
+  metadataBase: new URL(siteUrl()),
+  title: { default: SITE_TITLE, template: "%s · JAHRSAGER" },
+  description: SITE_DESCRIPTION,
+  applicationName: "JAHRSAGER",
+  alternates: { canonical: "/" },
+  openGraph: {
+    type: "website",
+    siteName: "JAHRSAGER",
+    locale: "de_DE",
+    title: SITE_TITLE,
+    description: SITE_DESCRIPTION,
+  },
+  twitter: { card: "summary_large_image", title: SITE_TITLE, description: SITE_DESCRIPTION },
+  // Vorbereitung Google Search Console (Meta-Tag-Verifizierung); leer = nicht gesetzt
+  icons: {
+    icon: [
+      { url: "/brand/favicon-64.png", sizes: "64x64", type: "image/png" },
+      { url: "/brand/icon-192.png", sizes: "192x192", type: "image/png" },
+    ],
+    apple: { url: "/brand/apple-touch-icon.png", sizes: "180x180" },
+  },
+  verification: { google: process.env.NEXT_PUBLIC_GOOGLE_SITE_VERIFICATION || undefined },
+};
+
+export const viewport: Viewport = {
+  themeColor: "#f7f5ef",
+  width: "device-width",
+  initialScale: 1,
+};
+
+export default function RootLayout({ children }: { children: React.ReactNode }) {
+  return (
+    <html lang="de" className={`${outfit.variable} ${inter.variable}`}>
+      <body className="flex min-h-dvh flex-col">
+        <JsonLd
+          data={[
+            { "@context": "https://schema.org", "@type": "WebSite", name: "JAHRSAGER", alternateName: ["Jahrsager Quiz", "Jahrsager – Das tägliche Geschichtsquiz"], url: absoluteUrl("/"), inLanguage: "de-DE", description: SITE_DESCRIPTION },
+            { "@context": "https://schema.org", "@type": "Organization", name: "JAHRSAGER", url: absoluteUrl("/"), logo: absoluteUrl("/brand/icon-512.png") },
+          ]}
+        />
+        <a
+          href="#inhalt"
+          className="sr-only focus:not-sr-only focus:fixed focus:left-3 focus:top-3 focus:z-50 focus:rounded-full focus:bg-ink focus:px-4 focus:py-2 focus:text-paper"
+        >
+          Zum Inhalt springen
+        </a>
+        <SiteHeader />
+        <main id="inhalt" className="flex-1">
+          {children}
+        </main>
+        <SiteFooter />
+        <Beacon />
+      </body>
+    </html>
+  );
+}

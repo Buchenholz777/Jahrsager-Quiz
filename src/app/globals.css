@@ -1,0 +1,141 @@
+@import "tailwindcss";
+
+/* JAHRSAGER Designsystem – "Modern History meets Gaming"
+   Zentrale Design-Tokens. Farben ausschließlich hier definieren (keine verstreuten Hex-Werte in Komponenten).
+
+   Kontrast (WCAG 2.2 AA, berechnet):
+   - Mitternachtsblau #16283D auf Cremeweiß #F7F5EF ≈ 13:1, auf Weiß ≈ 14:1
+   - Mitternachtsblau auf Sonnengelb #FFB34D ≈ 8:1  → auf Gelb nur dunkle Schrift verwenden, NIE weiße
+   - Sonnengelb auf Mitternachtsblau ≈ 8:1          → gelbe Zahlen auf dunklen Karten
+   - Petrolgrün #1E746D auf Weiß ≈ 5.9:1, Sekundärtext #526175 auf Weiß ≈ 6.2:1 */
+@theme {
+  --color-ink: #16283d; /* Primärfarbe Mitternachtsblau: Text, Logo, Primär-Buttons */
+  --color-ink-2: #223b58; /* Hover-/Verlaufston zur Primärfarbe */
+  --color-ink-soft: #526175; /* Sekundärtext */
+  --color-paper: #f7f5ef; /* Seitenhintergrund Cremeweiß */
+  --color-paper-2: #f0eee8; /* sehr helle Nebenflächen */
+  --color-card: #ffffff; /* Karten, Fotobereiche, Ergebnisse */
+  --color-line: #e4e3dd; /* dezente Rahmen */
+  --color-line-strong: #c4c2b8; /* Skalenstriche (dekorativ) */
+  --color-field: #7a8797; /* Rahmen von Eingabeelementen (≥ 3:1 auf Weiß) */
+  --color-sun: #ffb34d; /* Akzent Sonnengelb: gezielt für Jahre, Fortschritt, aktive Zustände */
+  --color-sun-2: #f6a13a; /* Hover zum Sonnengelb */
+  --color-sun-soft: #fff1da; /* helle Gelbfläche (Hinweise, Hervorhebungen) */
+  --color-good: #1e746d; /* Petrolgrün: positive Rückmeldung */
+  --color-good-soft: #e2f0ee;
+
+  --font-display: var(--font-outfit), "Segoe UI", system-ui, sans-serif;
+  --font-sans: var(--font-inter), system-ui, -apple-system, "Segoe UI", sans-serif;
+
+  --radius-card: 1.5rem;
+  --shadow-card: 0 1px 0 rgb(22 40 61 / 0.04), 0 12px 32px -18px rgb(22 40 61 / 0.35);
+  --shadow-pop: 0 18px 40px -20px rgb(22 40 61 / 0.5);
+
+  --animate-rise: rise 0.28s cubic-bezier(0.2, 0.7, 0.2, 1) both;
+  --animate-fade: fade 0.2s ease both;
+  --animate-pop: pop 0.22s cubic-bezier(0.2, 0.8, 0.3, 1.2) both;
+  --animate-nudge: nudge 1.5s ease-in-out 0.5s 4;
+  --animate-ring: ring 1.6s ease-out 0.5s 6;
+  @keyframes rise {
+    from { opacity: 0; transform: translateY(8px); }
+    to { opacity: 1; transform: none; }
+  }
+  @keyframes fade {
+    from { opacity: 0; }
+    to { opacity: 1; }
+  }
+  /* Hinweis auf der Zeitleiste: der Regler „zeigt“ die Bewegung viermal (links/rechts) und ruht dann */
+  @keyframes nudge {
+    0%, 100% { transform: translateX(0); }
+    30% { transform: translateX(-22px); }
+    70% { transform: translateX(22px); }
+  }
+  @keyframes ring {
+    from { transform: scale(1); opacity: 0.55; }
+    to { transform: scale(1.9); opacity: 0; }
+  }
+  @keyframes pop {
+    from { opacity: 0; transform: scale(0.96); }
+    to { opacity: 1; transform: none; }
+  }
+}
+
+:root { color-scheme: light; }
+
+html { -webkit-text-size-adjust: 100%; scroll-padding-top: 5rem; }
+
+body {
+  background: var(--color-paper);
+  color: var(--color-ink);
+  font-family: var(--font-sans);
+  font-size: 1.0625rem;
+  line-height: 1.6;
+  -webkit-font-smoothing: antialiased;
+  text-rendering: optimizeLegibility;
+  overflow-x: clip;
+}
+
+h1, h2, h3, .font-display {
+  font-family: var(--font-display);
+  font-weight: 700;
+  letter-spacing: -0.015em;
+  line-height: 1.08;
+}
+
+::selection { background: var(--color-sun); color: var(--color-ink); }
+
+/* Sichtbarer Fokus (WCAG 2.2: 2.4.7 / 2.4.11): dunkler Ring + gelber Außenring, auf hellen UND dunklen Flächen erkennbar */
+:where(a, button, input, textarea, select, summary, [tabindex], [role="slider"]):focus-visible {
+  outline: 3px solid var(--color-ink);
+  outline-offset: 2px;
+  box-shadow: 0 0 0 6px var(--color-sun);
+  border-radius: 10px;
+}
+
+/* Programmatisch fokussierte Überschriften (tabindex=-1) bekommen keinen Fokusring */
+[tabindex="-1"]:focus-visible { outline: none; box-shadow: none; }
+
+/* Gelber Textmarker für Schlüsselwörter und Jahreszahlen (Text bleibt dunkel) */
+.marker {
+  background-image: linear-gradient(transparent 58%, var(--color-sun) 58%, var(--color-sun) 92%, transparent 92%);
+  -webkit-box-decoration-break: clone;
+  box-decoration-break: clone;
+  padding-inline: 0.08em;
+}
+
+/* Prosa für redaktionelle Texte */
+.prose-zs p { margin-block: 0.9em; max-width: 68ch; }
+.prose-zs h2 { font-size: 1.6rem; margin-top: 2em; margin-bottom: 0.4em; }
+.prose-zs h3 { font-size: 1.25rem; margin-top: 1.6em; margin-bottom: 0.3em; }
+.prose-zs ul { list-style: disc; padding-left: 1.4em; margin-block: 0.8em; }
+.prose-zs a { color: var(--color-ink); text-decoration: underline; text-decoration-color: var(--color-sun); text-decoration-thickness: 3px; text-underline-offset: 3px; }
+.prose-zs code { background: var(--color-paper-2); border-radius: 6px; padding: 0.1em 0.4em; font-size: 0.92em; }
+
+@media (prefers-reduced-motion: reduce) {
+  *, *::before, *::after {
+    animation-duration: 0.001ms !important;
+    animation-iteration-count: 1 !important;
+    transition-duration: 0.001ms !important;
+    scroll-behavior: auto !important;
+  }
+}
+
+/* Lange technische Begriffe dürfen umbrechen (kein horizontales Scrollen auf kleinen Displays) */
+code, pre { overflow-wrap: anywhere; }
+
+h1, h2, h3 { hyphens: auto; overflow-wrap: break-word; }
+
+/* Geräteabhängige Hinweistexte (Finger vs. Maus) */
+.only-touch { display: none; }
+@media (pointer: coarse) {
+  .only-touch { display: inline; }
+  .only-mouse { display: none; }
+}
+
+/* Hero der Startseite: Mitternachtsblau mit dezenten Lichtakzenten (kein starker Verlauf, Texte bleiben kontrastreich) */
+.hero-bg {
+  background-color: var(--color-ink);
+  background-image:
+    radial-gradient(55% 70% at 88% 8%, rgb(255 179 77 / 0.13), transparent 62%),
+    radial-gradient(45% 55% at 0% 100%, rgb(247 245 239 / 0.06), transparent 60%);
+}
