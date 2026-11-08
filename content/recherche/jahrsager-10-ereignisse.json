@@ -1,0 +1,430 @@
+{
+  "product": "JAHRSAGER",
+  "schema_version": "seed-v1",
+  "generated_on": "2026-11-08",
+  "purpose": "10 candidate events for editorial review (not production-ready)",
+  "release_rule": "No image use or public release before human fact, source, rights, and visual approval.",
+  "events": [
+    {
+      "id": "suedpol-amundsen-1911",
+      "locale": "de-DE",
+      "slug": "suedpol-amundsen-1911",
+      "title_pre_guess": "Am Ende der Welt",
+      "teaser_pre_guess": "Inmitten einer endlosen Eislandschaft versammelt sich eine kleine norwegische Expedition. Die Männer haben eine extrem lange Reise über Schnee und Gletscher hinter sich. Ihr Ziel ist ein Punkt, den zuvor nach gesichertem Kenntnisstand noch keine Expedition erreicht hat. Die Aufnahme hält das Team am Ziel seiner Reise fest.",
+      "question": "In welchem Jahr war das?",
+      "answer_year": 1911,
+      "event_date": "1911-12-14",
+      "category": "Entdeckung",
+      "estimated_difficulty": "mittel",
+      "review_status": "draft_research",
+      "score_rule_version": "v1",
+      "image": {
+        "candidate_source_url": "https://commons.wikimedia.org/wiki/File:Amundsen_Expedition_at_South_Pole.jpg",
+        "storage_path": null,
+        "photographed_at": "1911-12-17",
+        "photo_date_precision": "day",
+        "institution": "Historische Publikation; Wikimedia Commons",
+        "photographer": "Olav Bjaaland",
+        "license_claim": "Wikimedia Commons: als gemeinfrei in Norwegen und USA gekennzeichnet; DE/EU-Rechte gesondert prüfen",
+        "credit_line_draft": "Olav Bjaaland / The South Pole (1912), via Wikimedia Commons (vorläufig)",
+        "license_url": null,
+        "modifications": [],
+        "visual_inspection_done": false,
+        "rights_approved_by_human": false,
+        "editorial_notes": "Foto 17.12.1911, Ankunft bereits 14.12.1911. Das Bild zeigt das Team während des Aufenthalts am Pol, NICHT das erstmalige Erreichen. Aktuelle Commons-Datei wurde nach der Digitalisierung restauriert; Originalscan und Bearbeitungen prüfen.",
+        "alt_text_pre_guess": null
+      },
+      "reveal": {
+        "what_happened": "Roald Amundsen erreichte mit vier Begleitern am 14. Dezember 1911 als erste nachweislich erfolgreiche Expedition den geografischen Südpol. Die Männer erkundeten das Gebiet und errichteten ein Lager, das sie Pollheim nannten.",
+        "why_it_matters": "Die Expedition gilt als Meilenstein der Polarforschung und war Teil eines internationalen Wettlaufs um die letzten großen geografischen Ziele. Amundsens sorgfältige Planung war entscheidend für den Erfolg.",
+        "extra_fact": "Das vorgeschlagene Gruppenfoto wurde erst am 17. Dezember am Südpol aufgenommen – drei Tage nach der Ankunft. Fotograf war Expeditionsmitglied Olav Bjaaland."
+      },
+      "fact_sources": [
+        "https://www.amnh.org/explore/ology/earth/race-to-the-south-pole/to-the-pole-who-won",
+        "https://commons.wikimedia.org/wiki/File:Amundsen_Expedition_at_South_Pole.jpg"
+      ],
+      "editorial_review_notes": "",
+      "approved_at": null,
+      "published_at": null
+    },
+    {
+      "id": "lindbergh-paris-1927",
+      "locale": "de-DE",
+      "slug": "lindbergh-paris-1927",
+      "title_pre_guess": "Ein Flug über den Ozean",
+      "teaser_pre_guess": "Ein einmotoriges Flugzeug taucht über einem französischen Flugplatz auf. Der Pilot hat einen außergewöhnlich langen Weg zurückgelegt, ganz allein und ohne Zwischenlandung. Zehntausende verfolgen die Ankunft mit Begeisterung. Die Reise verbindet zwei Kontinente und macht den Flieger über Nacht weltberühmt.",
+      "question": "In welchem Jahr war das?",
+      "answer_year": 1927,
+      "event_date": "1927-05-21",
+      "category": "Luftfahrt",
+      "estimated_difficulty": "leicht",
+      "review_status": "draft_research",
+      "score_rule_version": "v1",
+      "image": {
+        "candidate_source_url": "https://commons.wikimedia.org/wiki/File:L'avion_de_Lindbergh_(le_Spirit_of_Saint-Louis)_survolant_Le_Bourget,_1927_-_btv1b53241544p.jpg",
+        "storage_path": null,
+        "photographed_at": null,
+        "photo_date_precision": "month:1927-05",
+        "institution": "Bibliothèque nationale de France",
+        "photographer": "Agence Meurisse (laut Sammlungszuordnung; prüfen)",
+        "license_claim": "Wikimedia Commons: gemeinfrei gekennzeichnet, landesspezifische Voraussetzungen prüfen",
+        "credit_line_draft": "Bibliothèque nationale de France / Agence Meurisse? (zu prüfen)",
+        "license_url": null,
+        "modifications": [],
+        "visual_inspection_done": false,
+        "rights_approved_by_human": false,
+        "editorial_notes": "Die BnF-Bildbeschreibung nennt Mai 1927, aber keinen eindeutig bestätigten Aufnahmetag. Prüfen, ob das Überflugbild tatsächlich die Ankunft am 21.05. zeigt oder eine andere Flugbewegung. Erst nach Bestätigung freigeben.",
+        "alt_text_pre_guess": null
+      },
+      "reveal": {
+        "what_happened": "Charles Lindbergh landete am 21. Mai 1927 mit der Spirit of St. Louis auf dem Flugplatz Le Bourget bei Paris. Er hatte den Atlantik von New York aus allein und ohne Zwischenlandung überquert.",
+        "why_it_matters": "Der Flug demonstrierte die Reichweite moderner Flugzeuge und wurde zu einem wichtigen Symbol der Luftfahrtgeschichte. Er war allerdings nicht die erste Atlantiküberquerung überhaupt.",
+        "extra_fact": "Für die Strecke benötigte Lindbergh rund 33 Stunden und 30 Minuten. Die Maschine wurde eigens für den Langstreckenflug konstruiert und hatte keinen normalen freien Blick direkt nach vorn."
+      },
+      "fact_sources": [
+        "https://airandspace.si.edu/collection-objects/ryan-nyp-spirit-st-louis-charles-lindbergh/nasm_A19280021000",
+        "https://commons.wikimedia.org/wiki/File:L'avion_de_Lindbergh_(le_Spirit_of_Saint-Louis)_survolant_Le_Bourget,_1927_-_btv1b53241544p.jpg"
+      ],
+      "editorial_review_notes": "",
+      "approved_at": null,
+      "published_at": null
+    },
+    {
+      "id": "jesse-owens-1936",
+      "locale": "de-DE",
+      "slug": "jesse-owens-1936",
+      "title_pre_guess": "Ein Sprung in die Sportgeschichte",
+      "teaser_pre_guess": "Ein amerikanischer Leichtathlet setzt bei großen internationalen Wettkämpfen in Berlin zum Weitsprung an. Tausende Menschen verfolgen die Wettbewerbe im Stadion. Der Sportler zählt zu den herausragenden Teilnehmern und gewinnt mehrere Titel. Seine Leistungen werden auch außerhalb des Sports zu einem viel diskutierten Symbol.",
+      "question": "In welchem Jahr war das?",
+      "answer_year": 1936,
+      "event_date": "1936-08-04",
+      "category": "Sport & Gesellschaft",
+      "estimated_difficulty": "leicht",
+      "review_status": "draft_research",
+      "score_rule_version": "v1",
+      "image": {
+        "candidate_source_url": "https://commons.wikimedia.org/wiki/File:Bundesarchiv_Bild_183-R96374,_Berlin,_Olympiade,_Jesse_Owens_beim_Weitsprung.jpg",
+        "storage_path": null,
+        "photographed_at": null,
+        "photo_date_precision": "month:1936-08",
+        "institution": "Bundesarchiv",
+        "photographer": "Bundesarchiv / Fotograf laut Originaldatensatz zu prüfen",
+        "license_claim": "CC BY-SA 3.0 DE (Commons-Angabe; Auflagen prüfen)",
+        "credit_line_draft": "Bundesarchiv, Bild 183-R96374 / CC BY-SA 3.0 DE",
+        "license_url": null,
+        "modifications": [],
+        "visual_inspection_done": false,
+        "rights_approved_by_human": false,
+        "editorial_notes": "Commons-Version ist beschnitten, Original ist älter. Attribution Bundesarchiv Bild 183-R96374. 3.0 DE BY-SA mit Pflicht zur Kennzeichnung von Bearbeitungen und ggf. ShareAlike auf Bearbeitungen. Visuelle Prüfung und Aufnahmetag offen.",
+        "alt_text_pre_guess": null
+      },
+      "reveal": {
+        "what_happened": "Jesse Owens gewann bei den Olympischen Spielen in Berlin vier Goldmedaillen: über 100 und 200 Meter, im Weitsprung sowie mit der US-Sprintstaffel. Das gezeigte Bundesarchiv-Foto dokumentiert Owens bei einem Weitsprung.",
+        "why_it_matters": "Seine Erfolge standen im starken Gegensatz zur rassistischen Ideologie des nationalsozialistischen Gastgeberregimes. Die Spiele waren von der NS-Propaganda politisch instrumentalisiert worden.",
+        "extra_fact": "Die vierte Goldmedaille holte Owens mit der 4-mal-100-Meter-Staffel. Das Archivbild ist nur auf August datiert; ob es genau den Goldsprung zeigt, muss vor Freigabe geprüft werden."
+      },
+      "fact_sources": [
+        "https://olympics.com/en/athletes/jesse-owens",
+        "https://commons.wikimedia.org/wiki/File:Bundesarchiv_Bild_183-R96374,_Berlin,_Olympiade,_Jesse_Owens_beim_Weitsprung.jpg"
+      ],
+      "editorial_review_notes": "",
+      "approved_at": null,
+      "published_at": null
+    },
+    {
+      "id": "berliner-luftbruecke-1948",
+      "locale": "de-DE",
+      "slug": "berliner-luftbruecke-1948",
+      "title_pre_guess": "Versorgung aus der Luft",
+      "teaser_pre_guess": "Auf einem Berliner Flughafen stehen Transportmaschinen, während Helfer dringend benötigte Güter entladen. Die Stadt ist politisch geteilt, wichtige Zufahrtswege sind blockiert. Flugzeuge bringen Lebensmittel, Kohle und andere Versorgungsgüter. Der Flughafen wird zum Mittelpunkt einer außergewöhnlichen logistischen Operation.",
+      "question": "In welchem Jahr war das?",
+      "answer_year": 1948,
+      "event_date": null,
+      "category": "Politik & Gesellschaft",
+      "estimated_difficulty": "mittel",
+      "review_status": "draft_research",
+      "score_rule_version": "v1",
+      "image": {
+        "candidate_source_url": "https://commons.wikimedia.org/wiki/File:Airlift-berlin.jpg",
+        "storage_path": null,
+        "photographed_at": null,
+        "photo_date_precision": "month:1948-08",
+        "institution": "Truman Presidential Library / Wikimedia Commons",
+        "photographer": "Unbekannt / US-Dienststelle",
+        "license_claim": "Wikimedia Commons: als Werk der US-Regierung gemeinfrei gekennzeichnet; Originalprüfung offen",
+        "credit_line_draft": "Harry S. Truman Presidential Library / U.S. Army (Zuordnung zu prüfen)",
+        "license_url": null,
+        "modifications": [],
+        "visual_inspection_done": false,
+        "rights_approved_by_human": false,
+        "editorial_notes": "Authentische Aufnahme vom August 1948, aber kein konkreter Tag. Prüfen, ob Archivbeschreibung sicher einen Vorgang während der Luftbrücke zeigt und ob exakte Ortsangabe Tempelhof stimmt.",
+        "alt_text_pre_guess": null
+      },
+      "reveal": {
+        "what_happened": "Während der sowjetischen Blockade der Westsektoren Berlins versorgten die Westalliierten die Bevölkerung auf dem Luftweg. Die Berliner Luftbrücke begann im Juni 1948 und dauerte bis 1949. Das vorgeschlagene Foto zeigt Flugzeuge in Tempelhof im August 1948.",
+        "why_it_matters": "Die Operation hielt die Versorgung der Bevölkerung aufrecht und wurde zu einem bedeutenden Ereignis des beginnenden Kalten Krieges.",
+        "extra_fact": "Amerikanische und britische Maschinen landeten in dichter Folge auf Berliner Flughäfen. Der genaue Tag der ausgewählten Aufnahme ist bislang nur als August 1948 dokumentiert."
+      },
+      "fact_sources": [
+        "https://www.af.mil/News/Photos/igphoto/2001966485/",
+        "https://commons.wikimedia.org/wiki/File:Airlift-berlin.jpg"
+      ],
+      "editorial_review_notes": "Mehrjähriger Vorgang: Foto bezieht sich auf konkrete Flugbetriebssituation im August 1948; Einzelmoment präzisieren, bevor die Karte als gewertet freigegeben wird.",
+      "approved_at": null,
+      "published_at": null
+    },
+    {
+      "id": "marsch-washington-1963",
+      "locale": "de-DE",
+      "slug": "marsch-washington-1963",
+      "title_pre_guess": "Eine Menschenmenge fordert Gleichheit",
+      "teaser_pre_guess": "Vor dem Lincoln Memorial in Washington versammeln sich riesige Menschenmengen. Sie demonstrieren für Arbeit, Freiheit und gleiche Bürgerrechte. Bekannte Aktivisten und Vertreter verschiedener Organisationen sprechen zur Menge. Eine Rede dieses Tages wird weit über die Vereinigten Staaten hinaus bekannt.",
+      "question": "In welchem Jahr war das?",
+      "answer_year": 1963,
+      "event_date": "1963-08-28",
+      "category": "Politik & Gesellschaft",
+      "estimated_difficulty": "mittel",
+      "review_status": "draft_research",
+      "score_rule_version": "v1",
+      "image": {
+        "candidate_source_url": "https://unwritten-record.blogs.archives.gov/2013/08/30/images-of-the-week-august-30-2013/",
+        "storage_path": null,
+        "photographed_at": "1963-08-28",
+        "photo_date_precision": "day",
+        "institution": "U.S. National Archives",
+        "photographer": "Nicht genannt für gewählte Panoramaaufnahme",
+        "license_claim": "NARA / USIA-Bestand; konkrete Nutzungsrechte am Objekt klären",
+        "credit_line_draft": "U.S. National Archives, Local Identifier 306-SSM-4-D-80-10 (vorläufig)",
+        "license_url": null,
+        "modifications": [],
+        "visual_inspection_done": false,
+        "rights_approved_by_human": false,
+        "editorial_notes": "Konkrete Bildkennung 306-SSM-4-D-80-10 am 28.08.1963. National Archives Originaleintrag und Rechteprüfung direkt im Katalog durchführen. Statt Rede-Foto bevorzugt Weitwinkelaufnahme wegen fairer Rätselvisualisierung. Im obigen Artikel sind mehrere Bilder: beim Import EXAKTE Bild-ID verwenden.",
+        "alt_text_pre_guess": null
+      },
+      "reveal": {
+        "what_happened": "Am 28. August 1963 fand der March on Washington for Jobs and Freedom statt. Hunderttausende Menschen demonstrierten friedlich für Bürgerrechte und wirtschaftliche Gleichstellung. Martin Luther King Jr. hielt seine berühmte Rede am Lincoln Memorial.",
+        "why_it_matters": "Der Marsch war ein wichtiger Moment der amerikanischen Bürgerrechtsbewegung und erhöhte den politischen Druck für gesetzliche Veränderungen gegen Rassendiskriminierung.",
+        "extra_fact": "Das US-Nationalarchiv verwahrt zahlreiche Aufnahmen des Tages, darunter ein Weitwinkelbild mit Demonstrierenden vor dem Washington Monument. Für diese Karte sollte genau diese Aufnahme verwendet werden."
+      },
+      "fact_sources": [
+        "https://unwritten-record.blogs.archives.gov/2013/08/30/images-of-the-week-august-30-2013/",
+        "https://www.archives.gov/research/still-pictures/highlights/civil-rights-march-on-washington"
+      ],
+      "editorial_review_notes": "",
+      "approved_at": null,
+      "published_at": null
+    },
+    {
+      "id": "nixon-ruecktritt-1974",
+      "locale": "de-DE",
+      "slug": "nixon-ruecktritt-1974",
+      "title_pre_guess": "Abschied aus dem Weißen Haus",
+      "teaser_pre_guess": "Ein amerikanischer Präsident steht vor Mitarbeitenden und Angehörigen im Weißen Haus. Die Stimmung ist ernst, die politische Lage angespannt. Nach einer Affäre um Machtmissbrauch und Vertuschung verlässt er sein Amt vorzeitig. Die Aufnahme zeigt einen ungewöhnlichen Abschied in der Geschichte der Vereinigten Staaten.",
+      "question": "In welchem Jahr war das?",
+      "answer_year": 1974,
+      "event_date": "1974-08-09",
+      "category": "Politik",
+      "estimated_difficulty": "mittel",
+      "review_status": "draft_research",
+      "score_rule_version": "v1",
+      "image": {
+        "candidate_source_url": "https://commons.wikimedia.org/wiki/File:President_Richard_Nixon's_farewell_to_his_cabinet_and_members_of_the_White_House_staff.jpg",
+        "storage_path": null,
+        "photographed_at": "1974-08-09",
+        "photo_date_precision": "day",
+        "institution": "U.S. National Archives",
+        "photographer": "White House Photo Office",
+        "license_claim": "Wikimedia Commons: US-Bundesregierungswerk, Public Domain (Original prüfen)",
+        "credit_line_draft": "NARA / White House Photo Office Collection, Catalog ID 194597",
+        "license_url": null,
+        "modifications": [],
+        "visual_inspection_done": false,
+        "rights_approved_by_human": false,
+        "editorial_notes": "National Archives Katalognummer 194597; Aufnahme 09.08.1974, Gemeinfrei-Behauptung als US-Bundesregierungswerk; Abgebildete und genaue Bildquelle am Original kontrollieren.",
+        "alt_text_pre_guess": null
+      },
+      "reveal": {
+        "what_happened": "Richard Nixon trat am 9. August 1974 als Präsident der Vereinigten Staaten zurück. Am Vortag hatte er in einer Fernsehansprache seinen Rücktritt angekündigt. Am Morgen seines letzten Amtstags verabschiedete er sich von Mitarbeitenden im Weißen Haus.",
+        "why_it_matters": "Der Rücktritt war der erste eines amtierenden US-Präsidenten. Die Watergate-Affäre hatte das Vertrauen in die Regierung schwer beschädigt und eine Verfassungskrise ausgelöst.",
+        "extra_fact": "Die vorgeschlagene Fotografie stammt aus der White House Photo Office Collection. Noch am selben Tag wurde Vizepräsident Gerald Ford als neuer Präsident vereidigt."
+      },
+      "fact_sources": [
+        "https://visit.archives.gov/whats-on/explore-exhibits/president-resigns-50-years-later",
+        "https://catalog.archives.gov/id/194597"
+      ],
+      "editorial_review_notes": "",
+      "approved_at": null,
+      "published_at": null
+    },
+    {
+      "id": "shuttle-columbia-start-1981",
+      "locale": "de-DE",
+      "slug": "shuttle-columbia-start-1981",
+      "title_pre_guess": "Ein Raumgleiter hebt ab",
+      "teaser_pre_guess": "Ein ungewöhnliches Raumfahrzeug startet von einer großen Startrampe in Florida. Es trägt Flügel wie ein Flugzeug, fliegt jedoch zunächst mit gewaltigen Raketenantrieben ins All. An Bord befinden sich zwei Astronauten. Die Mission soll beweisen, dass ein neuer Typ Raumfahrzeug funktioniert.",
+      "question": "In welchem Jahr war das?",
+      "answer_year": 1981,
+      "event_date": "1981-04-12",
+      "category": "Wissenschaft & Technik",
+      "estimated_difficulty": "leicht",
+      "review_status": "draft_research",
+      "score_rule_version": "v1",
+      "image": {
+        "candidate_source_url": "https://www.nasa.gov/image-article/sts-1-columbias-maiden-launch/",
+        "storage_path": null,
+        "photographed_at": "1981-04-12",
+        "photo_date_precision": "day",
+        "institution": "NASA",
+        "photographer": "NASA / Remote Camera",
+        "license_claim": "NASA-Foto; Mediennutzungsrichtlinien einschließlich möglicher Drittrechte prüfen",
+        "credit_line_draft": "NASA, EC81-15508 / S81-30459",
+        "license_url": null,
+        "modifications": [],
+        "visual_inspection_done": false,
+        "rights_approved_by_human": false,
+        "editorial_notes": "Das NASA-Bild ist präzise auf 12.04.1981 datiert, Kennung EC81-15508 / S81-30459. Original-Lizenzbedingungen und Rechte Dritter prüfen; keine Behauptung einer NASA-Unterstützung.",
+        "alt_text_pre_guess": null
+      },
+      "reveal": {
+        "what_happened": "Am 12. April 1981 startete die Raumfähre Columbia zu STS-1, dem ersten Flug des Space-Shuttle-Programms. An Bord waren John Young und Robert Crippen. Nach einem rund zweitägigen Testflug landete Columbia auf der Edwards Air Force Base.",
+        "why_it_matters": "Das Programm sollte regelmäßige bemannte Flüge in den Erdorbit ermöglichen und machte Raumfähren mit wiederverwendbaren Hauptkomponenten zu einem zentralen Werkzeug der Raumfahrt.",
+        "extra_fact": "Das NASA-Foto EC81-15508 / S81-30459 wurde von einer ferngesteuerten Kamera an der Startrampe 39A aufgenommen und zeigt den echten Startmoment."
+      },
+      "fact_sources": [
+        "https://www.nasa.gov/mission/sts-1/",
+        "https://www.nasa.gov/image-article/sts-1-columbias-maiden-launch/"
+      ],
+      "editorial_review_notes": "",
+      "approved_at": null,
+      "published_at": null
+    },
+    {
+      "id": "hubble-start-1990",
+      "locale": "de-DE",
+      "slug": "hubble-start-1990",
+      "title_pre_guess": "Ein neues Auge für das Universum",
+      "teaser_pre_guess": "Eine amerikanische Raumfähre startet mit einer besonderen Fracht an Bord. Sie soll ein großes wissenschaftliches Instrument in eine Umlaufbahn um die Erde bringen. Von dort aus soll es Sterne, Galaxien und andere Himmelsobjekte beobachten, ohne durch die Erdatmosphäre eingeschränkt zu werden.",
+      "question": "In welchem Jahr war das?",
+      "answer_year": 1990,
+      "event_date": "1990-04-24",
+      "category": "Wissenschaft & Technik",
+      "estimated_difficulty": "mittel",
+      "review_status": "draft_research",
+      "score_rule_version": "v1",
+      "image": {
+        "candidate_source_url": "https://science.nasa.gov/image-detail/hubble_launch_0/",
+        "storage_path": null,
+        "photographed_at": "1990-04-24",
+        "photo_date_precision": "day",
+        "institution": "NASA",
+        "photographer": "NASA",
+        "license_claim": "NASA-Foto; Mediennutzungsrichtlinien prüfen",
+        "credit_line_draft": "NASA, STS-31 Discovery Launch (vorläufig)",
+        "license_url": null,
+        "modifications": [],
+        "visual_inspection_done": false,
+        "rights_approved_by_human": false,
+        "editorial_notes": "Passendes Startfoto NASA, Aufnahmedatum 24.04.1990; nicht das häufig verwendete Bild der Hubble-Aussetzung am 25.04.1990 einsetzen, wenn der Fragetext den Start zeigt.",
+        "alt_text_pre_guess": null
+      },
+      "reveal": {
+        "what_happened": "Am 24. April 1990 startete die Raumfähre Discovery zu STS-31 und brachte das Weltraumteleskop Hubble ins All. Die Besatzung setzte das Instrument am folgenden Tag in der Erdumlaufbahn aus.",
+        "why_it_matters": "Hubble ermöglichte über Jahrzehnte astronomische Beobachtungen mit großer wissenschaftlicher Bedeutung. Das Teleskop prägte außerdem das öffentliche Bild des Universums durch eindrucksvolle Aufnahmen.",
+        "extra_fact": "Das vorgeschlagene NASA-Foto zeigt ausdrücklich den Start am 24. April. Fotos der Aussetzung am 25. April dürfen nicht mit dem Startmoment verwechselt werden."
+      },
+      "fact_sources": [
+        "https://www.nasa.gov/mission/sts-31/",
+        "https://science.nasa.gov/image-detail/hubble_launch_0/"
+      ],
+      "editorial_review_notes": "",
+      "approved_at": null,
+      "published_at": null
+    },
+    {
+      "id": "humangenom-entwurf-2000",
+      "locale": "de-DE",
+      "slug": "humangenom-entwurf-2000",
+      "title_pre_guess": "Ein Meilenstein der Genforschung",
+      "teaser_pre_guess": "Im Weißen Haus treten ein amerikanischer Präsident und führende Wissenschaftler vor die Presse. Sie berichten von einem internationalen Forschungsprojekt, das den genetischen Bauplan des Menschen entschlüsseln soll. Nach jahrelanger Zusammenarbeit können die Forschenden einen bedeutenden Zwischenstand präsentieren.",
+      "question": "In welchem Jahr war das?",
+      "answer_year": 2000,
+      "event_date": "2000-06-26",
+      "category": "Wissenschaft & Medizin",
+      "estimated_difficulty": "schwer",
+      "review_status": "draft_research",
+      "score_rule_version": "v1",
+      "image": {
+        "candidate_source_url": "https://www.genome.gov/news/news-release/NHGRI-commemorates-20th-anniversary-of-white-house-event-announcing-draft-human-genome-sequence",
+        "storage_path": null,
+        "photographed_at": null,
+        "photo_date_precision": "pending_exact_original",
+        "institution": "National Human Genome Research Institute",
+        "photographer": "Ungeklärt",
+        "license_claim": "Ungeklärt; Nutzung bis Originalbild-Prüfung gesperrt",
+        "credit_line_draft": "NHGRI / White House (endgültige Quellenzeile offen)",
+        "license_url": null,
+        "modifications": [],
+        "visual_inspection_done": false,
+        "rights_approved_by_human": false,
+        "editorial_notes": "Fakten gut belegt; BILD IST NOCH NICHT freigegeben. Die NHGRI-Seite enthält Fotos, aber für das konkrete Bild Urheber, Fotoaufnahmedatum, Datei und Nutzungsrecht erst im Originalarchiv verifizieren. Keine Videostills ungeprüft als Originalfotografien verwenden.",
+        "alt_text_pre_guess": null
+      },
+      "reveal": {
+        "what_happened": "Am 26. Juni 2000 präsentierten Forschende und Politiker im Weißen Haus einen ersten Arbeitsentwurf der menschlichen Genomsequenz. US-Präsident Bill Clinton, Francis Collins und Craig Venter nahmen an der Bekanntgabe teil. Tony Blair wurde per Video zugeschaltet.",
+        "why_it_matters": "Die Ankündigung machte die große internationale Zusammenarbeit der Genomforschung sichtbar. Der Entwurf war ein Durchbruch, aber noch keine vollständig fehlerfreie Sequenz des gesamten menschlichen Genoms.",
+        "extra_fact": "Das öffentlich geförderte Human Genome Project erklärte erst 2003 seine im damaligen Sinne weitgehend abgeschlossene Referenzsequenz. Der Zwischenstand von 2000 enthielt noch zahlreiche Lücken."
+      },
+      "fact_sources": [
+        "https://www.genome.gov/10001356/june-2000-white-house-event",
+        "https://www.genome.gov/human-genome-project/timeline",
+        "https://www.genome.gov/news/news-release/NHGRI-commemorates-20th-anniversary-of-white-house-event-announcing-draft-human-genome-sequence"
+      ],
+      "editorial_review_notes": "",
+      "approved_at": null,
+      "published_at": null
+    },
+    {
+      "id": "frauen-ausseneinsatz-iss-2019",
+      "locale": "de-DE",
+      "slug": "frauen-ausseneinsatz-iss-2019",
+      "title_pre_guess": "Ein besonderer Einsatz im All",
+      "teaser_pre_guess": "Zwei Astronautinnen verlassen die Internationale Raumstation, um ein defektes Bauteil auszutauschen. In ihren Raumanzügen arbeiten sie mehrere Stunden außerhalb der Station. Ein Außenbordeinsatz ist Routine für die Raumfahrt, doch die Zusammensetzung dieses Teams stellt eine Premiere dar.",
+      "question": "In welchem Jahr war das?",
+      "answer_year": 2019,
+      "event_date": "2019-10-18",
+      "category": "Wissenschaft & Gesellschaft",
+      "estimated_difficulty": "mittel",
+      "review_status": "draft_research",
+      "score_rule_version": "v1",
+      "image": {
+        "candidate_source_url": "https://www.nasa.gov/image-article/nasa-astronaut-jessica-meir-conducts-her-first-spacewalk-2/",
+        "storage_path": null,
+        "photographed_at": "2019-10-18",
+        "photo_date_precision": "day",
+        "institution": "NASA",
+        "photographer": "NASA",
+        "license_claim": "NASA-Foto; Mediennutzungsrichtlinien prüfen",
+        "credit_line_draft": "NASA, ISS061-E-008788",
+        "license_url": null,
+        "modifications": [],
+        "visual_inspection_done": false,
+        "rights_approved_by_human": false,
+        "editorial_notes": "NASA-Foto vom tatsächlichen Außeneinsatz 18.10.2019 zeigt nur Jessica Meir, nicht beide Frauen. Text kann beide erwähnen, darf aber nicht behaupten, beide seien zu sehen. Alternative NASA-TV-Aufnahme zeigt beide; dort Bildrechte gesondert prüfen.",
+        "alt_text_pre_guess": null
+      },
+      "reveal": {
+        "what_happened": "Am 18. Oktober 2019 führten Christina Koch und Jessica Meir den ersten Außenbordeinsatz durch, an dem ausschließlich Frauen beteiligt waren. Die beiden NASA-Astronautinnen tauschten außerhalb der Internationalen Raumstation eine defekte Batterie-Steuerungseinheit aus.",
+        "why_it_matters": "Der Einsatz war ein weithin beachteter Meilenstein für die Sichtbarkeit von Frauen in der bemannten Raumfahrt. Zugleich war es eine reguläre technische Reparatur an der Raumstation.",
+        "extra_fact": "Der Außenbordeinsatz dauerte sieben Stunden und 17 Minuten. Das NASA-Foto ISS061-E-008788 zeigt Jessica Meir während des Einsatzes; Christina Koch befindet sich außerhalb des Bildausschnitts."
+      },
+      "fact_sources": [
+        "https://www.nasa.gov/blogs/spacestation/2019/10/18/nasa-astronauts-wrap-up-historic-all-woman-spacewalk/",
+        "https://www.nasa.gov/image-article/nasa-astronaut-jessica-meir-conducts-her-first-spacewalk-2/"
+      ],
+      "editorial_review_notes": "",
+      "approved_at": null,
+      "published_at": null
+    }
+  ]
+}
