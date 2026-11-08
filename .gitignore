@@ -13,3 +13,7 @@ test-results
 coverage
 storage/shots
 .claude/
+.open-next
+.wrangler
+.dev.vars
+dist

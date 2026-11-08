@@ -8,7 +8,7 @@
   },
   "scripts": {
     "dev": "next dev",
-    "build": "next build",
+    "build": "node scripts/build-pages.mjs",
     "start": "next start",
     "lint": "eslint .",
     "typecheck": "tsc --noEmit",
@@ -20,13 +20,16 @@
     "admin:hash": "tsx scripts/admin-hash.ts",
     "images:import": "tsx scripts/images-import.ts",
     "research:report": "tsx scripts/research-report.ts",
-    "cards:sync": "tsx scripts/cards-sync.ts"
+    "cards:sync": "tsx scripts/cards-sync.ts",
+    "build:next": "next build",
+    "preview:cf": "npm run build && wrangler pages dev dist"
   },
   "dependencies": {
     "@electric-sql/pglite": "^0.5.15",
     "@fontsource/fraunces": "^5.3.0",
     "@fontsource/inter": "^5.3.0",
     "@fontsource/outfit": "^5.3.0",
+    "@opennextjs/cloudflare": "^1.20.16",
     "class-variance-authority": "^0.7.1",
     "clsx": "^2.1.1",
     "lucide-react": "^1.70.0",
@@ -50,6 +53,7 @@
     "tailwindcss": "^4.3.5",
     "tsx": "^4.23.15",
     "typescript": "^6.0.3",
-    "vitest": "^5.1.0"
+    "vitest": "^5.1.0",
+    "wrangler": "^4.158.0"
   }
 }
