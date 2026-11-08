@@ -17,3 +17,4 @@ storage/shots
 .wrangler
 .dev.vars
 dist
+.env.cloudflare*

@@ -20,7 +20,24 @@ for (const entry of readdirSync(open)) {
   if (entry === "assets" || entry === "worker.js") continue;
   cpSync(path.join(open, entry), path.join(worker, entry), { recursive: true });
 }
-cpSync(path.join(open, "worker.js"), path.join(worker, "index.js"));
+cpSync(path.join(open, "worker.js"), path.join(worker, "app.js"));
+// TEMPORÄRE Diagnose: Startfehler des Workers per ?__debug=1 sichtbar machen (nach der Fehlersuche entfernen).
+writeFileSync(
+  path.join(worker, "index.js"),
+  `export default {
+  async fetch(request, env, ctx) {
+    const debug = new URL(request.url).searchParams.get("__debug") === "1";
+    try {
+      const mod = await import("./app.js");
+      return await mod.default.fetch(request, env, ctx);
+    } catch (e) {
+      if (debug) return new Response("WORKER-FEHLER: " +(e && e.stack ? e.stack : String(e)), { status: 500, headers: { "content-type": "text/plain; charset=utf-8" } });
+      throw e;
+    }
+  },
+};
+`,
+);
 
 // Pages erlaubt höchstens 25 MiB für den Worker. Entfernt werden nur Dateien, die auf Cloudflare nie geladen werden:
 // lokale PGlite-Datenbank (dort gilt DATABASE_URL), React-Development-/Profiling-Builds, Node-Varianten von react-dom und @vercel/og.
