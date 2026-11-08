@@ -113,16 +113,18 @@ export async function buildState(db: Queryable, game: GameRow, at: Date = clockN
 }
 
 async function createGame(db: Db, playerId: string, pack: PackInfo, events: EventRow[], official: boolean): Promise<GameRow> {
-  return db.transaction(async (tx) => {
-    const game = (await tx.one<GameRow>(
-      `insert into games(player_id, pack_id, mode, official, scoring_version) values ($1, $2, $3, $4, $5) returning *`,
-      [playerId, pack.id, official ? "daily" : "practice", official, SCORING_VERSION],
-    ))!;
-    for (const [i, e] of events.entries()) {
-      await tx.run("insert into game_rounds(game_id, position, event_id, event_version) values ($1, $2, $3, $4)", [game.id, i + 1, e.id, e.version]);
-    }
-    return game;
-  });
+  // Eine einzige Anweisung: Partie und Runden werden atomar angelegt.
+  const rounds = JSON.stringify(events.map((e, i) => ({ position: i + 1, event_id: e.id, event_version: e.version })));
+  return (await db.one<GameRow>(
+    `with g as (
+       insert into games(player_id, pack_id, mode, official, scoring_version) values ($1, $2, $3, $4, $5) returning *
+     ), r as (
+       insert into game_rounds(game_id, position, event_id, event_version)
+       select g.id, v.position, v.event_id, v.event_version from g, jsonb_to_recordset($6::jsonb) as v(position int, event_id uuid, event_version int)
+       returning 1
+     ) select * from g`,
+    [playerId, pack.id, official ? "daily" : "practice", official, SCORING_VERSION, rounds],
+  ))!;
 }
 
 const OFFICIAL_Q = "select * from games where player_id = $1 and pack_id = $2 and official";

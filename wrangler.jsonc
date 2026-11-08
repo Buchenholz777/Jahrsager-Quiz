@@ -6,6 +6,7 @@
   "compatibility_flags": ["nodejs_compat", "global_fetch_strictly_public"],
   "vars": {
     "NEXT_PUBLIC_SITE_URL": "https://www.jahrsagerquiz.de",
-    "DATABASE_SSL": "true"
+    "DATABASE_SSL": "true",
+    "SUPABASE_URL": "https://eawkxaracebrailcwvku.supabase.co"
   }
 }

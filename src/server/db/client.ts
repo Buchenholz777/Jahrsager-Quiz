@@ -12,7 +12,7 @@ export interface Queryable {
 export interface Db extends Queryable {
   transaction<T>(fn: (tx: Queryable) => Promise<T>): Promise<T>;
   close(): Promise<void>;
-  readonly driver: "pglite" | "pg";
+  readonly driver: "pglite" | "pg" | "http";
 }
 
 const MIGRATIONS_DIR = path.join(process.cwd(), "supabase", "migrations");
@@ -142,25 +142,44 @@ export async function createMemoryDb(): Promise<Db> {
 
 const g = globalThis as unknown as { __zsDb?: Promise<Db> };
 
-/** Verbindungs-URL des Cloudflare-Hyperdrive-Bindings, falls vorhanden (nur auf Workers). */
-export async function hyperdriveUrl(): Promise<string | undefined> {
-  if (typeof navigator === "undefined" || navigator.userAgent !== "Cloudflare-Workers") return undefined;
-  try {
-    const { getCloudflareContext } = await import("@opennextjs/cloudflare");
-    const env = getCloudflareContext().env as unknown as { HYPERDRIVE?: { connectionString?: string } };
-    return env.HYPERDRIVE?.connectionString || undefined;
-  } catch {
-    return undefined;
+/**
+ * SQL über HTTPS (Supabase-Data-API, Funktion public.app_sql) für Cloudflare Workers.
+ * Hinweis: Eine `transaction` ist hier nicht atomar – die Anweisungen laufen nacheinander einzeln.
+ * Mehrschrittige Schreibvorgänge, die atomar sein müssen, sind deshalb als einzelne SQL-Anweisung formuliert.
+ */
+export function createHttpDb(baseUrl: string, serviceKey: string): Db {
+  const endpoint = baseUrl.replace(/\/+$/, "") + "/rest/v1/rpc/app_sql";
+  async function call(sql: string, params?: unknown[]): Promise<{ rows: unknown[]; count: number }> {
+    const res = await fetch(endpoint, {
+      method: "POST",
+      headers: { apikey: serviceKey, "content-type": "application/json" },
+      body: JSON.stringify({ stmts: [{ sql, params: (params ?? []).map((p) => (p === undefined ? null : p)) }] }),
+    });
+    const text = await res.text();
+    let body: unknown;
+    try { body = JSON.parse(text); } catch { body = undefined; }
+    if (!res.ok) {
+      const b = body as { message?: string } | undefined;
+      throw new Error("Datenbank-HTTP " + res.status + ": " + (b?.message ?? text.slice(0, 200)));
+    }
+    return (body as { rows: unknown[]; count: number }[])[0];
   }
+  const base: Queryable = {
+    async query<T>(sql: string, params?: unknown[]) { return (await call(sql, params)).rows as T[]; },
+    async one<T>(sql: string, params?: unknown[]) { return ((await call(sql, params)).rows[0] as T | undefined) ?? null; },
+    async run(sql: string, params?: unknown[]) { return (await call(sql, params)).count; },
+    async exec(sql: string) { await call(sql); },
+  };
+  return { ...base, driver: "http", transaction: (fn) => fn(base), close: async () => undefined };
 }
 
 /** Prozessweite Verbindung (übersteht HMR im Entwicklungsmodus). */
 export function getDb(): Promise<Db> {
   if (!g.__zsDb) {
     g.__zsDb = (async () => {
-      // Auf Cloudflare Workers übernimmt Hyperdrive (Binding „HYPERDRIVE“) die verschlüsselte Verbindung zur Datenbank.
-      const hyperdrive = await hyperdriveUrl();
-      if (hyperdrive) return createPgDb(hyperdrive, false);
+      const supaUrl = process.env.SUPABASE_URL;
+      const supaKey = process.env.SUPABASE_SERVICE_KEY;
+      if (supaUrl && supaKey) return createHttpDb(supaUrl, supaKey);
       const url = process.env.DATABASE_URL;
       if (url) return createPgDb(url, process.env.DATABASE_SSL === "true");
       const db = process.env.PGLITE_MEMORY === "1" ? await createPgliteDb() : await createPgliteDb(process.env.PGLITE_DIR ?? path.join(process.cwd(), ".data", "pglite"));
