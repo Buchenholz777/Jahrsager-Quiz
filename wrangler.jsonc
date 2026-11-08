@@ -3,5 +3,9 @@
   "name": "jahrsager-quiz",
   "pages_build_output_dir": "./dist",
   "compatibility_date": "2026-10-01",
-  "compatibility_flags": ["nodejs_compat", "global_fetch_strictly_public"]
+  "compatibility_flags": ["nodejs_compat", "global_fetch_strictly_public"],
+  "vars": {
+    "NEXT_PUBLIC_SITE_URL": "https://www.jahrsagerquiz.de",
+    "DATABASE_SSL": "true"
+  }
 }

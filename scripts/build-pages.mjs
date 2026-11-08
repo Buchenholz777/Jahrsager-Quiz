@@ -6,6 +6,8 @@ import path from "node:path";
 
 const run = (cmd) => execSync(cmd, { stdio: "inherit", shell: true });
 
+// NEXT_PUBLIC_* wird beim Build fest eingebaut: Standard ist die Produktiv-Domain (per Umgebungsvariable überschreibbar).
+process.env.NEXT_PUBLIC_SITE_URL ||= "https://www.jahrsagerquiz.de";
 run("npx opennextjs-cloudflare build");
 
 const open = ".open-next";
