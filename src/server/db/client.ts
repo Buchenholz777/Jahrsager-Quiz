@@ -73,7 +73,32 @@ export async function createPgDb(connectionString: string, ssl: boolean): Promis
   const pg = pgMod.default;
   pg.types.setTypeParser(1082, (v: string) => v); // DATE als String
   pg.types.setTypeParser(20, (v: string) => parseInt(v, 10)); // INT8 als Zahl
-  const pool = new pg.Pool({ connectionString, max: 5, ssl: ssl ? { rejectUnauthorized: false } : undefined });
+  const sslOpt = ssl ? { rejectUnauthorized: false } : undefined;
+  // Cloudflare Workers dürfen Netzwerkverbindungen nicht zwischen Anfragen teilen: dort pro Abfrage eine frische Verbindung.
+  const isWorkers = typeof navigator !== "undefined" && navigator.userAgent === "Cloudflare-Workers";
+  type PgClient = InstanceType<typeof pg.Client> & { release: () => void };
+  const pool = (
+    isWorkers
+      ? {
+          async query(sql: string, params?: unknown[]) {
+            const c = new pg.Client({ connectionString, ssl: sslOpt });
+            await c.connect();
+            try {
+              return await c.query(sql, params);
+            } finally {
+              await c.end().catch(() => undefined);
+            }
+          },
+          async connect() {
+            const c = new pg.Client({ connectionString, ssl: sslOpt }) as PgClient;
+            await c.connect();
+            c.release = () => void c.end().catch(() => undefined);
+            return c;
+          },
+          async end() {},
+        }
+      : new pg.Pool({ connectionString, max: 5, ssl: sslOpt })
+  ) as InstanceType<typeof pg.Pool>;
   const wrap = (c: { query: (sql: string, params?: unknown[]) => Promise<{ rows: unknown[]; rowCount: number | null }> }): Queryable => ({
     async query<T>(sql: string, params?: unknown[]) {
       return (await c.query(sql, params)).rows as T[];
