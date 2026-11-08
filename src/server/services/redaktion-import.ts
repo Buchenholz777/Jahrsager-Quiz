@@ -1,5 +1,5 @@
 import type { Queryable } from "../db/client";
-import type { EventInput, EventRow, ImageStatus, Source } from "../types";
+import type { EventInput, EventRow, ImageCandidate, ImageStatus, Source } from "../types";
 import { EDITABLE_FIELDS } from "../types";
 import { createEvent, getEventBySlug, preTipHints, updateEvent } from "./events";
 
@@ -76,6 +76,84 @@ const PROBLEM_CASES = new Set([
   "frauen-ausseneinsatz-iss-2019",
 ]);
 
+const com = (f: string) => "https://commons.wikimedia.org/wiki/File:" + f.replace(/ /g, "_");
+
+/**
+ * Bildkandidaten, deren Lizenz am Commons-Datensatz abgefragt wurde (8. November 2026) und die eine nachvollziehbare
+ * Quelle haben. NICHT enthalten sind bewusst: Südpol (Fotograf Bjaaland † 1961 – in Deutschland/EU voraussichtlich
+ * noch geschützt, Rechte ungeklärt) und Humangenom (Bildquelle ungeklärt). Der Import (images:import) prüft die Lizenz
+ * erneut und gibt NIE frei; ein Mensch muss Bild, Lizenz, Quelle und Datum am Original bestätigen.
+ */
+const IMAGE_CANDIDATES: Record<string, ImageCandidate> = {
+  "lindbergh-paris-1927": {
+    commonsFile: "L'avion de Lindbergh (le Spirit of Saint-Louis) survolant Le Bourget, 1927 - btv1b53241544p.jpg",
+    commonsUrl: com("L'avion de Lindbergh (le Spirit of Saint-Louis) survolant Le Bourget, 1927 - btv1b53241544p.jpg"),
+    originalUrl: "https://gallica.bnf.fr/ark:/12148/btv1b53241544p",
+    originalReadable: false,
+    author: "Agence de presse Meurisse (Auftraggeber/Agentur; Fotograf nicht genannt)",
+    license: "Public domain",
+    licenseUrl: "",
+    photoDate: "1927-05",
+    photoDateNote: "Nur das Jahr/der Monat ist belegt; ob das Bild die Ankunft am 21. Mai zeigt, ist offen.",
+    creditShort: "Bibliothèque nationale de France / Agence Meurisse",
+    creditFull: "Bibliothèque nationale de France, Agence de presse Meurisse (btv1b53241544p), über Wikimedia Commons; als Public domain gekennzeichnet",
+    altDraft: "Entwurf (am Bild zu prüfen): Einmotoriges Flugzeug im Flug über einem Flugplatz.",
+    width: 6051,
+    height: 4639,
+    risks: ["Aufnahmetag unbestätigt", "Originalseite (Gallica) nicht geprüft", "Gemeinfrei-Angabe nach Landesrecht prüfen"],
+  },
+  "jesse-owens-1936": {
+    commonsFile: "Bundesarchiv Bild 183-R96374, Berlin, Olympiade, Jesse Owens beim Weitsprung.jpg",
+    commonsUrl: com("Bundesarchiv Bild 183-R96374, Berlin, Olympiade, Jesse Owens beim Weitsprung.jpg"),
+    originalUrl: com("Bundesarchiv Bild 183-R96374, Berlin, Olympiade, Jesse Owens beim Weitsprung.jpg"),
+    originalReadable: true,
+    author: "Bundesarchiv (Fotograf unbekannt)",
+    license: "CC BY-SA 3.0 de",
+    licenseUrl: "https://creativecommons.org/licenses/by-sa/3.0/de/",
+    photoDate: "1936-08",
+    photoDateNote: "Nur August belegt.",
+    creditShort: "Bundesarchiv, Bild 183-R96374 / CC BY-SA 3.0 DE",
+    creditFull: "Bundesarchiv, Bild 183-R96374, Fotograf unbekannt, CC BY-SA 3.0 DE (über Wikimedia Commons)",
+    altDraft: "Entwurf (am Bild zu prüfen): Leichtathlet beim Weitsprung im Stadion.",
+    width: 568,
+    height: 800,
+    risks: ["Namensnennung und ShareAlike (CC BY-SA 3.0 DE) einhalten", "Bearbeitungen kennzeichnen", "geringe Auflösung (568 × 800 px)"],
+  },
+  "berliner-luftbruecke-1948": {
+    commonsFile: "Airlift-berlin.jpg",
+    commonsUrl: com("Airlift-berlin.jpg"),
+    originalUrl: "http://www.trumanlibrary.org/photographs/displayimage.php?pointer=31197",
+    originalReadable: false,
+    author: "Unbekannt (US-Regierungsstelle)",
+    license: "Public domain",
+    licenseUrl: "",
+    photoDate: "1948-08",
+    photoDateNote: "Nur der Monat ist belegt.",
+    creditShort: "Harry S. Truman Presidential Library",
+    creditFull: "Harry S. Truman Presidential Library (Fotograf unbekannt, US-Regierungsstelle), über Wikimedia Commons; als Public domain gekennzeichnet",
+    altDraft: "Entwurf (am Bild zu prüfen): Transportflugzeuge auf einem Flughafen, Helfer entladen Fracht.",
+    width: 783,
+    height: 507,
+    risks: ["Einzeltag und Ort (Tempelhof?) unbestätigt", "Originalseite nicht geprüft"],
+  },
+  "nixon-ruecktritt-1974": {
+    commonsFile: "President Richard Nixon's farewell to his cabinet and members of the White House staff.jpg",
+    commonsUrl: com("President Richard Nixon's farewell to his cabinet and members of the White House staff.jpg"),
+    originalUrl: "https://catalog.archives.gov/id/194597",
+    originalReadable: false,
+    author: "White House Photo Office (US-Bundesregierung)",
+    license: "Public domain",
+    licenseUrl: "",
+    photoDate: "1974-08-09",
+    creditShort: "White House Photo Office / U.S. National Archives",
+    creditFull: "White House Photo Office Collection (Nixon Administration), U.S. National Archives, Katalog-ID 194597, über Wikimedia Commons; als Public domain gekennzeichnet",
+    altDraft: "Entwurf (am Bild zu prüfen): Ein Mann im Anzug spricht vor einer versammelten Gruppe in einem Saal.",
+    width: 3000,
+    height: 2051,
+    risks: ["Abgebildete und Bildquelle am Original prüfen"],
+  },
+};
+
 const HOST_LABEL: [RegExp, string][] = [
   [/commons\.wikimedia\.org/, "Wikimedia Commons (Bildseite)"],
   [/amnh\.org/, "American Museum of Natural History"],
@@ -136,6 +214,7 @@ export function mapRedaktionEvent(r: RedaktionEvent): EventInput {
     image_status: status,
     research: {
       openPoints,
+      ...(IMAGE_CANDIDATES[r.slug] ? { image: IMAGE_CANDIDATES[r.slug] } : {}),
       // Rohdaten der Recherche exakt übernommen (Review-Metadaten, keine Freigabe)
       redaktion: {
         quelle: "content/recherche/jahrsager-10-ereignisse.json",
