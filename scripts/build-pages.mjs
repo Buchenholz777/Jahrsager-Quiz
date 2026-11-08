@@ -56,6 +56,17 @@ drop(path.join(worker, "dynamodb-provider"));
 drop(path.join(worker, "server-functions", "default", ".next", "static"));
 drop(path.join(worker, "server-functions", "default", ".next", "cache"));
 
+// Dev-, CLI- und Debug-Teile von Next.js und deren Hilfspakete: ein produktiver Worker lädt sie nie.
+const nx = path.join(nm, "next", "dist");
+for (const rel of [
+  "server/dev", "server/mcp", "cli", "lib/typescript", "telemetry", "experimental", "export", "client/dev",
+  "compiled/tar", "compiled/watchpack", "compiled/conf", "compiled/comment-json", "compiled/commander", "compiled/@napi-rs",
+  "compiled/cross-spawn", "compiled/@mswjs", "compiled/edge-runtime", "compiled/@edge-runtime/primitives", "compiled/ws",
+  "compiled/compression", "compiled/source-map", "compiled/stacktrace-parser", "compiled/is-docker", "compiled/is-wsl",
+]) drop(path.join(nx, rel));
+for (const f of ["react-dom-client.production.js"]) drop(path.join(rd, f));
+for (const sub of ["build/swc", "build/static-paths", "build/segment-config", "build/next-config-ts", "build/output"]) drop(path.join(nx, sub));
+
 const sizeOf = (p) => {
   let t = 0;
   for (const e of readdirSync(p, { withFileTypes: true })) {
@@ -77,6 +88,17 @@ const walk = (p, depth) => {
 walk(worker, 1);
 report.sort((a, b) => b[0] - a[0]);
 for (const [b, f] of report.slice(0, 15)) console.log((b / 1024 / 1024).toFixed(1).padStart(6) + " MiB  " + f);
+const files = [];
+const collect = (p) => {
+  for (const e of readdirSync(p, { withFileTypes: true })) {
+    const f = path.join(p, e.name);
+    if (e.isDirectory()) collect(f); else files.push([lstatSync(f).size, f]);
+  }
+};
+collect(worker);
+files.sort((a, b) => b[0] - a[0]);
+console.log("Größte Dateien:");
+for (const [b, f] of files.slice(0, 25)) console.log((b / 1024 / 1024).toFixed(2).padStart(7) + " MiB  " + f.replace("dist/_worker.js/", ""));
 const mib = sizeOf(worker) / 1024 / 1024;
 console.log("Worker-Größe: " + mib.toFixed(1) + " MiB (Limit 25 MiB)");
 if (mib > 25) throw new Error("Worker größer als 25 MiB – weitere Dateien müssen entfernt werden.");
