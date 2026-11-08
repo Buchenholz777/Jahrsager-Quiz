@@ -1,7 +1,7 @@
 // Baut die App mit OpenNext und legt das Ergebnis im Pages-Format nach dist/ ab:
 // dist/ = statische Dateien, dist/_worker.js/ = Server (Advanced Mode von Cloudflare Pages).
 import { execSync } from "node:child_process";
-import { cpSync, existsSync, mkdirSync, lstatSync, readdirSync, rmSync, writeFileSync } from "node:fs";
+import { cpSync, existsSync, mkdirSync, lstatSync, readdirSync, readFileSync, rmSync, writeFileSync } from "node:fs";
 import path from "node:path";
 
 const run = (cmd) => execSync(cmd, { stdio: "inherit", shell: true });
@@ -38,6 +38,24 @@ writeFileSync(
 };
 `,
 );
+
+// Pages kennt Module nur unter ihrem Pfad relativ zu _worker.js. OpenNext schreibt aber absolute Build-Pfade
+// (z. B. /opt/buildhome/repo/.open-next/.../yoga.wasm?module) in den Code: auf relative Pfade umschreiben.
+const absOpen = path.resolve(open).split(path.sep).join("/") + "/";
+const rewrite = (dir) => {
+  for (const e of readdirSync(dir, { withFileTypes: true })) {
+    const f = path.join(dir, e.name);
+    if (e.isDirectory()) { rewrite(f); continue; }
+    if (!/\.(m?js|cjs)$/.test(e.name) || lstatSync(f).size > 12 * 1024 * 1024) continue;
+    const src = readFileSync(f, "utf8");
+    if (!src.includes(absOpen)) continue;
+    let rel = path.relative(dir, worker).split(path.sep).join("/") || ".";
+    if (!rel.startsWith(".")) rel = "./" + rel;
+    writeFileSync(f, src.split(absOpen).join(rel + "/").replace(/(\.wasm)\?module/g, "$1"));
+    console.log("Pfade umgeschrieben: " + f);
+  }
+};
+rewrite(worker);
 
 // Pages erlaubt höchstens 25 MiB für den Worker. Entfernt werden nur Dateien, die auf Cloudflare nie geladen werden:
 // lokale PGlite-Datenbank (dort gilt DATABASE_URL), React-Development-/Profiling-Builds, Node-Varianten von react-dom und @vercel/og.
