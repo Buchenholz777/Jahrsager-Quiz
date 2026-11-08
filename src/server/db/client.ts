@@ -142,10 +142,25 @@ export async function createMemoryDb(): Promise<Db> {
 
 const g = globalThis as unknown as { __zsDb?: Promise<Db> };
 
+/** Verbindungs-URL des Cloudflare-Hyperdrive-Bindings, falls vorhanden (nur auf Workers). */
+export async function hyperdriveUrl(): Promise<string | undefined> {
+  if (typeof navigator === "undefined" || navigator.userAgent !== "Cloudflare-Workers") return undefined;
+  try {
+    const { getCloudflareContext } = await import("@opennextjs/cloudflare");
+    const env = getCloudflareContext().env as unknown as { HYPERDRIVE?: { connectionString?: string } };
+    return env.HYPERDRIVE?.connectionString || undefined;
+  } catch {
+    return undefined;
+  }
+}
+
 /** Prozessweite Verbindung (übersteht HMR im Entwicklungsmodus). */
 export function getDb(): Promise<Db> {
   if (!g.__zsDb) {
     g.__zsDb = (async () => {
+      // Auf Cloudflare Workers übernimmt Hyperdrive (Binding „HYPERDRIVE“) die verschlüsselte Verbindung zur Datenbank.
+      const hyperdrive = await hyperdriveUrl();
+      if (hyperdrive) return createPgDb(hyperdrive, false);
       const url = process.env.DATABASE_URL;
       if (url) return createPgDb(url, process.env.DATABASE_SSL === "true");
       const db = process.env.PGLITE_MEMORY === "1" ? await createPgliteDb() : await createPgliteDb(process.env.PGLITE_DIR ?? path.join(process.cwd(), ".data", "pglite"));
