@@ -50,6 +50,12 @@ const stripLinks = (p) => {
 };
 stripLinks(worker);
 
+// Bereits als statische Dateien in dist/ vorhanden bzw. nur für ISR-Cache und AWS nötig: nicht noch einmal in den Worker packen.
+drop(path.join(worker, "cache"));
+drop(path.join(worker, "dynamodb-provider"));
+drop(path.join(worker, "server-functions", "default", ".next", "static"));
+drop(path.join(worker, "server-functions", "default", ".next", "cache"));
+
 const sizeOf = (p) => {
   let t = 0;
   for (const e of readdirSync(p, { withFileTypes: true })) {
@@ -58,6 +64,19 @@ const sizeOf = (p) => {
   }
   return t;
 };
+// Größenaufstellung (zwei Ebenen) für die Fehlersuche im Build-Log.
+const report = [];
+const walk = (p, depth) => {
+  for (const e of readdirSync(p, { withFileTypes: true })) {
+    const f = path.join(p, e.name);
+    if (e.isDirectory()) {
+      if (depth < 3) { report.push([sizeOf(f), f]); walk(f, depth + 1); }
+    }
+  }
+};
+walk(worker, 1);
+report.sort((a, b) => b[0] - a[0]);
+for (const [b, f] of report.slice(0, 15)) console.log((b / 1024 / 1024).toFixed(1).padStart(6) + " MiB  " + f);
 const mib = sizeOf(worker) / 1024 / 1024;
 console.log("Worker-Größe: " + mib.toFixed(1) + " MiB (Limit 25 MiB)");
 if (mib > 25) throw new Error("Worker größer als 25 MiB – weitere Dateien müssen entfernt werden.");
