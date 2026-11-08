@@ -1,5 +1,4 @@
 import { randomBytes } from "node:crypto";
-import sharp from "sharp";
 import { IMAGE_WIDTHS } from "@/lib/images";
 import { putImage } from "./storage";
 import { AppError } from "./types";
@@ -11,6 +10,8 @@ const MAX_BYTES = 12 * 1024 * 1024;
  * erzeugt WebP-Varianten in mehreren Breiten. Die Kennung ist zufällig (nicht erratbar).
  */
 export async function processUpload(data: Buffer, opts: { cropBottomPct?: number } = {}) {
+  // Lazy: `sharp` ist eine native Bibliothek und auf Cloudflare Workers nicht verfügbar (nur lokal/auf Node).
+  const sharp = (await import("sharp")).default;
   if (data.length > MAX_BYTES) throw new AppError("BILD_ZU_GROSS", "Das Bild ist größer als 12 MB.");
   let meta;
   try {
