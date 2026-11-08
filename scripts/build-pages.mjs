@@ -1,7 +1,7 @@
 // Baut die App mit OpenNext und legt das Ergebnis im Pages-Format nach dist/ ab:
 // dist/ = statische Dateien, dist/_worker.js/ = Server (Advanced Mode von Cloudflare Pages).
 import { execSync } from "node:child_process";
-import { cpSync, existsSync, mkdirSync, readdirSync, rmSync, statSync, writeFileSync } from "node:fs";
+import { cpSync, existsSync, mkdirSync, lstatSync, readdirSync, rmSync, writeFileSync } from "node:fs";
 import path from "node:path";
 
 const run = (cmd) => execSync(cmd, { stdio: "inherit", shell: true });
@@ -40,11 +40,21 @@ drop(path.join(nm, "next", "dist", "compiled", "@vercel", "og", "index.node.js")
 drop(path.join(nm, "next", "dist", "compiled", "next-server", "app-page-turbo-experimental.runtime.prod.js"));
 drop(path.join(nm, "next", "dist", "compiled", "next-server", "pages-turbo.runtime.prod.js"));
 
+// Symlinks (z. B. auf sharp) sind im Pages-Worker nutzlos und teils defekt: entfernen.
+const stripLinks = (p) => {
+  for (const e of readdirSync(p, { withFileTypes: true })) {
+    const f = path.join(p, e.name);
+    if (e.isSymbolicLink()) drop(f);
+    else if (e.isDirectory()) stripLinks(f);
+  }
+};
+stripLinks(worker);
+
 const sizeOf = (p) => {
   let t = 0;
   for (const e of readdirSync(p, { withFileTypes: true })) {
     const f = path.join(p, e.name);
-    t += e.isDirectory() ? sizeOf(f) : statSync(f).size;
+    t += e.isDirectory() ? sizeOf(f) : lstatSync(f).size;
   }
   return t;
 };
