@@ -8,7 +8,7 @@ const yes = args.includes("--yes");
 const target = args.find((a) => !a.startsWith("--"));
 const db = await getDb();
 const rows = await db.query<{ id: string; slug: string; image_is_placeholder: boolean; research: Research }>(
-  "select id, slug, image_is_placeholder, research from events where research ? 'image' and image_is_placeholder and ($1::text is null or slug = $1) order by slug",
+  "select id, slug, image_is_placeholder, research from events where research ? 'image' and (image_is_placeholder or image_id is null) and ($1::text is null or slug = $1) order by slug",
   [target ?? null],
 );
 if (!rows.length) {
