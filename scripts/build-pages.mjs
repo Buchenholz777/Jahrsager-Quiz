@@ -21,21 +21,15 @@ for (const entry of readdirSync(open)) {
   cpSync(path.join(open, entry), path.join(worker, entry), { recursive: true });
 }
 cpSync(path.join(open, "worker.js"), path.join(worker, "app.js"));
-// TEMPORÄRE Diagnose: Startfehler des Workers per ?__debug=1 sichtbar machen (nach der Fehlersuche entfernen).
+// Start-Wrapper: stellt `require` für gebündelte CommonJS-Teile bereit und lädt dann die OpenNext-App.
 writeFileSync(
   path.join(worker, "index.js"),
   `import { createRequire } from "node:module";
 globalThis.require ??= createRequire("file:///worker.js");
 export default {
   async fetch(request, env, ctx) {
-    const debug = new URL(request.url).searchParams.get("__debug") === "1";
-    try {
-      const mod = await import("./app.js");
-      return await mod.default.fetch(request, env, ctx);
-    } catch (e) {
-      if (debug) return new Response("WORKER-FEHLER: " +(e && e.stack ? e.stack : String(e)), { status: 500, headers: { "content-type": "text/plain; charset=utf-8" } });
-      throw e;
-    }
+    const mod = await import("./app.js");
+    return mod.default.fetch(request, env, ctx);
   },
 };
 `,
