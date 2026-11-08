@@ -24,7 +24,9 @@ cpSync(path.join(open, "worker.js"), path.join(worker, "app.js"));
 // TEMPORÄRE Diagnose: Startfehler des Workers per ?__debug=1 sichtbar machen (nach der Fehlersuche entfernen).
 writeFileSync(
   path.join(worker, "index.js"),
-  `export default {
+  `import { createRequire } from "node:module";
+globalThis.require ??= createRequire("file:///worker.js");
+export default {
   async fetch(request, env, ctx) {
     const debug = new URL(request.url).searchParams.get("__debug") === "1";
     try {
