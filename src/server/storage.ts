@@ -3,18 +3,21 @@ import path from "node:path";
 
 /**
  * Bildspeicher. `local`: ./storage/images (Entwicklung). `supabase`: privater Supabase-Storage-Bucket
- * (Produktion auf Vercel, da dort das Dateisystem nicht beschreibbar ist).
- * Der Supabase-Treiber ist implementiert, aber bislang nicht gegen eine echte Instanz getestet.
+ * (Produktion auf Cloudflare/Vercel, da dort das Dateisystem nicht beschreibbar ist). Die Auslieferung läuft über
+ * /bild/[id] (Zugriffsprüfung gegen Spoiler); der Bucket ist nicht öffentlich.
  */
 const LOCAL_DIR = path.join(process.cwd(), "storage", "images");
 const driver = () => process.env.STORAGE_DRIVER ?? "local";
 
 function supa() {
   const url = process.env.SUPABASE_URL;
-  const key = process.env.SUPABASE_SERVICE_ROLE_KEY;
+  const key = process.env.SUPABASE_SERVICE_KEY ?? process.env.SUPABASE_SERVICE_ROLE_KEY;
   const bucket = process.env.SUPABASE_STORAGE_BUCKET ?? "zeitspur-images";
-  if (!url || !key) throw new Error("SUPABASE_URL und SUPABASE_SERVICE_ROLE_KEY sind erforderlich (STORAGE_DRIVER=supabase).");
-  return { base: `${url.replace(/\/$/, "")}/storage/v1/object/${bucket}`, key };
+  if (!url || !key) throw new Error("SUPABASE_URL und SUPABASE_SERVICE_KEY sind erforderlich (STORAGE_DRIVER=supabase).");
+  // Neue geheime Schlüssel (sb_secret_…) gehören in den Header "apikey"; ältere JWT-Schlüssel zusätzlich als Bearer.
+  const headers: Record<string, string> = { apikey: key };
+  if (key.startsWith("eyJ")) headers.Authorization = `Bearer ${key}`;
+  return { base: `${url.replace(/\/$/, "")}/storage/v1/object/${bucket}`, headers };
 }
 
 export const CONTENT_TYPES: Record<string, string> = {
@@ -32,10 +35,10 @@ const safeName = (name: string) => {
 export async function putImage(name: string, data: Buffer, contentType: string) {
   safeName(name);
   if (driver() === "supabase") {
-    const { base, key } = supa();
+    const { base, headers } = supa();
     const res = await fetch(`${base}/${name}`, {
       method: "POST",
-      headers: { Authorization: `Bearer ${key}`, "Content-Type": contentType, "x-upsert": "true" },
+      headers: { ...headers, "Content-Type": contentType, "x-upsert": "true" },
       body: new Uint8Array(data),
     });
     if (!res.ok) throw new Error(`Supabase-Upload fehlgeschlagen (${res.status})`);
@@ -48,8 +51,8 @@ export async function putImage(name: string, data: Buffer, contentType: string) 
 export async function getImage(name: string): Promise<Buffer | null> {
   safeName(name);
   if (driver() === "supabase") {
-    const { base, key } = supa();
-    const res = await fetch(`${base}/${name}`, { headers: { Authorization: `Bearer ${key}` } });
+    const { base, headers } = supa();
+    const res = await fetch(`${base}/${name}`, { headers });
     if (!res.ok) return null;
     return Buffer.from(await res.arrayBuffer());
   }

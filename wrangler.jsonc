@@ -7,6 +7,8 @@
   "vars": {
     "NEXT_PUBLIC_SITE_URL": "https://www.jahrsagerquiz.de",
     "DATABASE_SSL": "true",
-    "SUPABASE_URL": "https://eawkxaracebrailcwvku.supabase.co"
+    "SUPABASE_URL": "https://eawkxaracebrailcwvku.supabase.co",
+    "STORAGE_DRIVER": "supabase",
+    "SUPABASE_STORAGE_BUCKET": "zeitspur-images"
   }
 }
