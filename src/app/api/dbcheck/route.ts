@@ -1,16 +1,22 @@
 // TEMPORÄR: Verbindungsdiagnose für den Cloudflare-Betrieb. Nach der Fehlersuche entfernen.
-import { getDb, hyperdriveUrl } from "@/server/db/client";
+import postgres from "postgres";
 
 export const dynamic = "force-dynamic";
 
 export async function GET() {
-  const hyperdrive = Boolean(await hyperdriveUrl());
-  try {
-    const db = await getDb();
-    const row = await db.one<{ n: number }>("select count(*)::int as n from events");
-    return Response.json({ ok: true, hyperdrive, driver: db.driver, events: row?.n });
-  } catch (e) {
-    const err = e as Error;
-    return Response.json({ ok: false, hyperdrive, message: String(err.message).replace(/:[^:@/\s]+@/g, ":***@") }, { status: 500 });
+  const url = process.env.DATABASE_URL ?? "";
+  const mask = (m: string) => m.replace(/:[^:@/\s]+@/g, ":***@");
+  const out: Record<string, unknown> = {};
+  for (const [name, ssl] of [["require", "require"], ["true", true], ["prefer", "prefer"]] as const) {
+    const sql = postgres(url, { ssl: ssl as never, max: 1, prepare: false, connect_timeout: 8 });
+    try {
+      const rows = await sql`select count(*)::int as n from events`;
+      out[name] = { ok: true, events: rows[0]?.n };
+    } catch (e) {
+      out[name] = { ok: false, message: mask(String((e as Error).message)) };
+    } finally {
+      await sql.end({ timeout: 1 }).catch(() => undefined);
+    }
   }
+  return Response.json(out);
 }
