@@ -42,7 +42,9 @@ export default async function AutomatikAdmin() {
   return (
     <div className="space-y-8">
       <h1 className="text-3xl font-semibold">Automatik</h1>
-      {s.lowStock && <p role="alert" className="rounded-card border-2 border-sun bg-card p-4 font-medium">Warnung: Der Vorrat ist klein ({s.stock} Ereignisse, {s.stockDays} Tage). Neue Recherche läuft täglich; bei Dauer prüfen Sie die Läufe unten.</p>}
+      <p role={s.lowStock ? "alert" : "status"} className={`rounded-card border-2 bg-card p-4 font-medium ${s.lowStock ? "border-sun" : "border-line"}`}>
+        Vorrat: {s.levelMessage} {s.lowStock && "Neue Recherche läuft täglich (nur mit KI-Schlüssel); sonst Ereignisse im Freigabe-Assistenten freigeben."}
+      </p>
       <div className="grid gap-4 sm:grid-cols-2 lg:grid-cols-4">
         {tile("Freigegebener Vorrat (ungenutzt)", s.stock, s.lowStock)}
         {tile("Vorrat in Tagen", s.stockDays, s.lowStock)}

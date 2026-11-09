@@ -31,3 +31,6 @@ jobs:
           SUPABASE_URL: https://eawkxaracebrailcwvku.supabase.co
           SUPABASE_SERVICE_KEY: ${{ secrets.SUPABASE_SERVICE_KEY }}
           ANTHROPIC_API_KEY: ${{ secrets.ANTHROPIC_API_KEY }}
+          PIPELINE_CONTACT: ${{ secrets.PIPELINE_CONTACT }} # gültige Kontaktangabe (E-Mail/URL) für die Wikimedia-Kennung
+          # Optional einstellbar (Standard laut docs/CONTENT-ENGINE.md): POOL_TARGET, POOL_BOOST, POOL_WARN, POOL_CRITICAL, POOL_BLOCKER,
+          # AI_MAX_CALLS_PER_RUN, AI_MAX_CALLS_PER_DAY, AI_MAX_CALLS_PER_MONTH, MIN_EXTERNAL_SOURCES

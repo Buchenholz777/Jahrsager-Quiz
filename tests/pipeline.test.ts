@@ -55,7 +55,7 @@ const base = (over: Partial<AssessInput> = {}): AssessInput => ({
   eventDate: "1969-07-20",
   meta: meta(),
   wikipediaUrl: "https://de.wikipedia.org/wiki/Test",
-  externalSources: ["https://www.nasa.gov/x"],
+  externalSources: ["https://www.nasa.gov/x", "https://www.archives.gov/y"],
   draft: draft(),
   duplicate: null,
   ...over,
@@ -108,6 +108,8 @@ describe("Automatische Entscheidung", () => {
     expect(assess(base({ meta: meta({ dateOriginal: "July 1969" }) })).decision).toBe("manual_review");
     expect(assess(base({ meta: meta({ dateOriginal: "" }) })).decision).toBe("manual_review");
     expect(assess(base({ externalSources: [] })).decision).toBe("manual_review");
+    expect(assess(base({ externalSources: ["https://www.nasa.gov/x"] })).decision).toBe("manual_review"); // eine Quelle reicht nicht
+    expect(assess(base({ externalSources: ["https://www.nasa.gov/x", "https://history.nasa.gov/y"] })).decision).toBe("manual_review"); // gleiche Institution zählt einmal
     expect(assess(base({ draft: draft({ description: words(35) + " im Jahr 1969" }) })).decision).toBe("manual_review");
     expect(assess(base({ draft: draft({ explanation_what: words(20) }) })).decision).toBe("manual_review");
     expect(assess(base({ draft: draft({ insufficient: true }) })).decision).toBe("manual_review");
@@ -128,7 +130,7 @@ function fakeDeps(over: Partial<Deps> = {}, m: Partial<CommonsMeta> = {}): Deps 
   let n = 0;
   return {
     commonsMeta: async (f) => meta({ file: f, pageUrl: `https://commons.wikimedia.org/wiki/File:${f}`, ...m }),
-    wikipediaInfo: async (u) => ({ title: decodeURIComponent(u.split("/wiki/").pop()!), url: u, extract: "Auszug", externalLinks: ["https://www.nasa.gov/x"] }),
+    wikipediaInfo: async (u) => ({ title: decodeURIComponent(u.split("/wiki/").pop()!), url: u, extract: "Auszug", externalLinks: ["https://www.nasa.gov/x", "https://www.archives.gov/y"] }),
     reachable: async () => true,
     previewJpegBase64: async () => "AAAA",
     storeImage: async () => ({ id: `imtest${++n}`, ext: "webp", width: 2000, height: 1333 }),

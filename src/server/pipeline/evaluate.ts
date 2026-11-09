@@ -31,6 +31,8 @@ export interface AssessInput {
   draft: CardDraft | null;
   duplicate: string | null;
   minWidth?: number;
+  /** Mindestzahl unabhängiger externer Quellen (verschiedene Institutionen/Domains); Standard 2 bzw. MIN_EXTERNAL_SOURCES */
+  minExternal?: number;
 }
 export interface Assessment {
   decision: PipelineDecision;
@@ -86,9 +88,12 @@ export function assess(i: AssessInput): Assessment {
   if (!q) reject.push("Bildqualität nicht ausreichend.");
 
   // 6 Faktenquellen (≥ 2, davon mind. eine externe Institution)
-  const src = i.externalSources.length >= 1;
-  audit.push(auditEntry("quellen", src ? "ok" : "manuell", [src ? `Wikipedia + ${i.externalSources.length} externe Quelle(n).` : "Keine erreichbare Quelle auf der Allowlist außer Wikipedia."], { wikipedia: i.wikipediaUrl, extern: i.externalSources }));
-  if (!src) manual.push("Weniger als zwei geeignete Faktenquellen.");
+  // Wikipedia/Wikidata zählen nicht als unabhängige Belege: nötig sind externe Institutionen (verschiedene Domains) auf der Allowlist.
+  const needExt = i.minExternal ?? (Number(process.env.MIN_EXTERNAL_SOURCES) || 2);
+  const hosts = new Set(i.externalSources.map((u) => { try { return new URL(u).hostname.replace(/^www./, "").split(".").slice(-2).join("."); } catch { return u; } }));
+  const src = hosts.size >= needExt;
+  audit.push(auditEntry("quellen", src ? "ok" : "manuell", [src ? `${hosts.size} unabhängige externe Quelle(n) (mind. ${needExt}).` : `Nur ${hosts.size} unabhängige externe Quelle(n) auf der Allowlist (mind. ${needExt}); Wikipedia/Wikidata gelten nicht als unabhängig.`], { wikipedia: i.wikipediaUrl, extern: i.externalSources }));
+  if (!src) manual.push(`Weniger als ${needExt} unabhängige Faktenquellen.`);
 
   // 7 Inhalte (KI-Entwurf formal prüfen, Bild-Veto)
   if (!i.draft) {

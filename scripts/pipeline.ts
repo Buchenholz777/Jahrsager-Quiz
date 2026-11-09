@@ -1,8 +1,10 @@
 import "./env";
 import sharp from "sharp";
+import { todayKey } from "../src/server/clock";
 import { getDb } from "../src/server/db/client";
 import { draftCard } from "../src/server/pipeline/ai";
-import { logRun, STOCK_TARGET } from "../src/server/pipeline/admin";
+import { logRun, pipelineStats } from "../src/server/pipeline/admin";
+import { aiBudget, aiCallsAllowed, aiCallsUsed, poolLevel, poolThresholds } from "../src/server/pipeline/monitor";
 import { planPacks, poolEvents } from "../src/server/pipeline/plan";
 import { processCandidate, type Deps, type Outcome } from "../src/server/pipeline/process";
 import { commonsMeta, downloadImage, findCandidates, reachable, wikipediaInfo } from "../src/server/pipeline/sources";
@@ -10,9 +12,11 @@ import { processUpload } from "../src/server/images";
 
 /**
  * Zeitgesteuerter Redaktionsprozess (GitHub Actions, siehe .github/workflows/redaktion.yml).
- *   npm run pipeline -- research [--max 25] [--target 150]   Kandidaten recherchieren, prüfen, Vorrat auffüllen
- *   npm run pipeline -- plan [--days 14]                     fehlende Tagespakete aus dem geprüften Pool planen
- *   npm run pipeline -- all                                  beides (Standard)
+ *   npm run pipeline -- research [--max 25] [--target 300]   Kandidaten recherchieren/prüfen (budgetiert), Vorrat auffüllen
+ *   npm run pipeline -- plan [--days 30]                     fehlende Tagespakete aus dem geprüften Pool planen
+ *   npm run pipeline -- monitor                              Vorrat, Veröffentlichung und Läufe prüfen; Exit 1 bei kritischem Zustand
+ *   npm run pipeline -- all                                  research, plan, monitor (Standard)
+ * Ein kritischer Zustand beendet den Lauf mit Fehler: GitHub benachrichtigt den Repository-Inhaber per E-Mail über fehlgeschlagene Workflows.
  */
 const args = process.argv.slice(2);
 const arg = (k: string, d: number) => {
@@ -21,6 +25,12 @@ const arg = (k: string, d: number) => {
 };
 const mode = args.find((a) => !a.startsWith("--")) ?? "all";
 const apiKey = process.env.ANTHROPIC_API_KEY;
+const thresholds = poolThresholds();
+
+const db = await getDb();
+let failed = false;
+let aiCalls = 0;
+let aiLimit = 0;
 
 const deps: Deps = {
   commonsMeta,
@@ -31,25 +41,30 @@ const deps: Deps = {
     return (await sharp(buf).rotate().resize({ width: 1024, withoutEnlargement: true }).jpeg({ quality: 80 }).toBuffer()).toString("base64");
   },
   storeImage: async (meta) => processUpload(await downloadImage(meta)),
-  draft: (input) => (apiKey ? draftCard(input, apiKey) : null),
+  // KI-Aufrufe nur mit Schlüssel und innerhalb des Budgets (je Lauf, Tag und Monat)
+  draft: (input) => {
+    if (!apiKey || aiCalls >= aiLimit) return null;
+    aiCalls++;
+    return draftCard(input, apiKey);
+  },
 };
 
-const db = await getDb();
-let failed = false;
 try {
   if (mode === "research" || mode === "all") {
     await logRun(db, "research", async () => {
-      const target = arg("target", STOCK_TARGET);
+      const target = arg("target", thresholds.target);
       const maxPerRun = arg("max", 25);
       const before = (await poolEvents(db)).length;
       const stats: Record<string, number> = {};
       const outcomes: Outcome[] = [];
-      if (before < target && apiKey) {
+      const used = await aiCallsUsed(db);
+      aiLimit = aiCallsAllowed(used, aiBudget());
+      if (before < target && apiKey && aiLimit > 0) {
         const offset = Math.floor(Math.random() * 400);
         const batch = await findCandidates(maxPerRun * 3, offset);
         let processed = 0;
         for (const c of batch) {
-          if (processed >= maxPerRun || (await poolEvents(db)).length >= target) break;
+          if (processed >= maxPerRun || aiCalls >= aiLimit || (await poolEvents(db)).length >= target) break;
           try {
             const o = await processCandidate(db, c, deps);
             outcomes.push(o);
@@ -61,19 +76,37 @@ try {
           }
         }
       } else if (!apiKey) {
-        console.log("ANTHROPIC_API_KEY fehlt: keine Recherche (keine Texte ohne Quelle erzeugt).");
+        console.log("ANTHROPIC_API_KEY fehlt: keine Recherche (es werden keine Texte ohne Quelle erzeugt).");
+      } else if (aiLimit <= 0) {
+        console.log(`KI-Budget erschöpft (heute ${used.today}, Monat ${used.month} Aufrufe): keine Recherche in diesem Lauf.`);
       }
       const after = (await poolEvents(db)).length;
-      console.log(`Vorrat: ${before} → ${after} (Ziel ${target}).`, stats);
-      return { before, after, target, ...stats, apiKey: Boolean(apiKey) };
+      console.log(`Vorrat: ${before} → ${after} (Ziel ${target}); KI-Aufrufe: ${aiCalls}.`, stats);
+      return { before, after, target, aiCalls, ...stats, apiKey: Boolean(apiKey) };
     });
   }
   if (mode === "plan" || mode === "all") {
     await logRun(db, "plan", async () => {
-      const r = await planPacks(db, { days: arg("days", 14) });
+      const r = await planPacks(db, { days: arg("days", 30) });
       console.log(`Pakete geplant: ${r.planned.join(", ") || "–"}; ohne ausreichenden Pool: ${r.missing.join(", ") || "–"}; Vorrat ${r.stock} (${r.stockDays} Tage).`);
       if (r.missing.length) console.warn(["WARNUNG: Für manche Tage ist keine regelkonforme Auswahl möglich:", ...r.warnings].join(String.fromCharCode(10)));
       return r;
+    });
+  }
+  if (mode === "monitor" || mode === "all") {
+    await logRun(db, "monitor", async () => {
+      const s = await pipelineStats(db);
+      const lvl = poolLevel(s.stock, thresholds);
+      const today = todayKey();
+      const prepared = s.nextPacks.filter((p) => p.pack_date >= today).length;
+      const todayReady = s.nextPacks.some((p) => p.pack_date === today);
+      const problems: string[] = [];
+      if (lvl.level === "critical" || lvl.level === "blocker") problems.push(lvl.message);
+      if (!todayReady) problems.push(`Für heute (${today}) ist kein Tagesrätsel vorbereitet.`);
+      console.log(`Vorrat: ${lvl.message} Vorbereitete Tage (nächste 7 sichtbar): ${prepared}. Fehlgeschlagene Läufe (letzte 10): ${s.lastErrors}.`);
+      if (lvl.level === "warn" || lvl.level === "boost") console.warn(lvl.message);
+      if (problems.length) throw new Error("ALARM: " + problems.join(" "));
+      return { stock: s.stock, level: lvl.level, preparedDays: prepared, lastErrors: s.lastErrors };
     });
   }
 } catch (e) {

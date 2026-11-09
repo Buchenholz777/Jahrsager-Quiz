@@ -1,6 +1,7 @@
 import type { CommonsMeta } from "./license";
 
-const UA = "JAHRSAGER-Redaktion/0.1 (https://www.jahrsagerquiz.de; Kontakt über den Betreiber der Website)";
+// Wikimedia verlangt eine identifizierbare Kennung mit gültigem Kontakt: PIPELINE_CONTACT (E-Mail oder URL) setzen.
+const UA = `JAHRSAGER-Redaktion/0.2 (https://www.jahrsagerquiz.de; ${process.env.PIPELINE_CONTACT ?? "Kontakt: PIPELINE_CONTACT nicht gesetzt"})`;
 const sleep = (ms: number) => new Promise((r) => setTimeout(r, ms));
 
 /** Höflicher Abruf mit Timeout und Wiederholung bei 429/5xx (Wikimedia-Richtlinien). */

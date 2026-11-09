@@ -6,13 +6,17 @@ import { todayKey } from "../clock";
 import { AppError, type AuditEntry, type EventRow } from "../types";
 import { auditEntry } from "./license";
 
-export const STOCK_TARGET = 150;
+import { poolLevel, poolThresholds, type PoolLevel } from "./monitor";
+
+export const STOCK_TARGET = poolThresholds().target;
 
 export interface PipelineStats {
   stock: number;
   stockDays: number;
   target: number;
   lowStock: boolean;
+  level: PoolLevel;
+  levelMessage: string;
   candidatesWeek: number;
   autoApproved: number;
   manualReview: number;
@@ -32,7 +36,7 @@ export async function pipelineStats(db: Queryable, now = new Date()): Promise<Pi
   const nextPacks = await db.query<{ pack_date: string; titles: string[] }>(
     `select p.pack_date::text as pack_date,
        array(select e.neutral_title from daily_pack_events pe join events e on e.id = pe.event_id where pe.pack_id = p.id order by pe.position) as titles
-     from daily_packs p where p.pack_date >= $1 order by p.pack_date limit 7`,
+     from daily_packs p where p.pack_date >= $1 and p.superseded_at is null order by p.pack_date limit 7`,
     [todayKey(now)],
   );
   const runs = await db.query<PipelineStats["runs"][number]>("select id, kind, started_at::text as started_at, ok, error, summary from pipeline_runs order by id desc limit 10");
@@ -40,7 +44,9 @@ export async function pipelineStats(db: Queryable, now = new Date()): Promise<Pi
     stock,
     stockDays: Math.floor(stock / ROUNDS_PER_GAME),
     target: STOCK_TARGET,
-    lowStock: stock < 30,
+    lowStock: ["warn", "critical", "blocker"].includes(poolLevel(stock).level),
+    level: poolLevel(stock).level,
+    levelMessage: poolLevel(stock).message,
     candidatesWeek: await n("select count(*)::int as n from events where pipeline_state is not null and created_at > now() - interval '7 days'"),
     autoApproved: await n("select count(*)::int as n from events where pipeline_state = 'auto_approved' and not blocked"),
     manualReview: await n("select count(*)::int as n from events where pipeline_state = 'manual_review' and not blocked"),
