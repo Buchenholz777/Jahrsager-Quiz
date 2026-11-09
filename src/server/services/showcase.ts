@@ -16,7 +16,7 @@ export interface ShowcaseEvent {
 }
 
 /** Bevorzugte Motive für die Bildkomposition (Vielfalt: Raumfahrt, Luftfahrt, Politik, Gesellschaft). */
-const HERO_ORDER = ["apollo-11-mondlandung", "erster-motorflug-der-brueder-wright", "mauerbau-in-berlin", "kennedy-in-berlin", "hubble-teleskop-ausgesetzt"];
+const HERO_ORDER = ["nixon-ruecktritt-1974", "jesse-owens-1936", "berliner-luftbruecke-1948", "lindbergh-paris-1927", "apollo-11-mondlandung", "mauerbau-in-berlin", "kennedy-in-berlin"];
 const TEASER_ORDER = ["wunder-von-bern", "hubble-teleskop-ausgesetzt", "sonnenfinsternis-expedition", "kennedy-in-berlin", "fliessband-bei-ford", "vorstellung-des-ersten-iphone", "live-aid"];
 
 /**
