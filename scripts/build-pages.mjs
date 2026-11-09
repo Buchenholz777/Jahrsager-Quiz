@@ -8,8 +8,10 @@ const run = (cmd) => execSync(cmd, { stdio: "inherit", shell: true });
 
 // NEXT_PUBLIC_* wird beim Build fest eingebaut: Standard ist die Produktiv-Domain (per Umgebungsvariable überschreibbar).
 process.env.NEXT_PUBLIC_SITE_URL ||= "https://www.jahrsagerquiz.de";
-// Öffentliche Tag-Manager-Container-ID (kein Geheimnis). Geladen wird Google erst nach Einwilligung (siehe src/lib/tracking.ts).
-process.env.NEXT_PUBLIC_GTM_ID ||= "GTM-NKQN3HHL";
+// Öffentliche GA4-Mess-ID (kein Geheimnis). Google wird erst nach Einwilligung geladen (siehe src/lib/tracking.ts).
+// Direkte GA4-Einbindung. Der Tag-Manager-Container GTM-NKQN3HHL ist bewusst NICHT aktiv (sonst hätte er Vorrang und es bräuchte GA4-Tags im Container);
+// zum Umschalten NEXT_PUBLIC_GTM_ID im Build setzen.
+process.env.NEXT_PUBLIC_GA_MEASUREMENT_ID ||= "G-YZP98X4VFE";
 run("npx opennextjs-cloudflare build");
 
 const open = ".open-next";
