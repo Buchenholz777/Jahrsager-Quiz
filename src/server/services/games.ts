@@ -127,7 +127,15 @@ async function createGame(db: Db, playerId: string, pack: PackInfo, events: Even
   ))!;
 }
 
-const OFFICIAL_Q = "select * from games where player_id = $1 and pack_id = $2 and official";
+/** Offizielle Partie des Spielers für das Datum des Pakets (beliebige Fassung). */
+async function officialOfDate(db: Db, playerId: string, pack: PackInfo): Promise<GameRow | null> {
+  return db.one<GameRow>(
+    "select g.* from games g join daily_packs p on p.id = g.pack_id where g.player_id = $1 and g.official and p.pack_date = $2 order by g.started_at limit 1",
+    [playerId, pack.pack_date],
+  );
+}
+
+const OFFICIAL_Q ="select * from games where player_id = $1 and pack_id = $2 and official";
 const PRACTICE_Q = "select * from games where player_id = $1 and pack_id = $2 and not official and status = 'laufend'";
 
 /**
@@ -146,8 +154,10 @@ export async function startGame(
   let pack: PackInfo;
   let events: EventRow[];
   if (opts.packNumber !== undefined) {
-    const p = await getPublicPack(db, opts.packNumber, at);
+    let p = await getPublicPack(db, opts.packNumber, at);
     if (!p) throw new AppError("NICHT_VERFUEGBAR", "Dieses Tagesrätsel ist (noch) nicht verfügbar.", 404);
+    // Eine ersetzte Fassung des heutigen Tages steht nur noch bereits begonnenen Partien offen: neue Partien nutzen die aktuelle Fassung.
+    if (p.pack.pack_date === today && (await db.one("select 1 from daily_packs where id = $1 and superseded_at is not null", [p.pack.id]))) p = (await getTodayPack(db, at)) ?? p;
     ({ pack, events } = p);
   } else {
     const t = await getTodayPack(db, at);
@@ -155,7 +165,8 @@ export async function startGame(
     ({ pack, events } = t);
   }
 
-  const official = await db.one<GameRow>(OFFICIAL_Q, [playerId, pack.id]);
+  // Je Datum gibt es höchstens eine offizielle Wertung – auch wenn das Paket des Tages versioniert (ersetzt) wurde.
+  const official = await officialOfDate(db, playerId, pack);
   if (official?.status === "laufend") return buildState(db, official, at);
 
   // Heutiges Paket: Übung erst nach abgeschlossener offizieller Wertung (sonst könnte man die Lösungen vorab sehen).
@@ -166,7 +177,7 @@ export async function startGame(
       return buildState(db, await createGame(db, playerId, pack, events, true), at);
     } catch (e) {
       if ((e as { code?: string }).code !== "23505") throw e;
-      const again = await db.one<GameRow>(OFFICIAL_Q, [playerId, pack.id]);
+      const again = await officialOfDate(db, playerId, pack);
       if (!again) throw e;
       return buildState(db, again, at);
     }
@@ -257,8 +268,8 @@ export async function getTodayStatus(db: Db, playerId: string | null, at: Date =
   if (today) {
     const g = await db.one<GameRow & { answered: number }>(
       `select g.*, (select count(*)::int from game_rounds r where r.game_id = g.id and r.status <> 'offen') as answered
-       from games g where g.player_id = $1 and g.pack_id = $2 and g.official`,
-      [playerId, today.pack.id],
+       from games g join daily_packs p on p.id = g.pack_id where g.player_id = $1 and p.pack_date = $2 and g.official order by g.started_at limit 1`,
+      [playerId, today.pack.pack_date],
     );
     if (g) {
       base.state = g.status === "abgeschlossen" ? "abgeschlossen" : "laufend";

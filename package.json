@@ -27,7 +27,8 @@
     "pipeline": "tsx scripts/pipeline.ts",
     "import:kuratiert": "tsx scripts/import-kuratiert.ts",
     "simulate:auswahl": "tsx scripts/simulate-auswahl.ts",
-    "reklassifizieren": "tsx scripts/reklassifizieren.ts"
+    "reklassifizieren": "tsx scripts/reklassifizieren.ts",
+    "revise:pack": "tsx scripts/revise-pack.ts"
   },
   "dependencies": {
     "@electric-sql/pglite": "^0.5.15",

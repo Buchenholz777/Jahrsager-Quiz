@@ -12,7 +12,7 @@ export async function getPackByNumber(db: Queryable, number: number) {
   return db.one<PackInfo>(`select ${PACK_COLS} from daily_packs where number = $1`, [number]);
 }
 export async function getPackByDate(db: Queryable, date: string) {
-  return db.one<PackInfo>(`select ${PACK_COLS} from daily_packs where pack_date = $1`, [date]);
+  return db.one<PackInfo>(`select ${PACK_COLS} from daily_packs where pack_date = $1 and superseded_at is null`, [date]);
 }
 
 export async function getPackEvents(db: Queryable, packId: string): Promise<EventRow[]> {
@@ -87,7 +87,7 @@ export async function listArchivePacks(db: Db, at: Date = clockNow(), limit = 60
   const rows = await db.query<{ id: string; number: number; pack_date: string; demo: boolean }>(
     `select p.id, p.number, p.pack_date,
        exists(select 1 from daily_pack_events pe join events e on e.id = pe.event_id where pe.pack_id = p.id and e.is_demo) as demo
-     from daily_packs p where p.pack_date < $1 order by p.pack_date desc limit $2`,
+     from daily_packs p where p.pack_date < $1 and p.superseded_at is null order by p.pack_date desc limit $2`,
     [today, limit],
   );
   return demoAllowed() ? rows : rows.filter((r) => !r.demo);
@@ -150,6 +150,40 @@ export async function unschedulePack(db: Db, packId: string, at: Date = clockNow
       const used = await tx.one("select 1 from daily_pack_events where event_id = $1", [event_id]);
       if (!used) await tx.run("update events set status = 'freigegeben' where id = $1 and status = 'eingeplant'", [event_id]);
     }
+  });
+}
+
+/**
+ * Ersetzt das (bereits veröffentlichte) Paket eines Tages durch eine neue Fassung für NEUE Partien.
+ * Bestehende Partien und Ergebnisse bleiben unverändert und werden mit dem ursprünglichen Paket abgeschlossen.
+ * Wer für den Tag bereits eine offizielle Partie hat, spielt keine zweite Wertung (siehe startGame).
+ */
+export async function revisePack(db: Db, input: { packId: string; eventIds: string[] }, at: Date = clockNow()): Promise<PackInfo & { revision: number }> {
+  const today = todayKey(at);
+  const old = await db.one<PackInfo & { revision: number }>("select id, number, pack_date, status, revision from daily_packs where id = $1 and superseded_at is null", [input.packId]);
+  if (!old) throw new AppError("NICHT_GEFUNDEN", "Aktives Paket nicht gefunden", 404);
+  if (old.pack_date > today) throw new AppError("PAKET_ZUKUENFTIG", "Zukünftige Pakete werden zurückgenommen und neu geplant, nicht versioniert.", 409);
+  if (new Set(input.eventIds).size !== ROUNDS_PER_GAME) throw new AppError("PAKET_UNGUELTIG", "Ein Tagespaket benötigt genau fünf verschiedene Ereignisse.", 422);
+  const events: EventRow[] = [];
+  for (const id of input.eventIds) {
+    const e = await db.one<EventRow>("select * from events where id = $1", [id]);
+    if (!e) throw new AppError("NICHT_GEFUNDEN", "Ereignis nicht gefunden", 404);
+    if (e.blocked || e.is_demo || e.image_status !== "freigegeben" || !["freigegeben", "veroeffentlicht"].includes(e.status)) {
+      throw new AppError("PAKET_UNGUELTIG", `„${e.neutral_title}“ ist nicht freigegeben bzw. gesperrt.`, 422);
+    }
+    events.push(e);
+  }
+  return db.transaction(async (tx) => {
+    await tx.run("update daily_packs set superseded_at = now() where id = $1", [old.id]);
+    const pack = (await tx.one<PackInfo & { revision: number }>(
+      "insert into daily_packs(pack_date, status, revision) values ($1, 'veroeffentlicht', $2) returning id, number, pack_date, status, revision",
+      [old.pack_date, old.revision + 1],
+    ))!;
+    for (const [i, e] of events.entries()) {
+      await tx.run("insert into daily_pack_events(pack_id, position, event_id) values ($1, $2, $3)", [pack.id, i + 1, e.id]);
+      await tx.run("update events set status = 'veroeffentlicht', published_at = coalesce(published_at, now()) where id = $1 and status in ('freigegeben', 'eingeplant')", [e.id]);
+    }
+    return pack;
   });
 }
 
