@@ -28,7 +28,7 @@ export function HeroCollage({ events }: { events: ShowcaseEvent[] }) {
   const four = events.slice(0, 4);
   const [left, right] = columns(four);
   return (
-    <figure className="relative mx-auto w-full max-w-[24rem] sm:max-w-[34rem] lg:row-span-2 lg:col-start-2 lg:row-start-1 lg:max-w-[36rem]">
+    <figure className="relative mx-auto w-full max-w-[24rem] sm:max-w-[34rem] lg:row-span-2 lg:col-start-2 lg:row-start-1 lg:max-w-[31rem]">
       {/* Leuchtfläche hinter den Fotos */}
       <div aria-hidden="true" className="pointer-events-none absolute -inset-[10%] rounded-full bg-[radial-gradient(closest-side,rgb(255_179_77/0.2),transparent_70%)]" />
 
