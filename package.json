@@ -24,7 +24,8 @@
     "build:next": "next build",
     "preview:cf": "npm run build && wrangler pages dev dist",
     "import:redaktion": "tsx scripts/import-redaktion.ts",
-    "pipeline": "tsx scripts/pipeline.ts"
+    "pipeline": "tsx scripts/pipeline.ts",
+    "import:kuratiert": "tsx scripts/import-kuratiert.ts"
   },
   "dependencies": {
     "@electric-sql/pglite": "^0.5.15",

@@ -78,7 +78,9 @@ export async function processCandidate(db: Queryable, c: Candidate, deps: Deps):
     ...external.map((u) => ({ label: new URL(u).hostname.replace(/^www\./, ""), url: u })),
     { label: `Wikidata ${c.sourceId}`, url: `https://www.wikidata.org/wiki/${c.sourceId}` },
   ];
-  const credit = [meta.artist, meta.credit].filter(Boolean).join(" / ");
+  // Commons-Credit-Felder enthalten oft lange URLs/Wayback-Hinweise: nur kurze, URL-freie Angaben in den Nachweis übernehmen.
+  const creditExtra = meta.credit && meta.credit.length <= 100 && !/https?:|wayback/i.test(meta.credit) ? meta.credit : "";
+  const credit = [meta.artist, creditExtra].filter(Boolean).join(" / ");
   const creditShort = [meta.artist || meta.credit, meta.license].filter(Boolean).join(" · ").slice(0, 80);
   const auto = a.decision === "auto_approved";
   const input: EventInput = {

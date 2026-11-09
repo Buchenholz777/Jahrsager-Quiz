@@ -26,6 +26,9 @@ Wikimedia Commons (Bilddatei, Lizenzmetadaten), Wikidata (Ereignis, Datum, Bildz
 * 80 Tests grün (u. a. Lizenzregeln, Datums-/Quellen-/Spoilerregeln, Dubletten, API-Ausfall, Paketplanung, Sperre, bestehende Spielstände).
 * Echtlauf der Regeln gegen 25 echte Wikidata-/Commons-Kandidaten ohne KI: 15 abgelehnt (z. B. Foto aus 2010 zu Ereignis 1931), 10 manuell, **0 automatisch freigegeben**.
 
+## Kuratierter Import (ohne API-Schlüssel)
+`npm run import:kuratiert -- kuratiert-1` liest Kandidaten und Texte aus `content/recherche/kuratiert-N.json` (z. B. aus einer Redaktionssitzung) und lässt sie durch **dieselben Pipeline-Regeln** laufen. Erster Lauf (9. November 2026): 6 Ereignisse (Normandie, Apollo 11, Apollo 17, Voyager 1, Cassini, Challenger) – alle `auto_approved`; Texte aus dem Wikipedia-Auszug, Bilder vor dem Import gesichtet (Motiv, Personen, Beschriftung), zusätzliche Quellen einzeln abgerufen. Skylab, Mercury-Atlas 6, Mars Pathfinder, Apollo-Sojus u. a. wurden **zurückgestellt**, weil der Wikipedia-Auszug die nötigen Fakten (Startdatum) nicht enthielt.
+
 ## Offen / nicht geprüft
 * **Kein Lauf mit Claude-API und Bildkontrolle** (Schlüssel fehlt), **kein Lauf in GitHub Actions**, noch keine automatisch freigegebenen Ereignisse im Produktivsystem.
 * **Geringe Auto-Ausbeute zu erwarten:** Mit CC0/US-Regierungswerk und tagesgenauem Foto, ohne erkennbare Personen, bleibt nur ein kleiner Teil übrig. Der Vorrat von 150 wird deshalb nicht schnell erreicht; Hebel: weitere, fachlich geprüfte Quellen (z. B. NASA-Archiv direkt) oder gezielte manuelle Freigabe der Ausnahmefälle.
