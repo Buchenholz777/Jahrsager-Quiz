@@ -1,0 +1,81 @@
+{
+  "hinweis": "Kuratierter Import 3 (9. November 2026): vielfältige Startseiten-Motive (Natur, Sport, Naturkatastrophe). Texte aus den deutschen Wikipedia-Artikeln formuliert, Bilder gesichtet. Dorando (Personen, Alter-PD, Datum nur Jahr) und San Francisco (Datum nur Jahr) gehen in die manuelle Prüfung.",
+  "events": [
+    {
+      "sourceId": "Q4675",
+      "date": "1980-05-18",
+      "commonsFile": "Mount St. Helens 05-18-1980.jpg",
+      "article": "Mount St. Helens",
+      "extra_sources": ["https://www.usgs.gov/volcanoes/mount-st-helens"],
+      "draft": {
+        "insufficient": false,
+        "category": "natur",
+        "difficulty": 2,
+        "subcategory": "Vulkanausbruch",
+        "tags": ["vulkan", "naturkatastrophe", "ausbruch"],
+        "region": "nordamerika",
+        "country": "USA",
+        "topic_key": "mount-st-helens",
+        "neutral_title": "Eine Wolke steigt über einem Berg auf",
+        "description": "Aus dem Gipfel eines kegelförmigen, verschneiten Berges steigt eine gewaltige graue Wolke in den Himmel. Die Flanken des Berges sind dunkel und zerfurcht, davor liegen niedrigere Wolken. Das Foto hält ein Naturereignis fest, das als eines der am besten beobachteten seiner Art gilt.",
+        "image_alt": "Farbfoto in bläulichen Tönen: Eine gewaltige graue Aschewolke steigt aus dem Gipfel eines verschneiten, dunkel zerfurchten Vulkans auf",
+        "public_title": "Der Ausbruch des Mount St. Helens",
+        "explanation_what": "Der Mount St. Helens ist ein aktiver Vulkan im Süden des US-Bundesstaates Washington mit einer Höhe von 2539 Metern. Er gehört zur Kaskadenkette, die sich entlang der Westküste Nordamerikas erstreckt und Teil des pazifischen Feuerrings ist. Der Ausbruch vom 18. Mai 1980 ist der bis heute am besten beobachtete und untersuchte plinianische Ausbruch. Das Foto stammt von diesem Tag und zeigt die Aschewolke über dem Vulkankegel.",
+        "explanation_why": "Seit 1982 sind der Vulkan und sein durch den Ausbruch verwüstetes Umfeld als Naturschutzgebiet vom Typ eines National Monuments ausgewiesen.",
+        "explanation_detail": "Das verwüstete Gebiet regeneriert sich langsam und wird vom United States Forest Service verwaltet.",
+        "image_check": { "matches_event": "yes", "persons_visible": false, "caption_or_date_visible": false, "quality_ok": true, "note": "Sichtprüfung: Aschewolke über dem Vulkankegel, keine Personen, keine Beschriftung." }
+      }
+    },
+    {
+      "sourceId": "Q211386",
+      "date": "1906-04-18",
+      "commonsFile": "Aftermath of San Francisco earthquake, 1906.jpg",
+      "article": "Erdbeben von San Francisco 1906",
+      "extra_sources": ["https://earthquake.usgs.gov/earthquakes/events/1906calif/18april/"],
+      "draft": {
+        "insufficient": false,
+        "category": "natur",
+        "difficulty": 2,
+        "subcategory": "Erdbeben",
+        "tags": ["erdbeben", "naturkatastrophe", "san-francisco"],
+        "region": "nordamerika",
+        "country": "USA",
+        "topic_key": "erdbeben-san-francisco",
+        "neutral_title": "Eine Stadt aus Trümmern",
+        "description": "Zwischen Schutthaufen und eingestürzten Mauern ragen vereinzelt Schornsteine und Fassadenreste in die Luft. Im Hintergrund sind die Reste größerer Gebäude zu erkennen. Die Straßen einer ganzen Stadt sind unter Trümmern verschwunden, und alles wirkt verlassen und still.",
+        "image_alt": "Schwarz-Weiß-Foto: Ein Trümmerfeld mit Schornsteinresten und eingestürzten Mauern, im Hintergrund ausgebrannte Gebäude",
+        "public_title": "Das Erdbeben von San Francisco",
+        "explanation_what": "Das Erdbeben von San Francisco erschütterte die Küste Nordkaliforniens am 18. April 1906 und gilt als eine der schlimmsten Naturkatastrophen in der Geschichte der Vereinigten Staaten. In San Francisco und Umgebung kamen durch das Beben und die dadurch verursachten Feuer mehr als 3000 Menschen ums Leben. Das Beben wurde von Oregon bis Los Angeles und bis nach Nevada wahrgenommen. Das Foto zeigt die Zerstörung nach dem Beben.",
+        "explanation_why": "Das Beben entstand entlang der San-Andreas-Verwerfung; sein Epizentrum lag etwa drei Kilometer von der Stadt entfernt im Meer nahe Mussel Rock.",
+        "explanation_detail": "Die Stärke wird meist mit 7,8 auf der Momenten-Magnituden-Skala angegeben, andere Quellen nennen Werte von 7,7 bis 8,4.",
+        "image_check": { "matches_event": "yes", "persons_visible": false, "caption_or_date_visible": false, "quality_ok": true, "note": "Sichtprüfung: Trümmerlandschaft mit Gebäuderesten, keine erkennbaren Personen, keine Beschriftung. Commons nennt nur das Jahr; Aufnahmetag unbestätigt." }
+      }
+    },
+    {
+      "sourceId": "Q433425-1908",
+      "min_long_side": 1000,
+      "date": "1908-07-24",
+      "commonsFile": "Dorando Pietri 1908b.jpg",
+      "article": "Dorando Pietri",
+      "extra_sources": [],
+      "draft": {
+        "insufficient": false,
+        "category": "sport",
+        "difficulty": 2,
+        "subcategory": "Olympische Spiele",
+        "tags": ["olympia", "marathon", "leichtathletik"],
+        "region": "europa",
+        "country": "Vereinigtes Königreich",
+        "topic_key": "olympia-1908",
+        "neutral_title": "Ein Läufer wird über die Ziellinie geführt",
+        "description": "Ein erschöpfter Läufer in kurzen Hosen und Trikot wird von mehreren Männern in Hut und Anzug gestützt, während Zuschauer und Polizisten im Hintergrund zusehen. Er schwankt kurz vor dem Ziel eines langen Rennens. Die Helfer greifen ein, obwohl das streng genommen nicht erlaubt ist.",
+        "image_alt": "Schwarz-Weiß-Foto: Ein erschöpfter Läufer im Trikot wird von mehreren Männern in Anzug und Hut gestützt, im Hintergrund Zuschauer und Polizisten",
+        "public_title": "Dorando Pietri im Marathon von London",
+        "explanation_what": "Bei den Olympischen Spielen in London kam der italienische Marathonläufer Dorando Pietri mit großem Vorsprung im mit 75.000 Zuschauern vollbesetzten White City Stadium an. Erschöpft und benommen brach er auf den letzten 350 Metern fünfmal zusammen, bis Ärzte und Kampfrichter ihm über die Ziellinie halfen. Das amerikanische Team protestierte, Pietri wurde der Sieg aberkannt und John Hayes zum Olympiasieger erklärt.",
+        "explanation_why": "Seine Geschichte ging weltweit durch die Presse; durch ihn gewannen sowohl der Marathonlauf als auch die Olympischen Spiele im Allgemeinen an Popularität.",
+        "explanation_detail": "Pietri erhielt von der britischen Königin einen goldenen Pokal als besondere Auszeichnung für seine kämpferische Leistung.",
+        "image_check": { "matches_event": "yes", "persons_visible": true, "caption_or_date_visible": false, "quality_ok": true, "note": "Sichtprüfung: Läufer mit Startnummer, Helfer, Zuschauer und Polizisten, keine lesbare Beschriftung. Personen im Bild; Fotograf unbekannt (Alter-PD): Rechtslage manuell prüfen. Rennen im Juli 1908 laut Wikipedia; Tag nicht in der Quelle bestätigt." }
+      }
+    }
+  ]
+}

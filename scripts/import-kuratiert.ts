@@ -19,6 +19,8 @@ interface Entry {
   commonsFile: string;
   article: string;
   extra_sources: string[];
+  /** optional: Mindestlänge der langen Bildseite in px (Standard 1200), z. B. für historische Fotos mit kleinerer Auflösung */
+  min_long_side?: number;
   draft: CardDraft;
 }
 const name = process.argv[2] ?? "kuratiert-1";
@@ -58,6 +60,7 @@ await logRun(db, "kuratiert", async () => {
       db,
       { sourceId: e.sourceId, date: e.date, commonsFile: e.commonsFile, articleUrl: `https://de.wikipedia.org/wiki/${encodeURIComponent(e.article.replace(/ /g, "_"))}`, articleTitle: e.article },
       d,
+      { minWidth: e.min_long_side },
     );
     stats[o.decision] = (stats[o.decision] ?? 0) + 1;
     console.log(o.decision.padEnd(14), e.article, o.reason ? `| ${o.reason}` : "");

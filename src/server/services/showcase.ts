@@ -16,7 +16,7 @@ export interface ShowcaseEvent {
 }
 
 /** Bevorzugte Motive für die Bildkomposition (Vielfalt: Raumfahrt, Luftfahrt, Politik, Gesellschaft). */
-const HERO_ORDER = ["berliner-mauer-1989", "wright-flyer-1903", "apollo-11-1969-q43653-aldrin", "earthrise-1968", "nixon-ruecktritt-1974", "jesse-owens-1936", "berliner-luftbruecke-1948"];
+const HERO_ORDER = ["berliner-mauer-1989", "mount-st-helens-1980", "apollo-11-1969-q43653-aldrin", "dorando-pietri-1908", "erdbeben-von-san-francisco-1906-1906", "nixon-ruecktritt-1974", "jesse-owens-1936", "berliner-luftbruecke-1948", "earthrise-1968", "wright-flyer-1903"];
 const TEASER_ORDER = ["wunder-von-bern", "hubble-teleskop-ausgesetzt", "sonnenfinsternis-expedition", "kennedy-in-berlin", "fliessband-bei-ford", "vorstellung-des-ersten-iphone", "live-aid"];
 
 /**

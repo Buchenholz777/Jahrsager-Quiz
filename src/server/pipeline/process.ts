@@ -33,7 +33,7 @@ async function markSeen(db: Queryable, id: string, decision: string, reason: str
 }
 
 /** Prüft einen Kandidaten vollständig und legt ihn je nach Entscheidung als freigegeben / zur manuellen Prüfung an. */
-export async function processCandidate(db: Queryable, c: Candidate, deps: Deps): Promise<Outcome> {
+export async function processCandidate(db: Queryable, c: Candidate, deps: Deps, opts: { minWidth?: number } = {}): Promise<Outcome> {
   const known = await db.one("select 1 from pipeline_seen where source_id = $1 union all select 1 from events where source_id = $1", [c.sourceId]);
   if (known) return { sourceId: c.sourceId, decision: "uebersprungen", reason: "bereits bekannt" };
 
@@ -52,7 +52,7 @@ export async function processCandidate(db: Queryable, c: Candidate, deps: Deps):
   }
 
   // Vorab ohne KI: harte Ablehnungen kosten keine Tokens.
-  const pre = assess({ eventDate: c.date, meta, wikipediaUrl: c.articleUrl, externalSources: external, draft: null, duplicate: dup?.slug ?? null });
+  const pre = assess({ eventDate: c.date, meta, wikipediaUrl: c.articleUrl, externalSources: external, draft: null, duplicate: dup?.slug ?? null, minWidth: opts.minWidth });
   if (pre.decision === "rejected") {
     await markSeen(db, c.sourceId, "rejected", pre.reasons.join(" | "));
     return { sourceId: c.sourceId, decision: "rejected", reason: pre.reasons.join(" | ") };
@@ -61,7 +61,7 @@ export async function processCandidate(db: Queryable, c: Candidate, deps: Deps):
   let draft: CardDraft | null = null;
   const pending = deps.draft({ title: wiki.title, date: c.date, extract: wiki.extract, imageJpegBase64: await deps.previewJpegBase64(meta) });
   if (pending) draft = await pending;
-  const a = assess({ eventDate: c.date, meta, wikipediaUrl: c.articleUrl, externalSources: external, draft, duplicate: null });
+  const a = assess({ eventDate: c.date, meta, wikipediaUrl: c.articleUrl, externalSources: external, draft, duplicate: null, minWidth: opts.minWidth });
   if (a.decision === "rejected") {
     await markSeen(db, c.sourceId, "rejected", a.reasons.join(" | "));
     return { sourceId: c.sourceId, decision: "rejected", reason: a.reasons.join(" | ") };

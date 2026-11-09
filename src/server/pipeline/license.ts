@@ -34,7 +34,7 @@ export interface LicenseDecision {
  *    US-Streitkräfte, USIA) im Credit/Urheber/Kategorien – eine bloße Commons-Angabe „Public domain“ reicht nicht.
  * Alles andere (CC BY, CC BY-SA, nur „PD-old“, Library of Congress mit Drittrechten, unbekannt) bleibt manuell bzw. wird abgelehnt.
  */
-const USGOV = /\b(NASA|National Aeronautics and Space Administration|National Archives and Records Administration|U\.?S\.? National Archives|White House Photo Office|U\.?S\.? Air Force|U\.?S\.? Army|U\.?S\.? Navy|U\.?S\.? Marine Corps|United States Information Agency)\b/i;
+const USGOV = /\b(NASA|National Aeronautics and Space Administration|National Archives and Records Administration|U\.?S\.? National Archives|White House Photo Office|U\.?S\.? Air Force|U\.?S\.? Army|U\.?S\.? Navy|U\.?S\.? Marine Corps|United States Information Agency|U.?S.? Geological Survey|USGS)\b/i;
 const NONFREE = /(non-?free|fair use|all rights reserved|no derivatives|\bnd\b|\bnc\b|non-?commercial)/i;
 const COPYRIGHT_HINT = /(©|\bcopyright\b|\(c\)\s*\d{4}|getty|alamy|reuters|associated press|\bap photo\b|dpa|ullstein)/i;
 

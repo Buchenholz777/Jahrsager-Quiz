@@ -113,7 +113,7 @@ export async function wikipediaInfo(articleUrl: string): Promise<WikiInfo | null
 export const SOURCE_ALLOWLIST = [
   "nasa.gov", "archives.gov", "loc.gov", "bundesarchiv.de", "bpb.de", "bundestag.de", "bundesregierung.de", "whitehouse.gov",
   "britannica.com", "si.edu", "olympics.com", "nobelprize.org", "un.org", "europarl.europa.eu", "dhm.de", "hdg.de", "bnf.fr",
-  "europeana.eu", "trumanlibrary.org", "jfklibrary.org", "esa.int", "nih.gov", "genome.gov", "unesco.org", "icrc.org",
+  "europeana.eu", "trumanlibrary.org", "jfklibrary.org", "esa.int", "nih.gov", "genome.gov", "unesco.org", "icrc.org", "usgs.gov", "noaa.gov", "nps.gov",
 ];
 export const allowedSource = (url: string) => {
   try {
