@@ -6,6 +6,7 @@ import { ArrowRight, Clock } from "lucide-react";
 import type { TodayStatus } from "@/lib/game-types";
 import { buttonVariants } from "@/components/ui/button";
 import { sendMeasurement } from "@/components/beacon";
+import { trackEvent } from "@/lib/tracking";
 
 function useCountdown(iso: string | null) {
   const [text, setText] = useState("");
@@ -47,7 +48,10 @@ export function HomeCta({ variant }: { variant: string }) {
   const countdown = useCountdown(s?.state === "abgeschlossen" ? s.nextResetAt : null);
 
   const done = s?.state === "abgeschlossen";
-  const track = () => sendMeasurement("cta_click", { variant, device: deviceClass() });
+  const track = () => {
+    sendMeasurement("cta_click", { variant, device: deviceClass() });
+    trackEvent("home_cta_click", { page_type: "home", cta_state: s?.state ?? "unbekannt", device: deviceClass() });
+  };
   const cta = buttonVariants({ variant: "sun", size: "lg", className: "w-full min-h-[3.75rem] text-[1.15rem] sm:w-auto sm:px-9" });
 
   return (

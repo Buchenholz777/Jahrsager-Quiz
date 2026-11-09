@@ -7,6 +7,7 @@ import { CATEGORIES, type CategoryKey } from "@/lib/constants";
 import { formatPoints } from "@/lib/scoring";
 import { formatDateDe } from "@/lib/time";
 import { getDb } from "@/server/db/client";
+import { PageEvent } from "@/components/analytics/page-event";
 import { readPlayerId } from "@/server/http";
 import { listArchivePacks } from "@/server/services/packs";
 
@@ -39,6 +40,7 @@ export default async function ArchivPage() {
 
   return (
     <Container>
+      <PageEvent name="archive_opened" params={{ page_type: "archive" }} />
       <PageHeader
         eyebrow="Rätselarchiv"
         title="Frühere Rätsel nachspielen"

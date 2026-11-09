@@ -1,6 +1,7 @@
 import Link from "next/link";
 import { LogoLarge } from "./logo";
 import { CLAIM } from "@/lib/constants";
+import { ConsentLink } from "./analytics/consent-link";
 
 const LINKS = [
   ["/archiv", "Archiv"],
@@ -28,6 +29,9 @@ export function SiteFooter() {
                 </Link>
               </li>
             ))}
+            <li>
+              <ConsentLink className="inline-flex min-h-11 items-center rounded-lg px-2 underline-offset-4 hover:text-sun hover:underline" />
+            </li>
           </ul>
         </nav>
       </div>

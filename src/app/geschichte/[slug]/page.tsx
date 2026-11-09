@@ -1,4 +1,5 @@
 import type { Metadata } from "next";
+import { PageEvent } from "@/components/analytics/page-event";
 import Link from "next/link";
 import { notFound } from "next/navigation";
 import { ArrowRight } from "lucide-react";
@@ -40,6 +41,7 @@ export default async function EventPage({ params }: Props) {
 
   return (
     <Container>
+      <PageEvent name="history_article_view" params={{ page_type: "history_article", event_category: ev.category }} />
       {!ev.is_demo && (
         <JsonLd
           data={[

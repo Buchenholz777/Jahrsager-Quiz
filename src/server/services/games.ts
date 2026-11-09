@@ -135,7 +135,6 @@ async function officialOfDate(db: Db, playerId: string, pack: PackInfo): Promise
   );
 }
 
-const OFFICIAL_Q ="select * from games where player_id = $1 and pack_id = $2 and official";
 const PRACTICE_Q = "select * from games where player_id = $1 and pack_id = $2 and not official and status = 'laufend'";
 
 /**

@@ -5,6 +5,7 @@ import { SiteHeader } from "@/components/site-header";
 import { absoluteUrl, SITE_DESCRIPTION, SITE_TITLE, siteUrl } from "@/lib/site";
 import { JsonLd } from "@/components/json-ld";
 import { Beacon } from "@/components/beacon";
+import { AnalyticsProvider } from "@/components/analytics/analytics-provider";
 import "./globals.css";
 
 // Schriften werden beim Build lokal eingebunden (keine Anfragen an Google Fonts, datenschutzfreundlich).
@@ -83,6 +84,7 @@ export default function RootLayout({ children }: { children: React.ReactNode }) 
         </main>
         <SiteFooter />
         <Beacon />
+        <AnalyticsProvider />
       </body>
     </html>
   );

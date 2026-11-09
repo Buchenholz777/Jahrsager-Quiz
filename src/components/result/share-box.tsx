@@ -5,6 +5,7 @@ import { useEffect, useState } from "react";
 import { Button, buttonVariants } from "@/components/ui/button";
 import { whatsappUrl } from "@/lib/share";
 import { sendMeasurement } from "@/components/beacon";
+import { trackEvent } from "@/lib/tracking";
 
 /** Spoilerfreies Teilen: native Freigabe (Smartphone), WhatsApp, Zwischenablage. */
 export function ShareBox({ text, url }: { text: string; url: string }) {
@@ -19,6 +20,7 @@ export function ShareBox({ text, url }: { text: string; url: string }) {
     try {
       await navigator.share({ title: "JAHRSAGER", text });
       sendMeasurement("share", { method: "native" });
+      trackEvent("quiz_result_shared", { share_method: "native" });
     } catch {
       /* Abbruch durch Nutzer */
     }
@@ -29,6 +31,7 @@ export function ShareBox({ text, url }: { text: string; url: string }) {
       setCopied(true);
       setNote("Ergebnis kopiert.");
       sendMeasurement("share", { method: "kopieren" });
+      trackEvent("quiz_result_shared", { share_method: "copy" });
       setTimeout(() => setCopied(false), 2500);
     } catch {
       setNote("Kopieren nicht möglich – markiere den Text und kopiere ihn manuell.");
@@ -56,7 +59,10 @@ export function ShareBox({ text, url }: { text: string; url: string }) {
           href={whatsappUrl(text)}
           target="_blank"
           rel="noopener noreferrer"
-          onClick={() => sendMeasurement("share", { method: "whatsapp" })}
+          onClick={() => {
+            sendMeasurement("share", { method: "whatsapp" });
+            trackEvent("share_opened", { share_method: "whatsapp" }); // geöffnet, nicht bestätigt
+          }}
           className={buttonVariants({ size: "lg", className: "bg-good text-white hover:bg-good/90" })}
         >
           <MessageCircle className="size-5" aria-hidden="true" /> WhatsApp

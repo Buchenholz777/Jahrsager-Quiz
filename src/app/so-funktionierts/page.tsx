@@ -1,4 +1,5 @@
 import type { Metadata } from "next";
+import { PageEvent } from "@/components/analytics/page-event";
 import Link from "next/link";
 import { Container, PageHeader } from "@/components/page-header";
 import { buttonVariants } from "@/components/ui/button";
@@ -24,6 +25,7 @@ const TABLE: [string, number][] = [
 export default function RegelnPage() {
   return (
     <Container>
+      <PageEvent name="instructions_opened" params={{ page_type: "instructions" }} />
       <JsonLd
         data={{
           "@context": "https://schema.org",

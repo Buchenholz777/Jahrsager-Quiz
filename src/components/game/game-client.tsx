@@ -1,6 +1,7 @@
 "use client";
 
 import Link from "next/link";
+import { once, scoreBucket, trackEvent } from "@/lib/tracking";
 import { useRouter } from "next/navigation";
 import { useCallback, useEffect, useRef, useState } from "react";
 import { Check, RotateCcw } from "lucide-react";
@@ -47,6 +48,10 @@ export function GameClient({ packNumber, practice }: { packNumber?: number; prac
       const { state } = await api<{ state: GameState }>("/api/spiel/start", opts);
       setGame(state);
       setView(state.currentPosition ?? ROUNDS_PER_GAME);
+      // Messung (nur mit Einwilligung, je Partie höchstens einmal): erst NACH erfolgreichem Start
+      if (!state.official) once(`jsq_ev_arch_${state.gameId}`, () => trackEvent("archive_quiz_started", { quiz_mode: "practice" }));
+      else if (state.status === "laufend" && state.answered === 0) once(`jsq_ev_start_${state.gameId}`, () => trackEvent("daily_quiz_started", { quiz_mode: "daily" }));
+      else if (state.status === "laufend") once(`jsq_ev_res_${state.gameId}`, () => trackEvent("daily_quiz_resumed", { quiz_mode: "daily", round_number: state.currentPosition ?? 0 }));
     } catch (e) {
       const err = e as Error & { code?: string };
       setLoadError({ code: err.code, message: err.message });
@@ -73,8 +78,14 @@ export function GameClient({ packNumber, practice }: { packNumber?: number; prac
         setActionError(null);
         try {
           const { state } = await api<{ state: GameState }>(`/api/spiel/${game.gameId}/antwort`, { position, year });
+          const wasDone = game.status === "abgeschlossen";
           setGame(state);
           setView(position);
+          const mode = state.official ? "daily" : "practice";
+          once(`jsq_ev_r_${state.gameId}_${position}`, () => trackEvent("quiz_round_completed", { quiz_mode: mode, round_number: position }));
+          if (state.status === "abgeschlossen" && !wasDone) {
+            once(`jsq_ev_done_${state.gameId}`, () => trackEvent(state.official ? "daily_quiz_completed" : "archive_quiz_completed", { quiz_mode: mode, completion_status: "completed", score_bucket: scoreBucket(state.totalPoints) }));
+          }
         } catch (e) {
           const err = e as Error & { code?: string };
           setActionError(err.code === "UNGUELTIGES_JAHR" || err.code === "UNGUELTIGE_EINGABE" ? err.message : "Das hat nicht geklappt. Dein Tipp wurde nicht verbraucht – bitte versuche es erneut.");
