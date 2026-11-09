@@ -141,6 +141,6 @@ if (mib > 25) throw new Error("Worker größer als 25 MiB – weitere Dateien m�
 // Statische Build-Dateien direkt vom CDN ausliefern, alles andere über den Worker.
 writeFileSync(
   path.join("dist", "_routes.json"),
-  JSON.stringify({ version: 1, include: ["/*"], exclude: ["/_next/static/*", "/brand/*", "/favicon.ico", "/googleca51093de23aed0e.html"] }, null, 2),
+  JSON.stringify({ version: 1, include: ["/*"], exclude: ["/_next/static/*", "/brand/*", "/favicon.ico"] }, null, 2),
 );
 console.log("Pages-Ausgabe in dist/ erstellt.");
