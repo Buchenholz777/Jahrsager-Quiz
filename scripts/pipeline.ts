@@ -7,7 +7,8 @@ import { logRun, pipelineStats } from "../src/server/pipeline/admin";
 import { aiBudget, aiCallsAllowed, aiCallsUsed, poolLevel, poolThresholds } from "../src/server/pipeline/monitor";
 import { planPacks, poolEvents } from "../src/server/pipeline/plan";
 import { processCandidate, type Deps, type Outcome } from "../src/server/pipeline/process";
-import { commonsMeta, downloadImage, findCandidates, reachable, wikipediaInfo } from "../src/server/pipeline/sources";
+import { findEventImage } from "../src/server/pipeline/imagesearch";
+import { commonsMeta, downloadImage, findCandidates, reachable, wikipediaInfo, type Candidate } from "../src/server/pipeline/sources";
 import { processUpload } from "../src/server/images";
 
 /**
@@ -60,12 +61,20 @@ try {
       const used = await aiCallsUsed(db);
       aiLimit = aiCallsAllowed(used, aiBudget());
       if (before < target && apiKey && aiLimit > 0) {
-        const offset = Math.floor(Math.random() * 400);
-        const batch = await findCandidates(maxPerRun * 3, offset);
+        // Zwei Suchwege: Ereignisse in den USA (dort sind Bilder von Bundesbehörden häufig) zuerst, danach weltweit.
+        const rnd = (n: number) => Math.floor(Math.random() * n);
+        const batch: Candidate[] = [];
+        const seenIds = new Set<string>();
+        for (const part of [await findCandidates(maxPerRun * 2, rnd(150), { variant: "us" }), await findCandidates(maxPerRun, rnd(400))]) {
+          for (const c of part) if (!seenIds.has(c.sourceId)) { seenIds.add(c.sourceId); batch.push(c); }
+        }
         let processed = 0;
         for (const c of batch) {
           if (processed >= maxPerRun || aiCalls >= aiLimit || (await poolEvents(db)).length >= target) break;
           try {
+            // Bildsuche je Ereignis: ein Foto aus der Ereigniskategorie, das Lizenz-, Datums- und Größenregeln erfüllt, ersetzt das Wikidata-Standardbild.
+            const better = await findEventImage(c).catch(() => null);
+            if (better) c.commonsFile = better.file;
             const o = await processCandidate(db, c, deps);
             outcomes.push(o);
             stats[o.decision] = (stats[o.decision] ?? 0) + 1;

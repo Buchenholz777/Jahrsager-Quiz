@@ -25,18 +25,37 @@ export interface Candidate {
   commonsFile: string;
   articleUrl: string;
   articleTitle: string;
+  /** Commons-Kategorie des Ereignisses (Wikidata P373), Quelle für die Bild-Suche je Ereignis */
+  commonsCategory?: string;
 }
 
+/** Zusätzliche Ereignistypen für die US-Variante: Naturereignisse, Katastrophen, Raumflüge. */
+const US_EXTRA_TYPES = ["Q8065", "Q7944", "Q8068", "Q168983", "Q5916", "Q1261499"];
 const EVENT_TYPES = ["Q1190554", "Q1656682", "Q13418847", "Q3839081", "Q273120", "Q40231", "Q124757", "Q178561", "Q2627975"];
 
-/** Wikidata-Ereignisse mit tagesgenauem Datum 1900–2020, Bild (P18) und deutschem Wikipedia-Artikel. */
-export async function findCandidates(limit: number, offset = 0): Promise<Candidate[]> {
-  const q = `SELECT ?item ?date ?image ?article WHERE {
-    VALUES ?t { ${EVENT_TYPES.map((t) => "wd:" + t).join(" ")} }
+/**
+ * Suchvarianten: "breit" (alle Ereignistypen weltweit), "us" (Ereignisse in den USA – dort sind Bilder von Bundesbehörden wie NASA, Militär,
+ * National Archives, USGS verbreitet und als Werke der Bundesregierung gemeinfrei). Optional auf einen Zeitraum eingegrenzt.
+ */
+export interface DiscoveryOptions {
+  variant?: "breit" | "us";
+  fromYear?: number;
+  toYear?: number;
+}
+
+/** Wikidata-Ereignisse mit tagesgenauem Datum (Standard 1900–2020), Bild (P18) und deutschem Wikipedia-Artikel. */
+export async function findCandidates(limit: number, offset = 0, opts: DiscoveryOptions = {}): Promise<Candidate[]> {
+  const from = Math.max(1900, opts.fromYear ?? 1900);
+  const to = Math.min(2020, opts.toYear ?? 2020);
+  const types = opts.variant === "us" ? [...EVENT_TYPES, ...US_EXTRA_TYPES] : EVENT_TYPES;
+  const q = `SELECT ?item ?date ?image ?article ?cat WHERE {
+    VALUES ?t { ${types.map((t) => "wd:" + t).join(" ")} }
     ?item wdt:P31 ?t .
+    ${opts.variant === "us" ? "?item wdt:P17 wd:Q30 ." : ""}
     ?item p:P585 ?st . ?st psv:P585 ?v . ?v wikibase:timeValue ?date ; wikibase:timePrecision 11 .
-    FILTER(?date >= "1900-01-01T00:00:00Z"^^xsd:dateTime && ?date < "2021-01-01T00:00:00Z"^^xsd:dateTime)
+    FILTER(?date >= "${from}-01-01T00:00:00Z"^^xsd:dateTime && ?date < "${to + 1}-01-01T00:00:00Z"^^xsd:dateTime)
     ?item wdt:P18 ?image .
+    OPTIONAL { ?item wdt:P373 ?cat }
     ?article schema:about ?item ; schema:isPartOf <https://de.wikipedia.org/> .
   } LIMIT ${limit} OFFSET ${offset}`;
   const res = await politeFetch("https://query.wikidata.org/sparql?" + new URLSearchParams({ query: q }), { headers: { Accept: "application/sparql-results+json" } });
@@ -48,10 +67,18 @@ export async function findCandidates(limit: number, offset = 0): Promise<Candida
     commonsFile: decodeURIComponent(b.image.value.split("Special:FilePath/").pop()!).replace(/_/g, " "),
     articleUrl: b.article.value,
     articleTitle: decodeURIComponent(b.article.value.split("/wiki/").pop()!).replace(/_/g, " "),
+    commonsCategory: b.cat?.value,
   }));
 }
 
-const strip = (s: string | undefined) => (s ?? "").replace(/<[^>]+>/g, " ").replace(/&amp;/g, "&").replace(/\s+/g, " ").trim();
+/** Commons-Metadaten sind HTML: Tags entfernen und Entitäten dekodieren; das Ergebnis ist reiner Text (wird im Browser nie als HTML dargestellt). */
+const ENT: Record<string, string> = { "&amp;": "&", "&lt;": "<", "&gt;": ">", "&quot;": '"', "&#39;": "'", "&nbsp;": " " };
+const strip = (s: string | undefined) =>
+  (s ?? "")
+    .replace(/<[^>]+>/g, " ")
+    .replace(/&(amp|lt|gt|quot|nbsp|#39);/g, (m) => ENT[m] ?? m)
+    .replace(/\s+/g, " ")
+    .trim();
 
 type ImageInfo = {
   url: string;
@@ -62,15 +89,7 @@ type ImageInfo = {
   extmetadata?: Record<string, { value?: string }>;
 };
 
-export async function commonsMeta(file: string): Promise<CommonsMeta | null> {
-  const api =
-    "https://commons.wikimedia.org/w/api.php?" +
-    new URLSearchParams({ action: "query", titles: `File:${file}`, prop: "imageinfo", iiprop: "url|size|mime|extmetadata", format: "json", formatversion: "2" });
-  const res = await politeFetch(api);
-  if (!res.ok) throw new Error(`Commons-API: HTTP ${res.status}`);
-  const page = ((await res.json()) as { query?: { pages?: { imageinfo?: ImageInfo[] }[] } }).query?.pages?.[0];
-  const i = page?.imageinfo?.[0];
-  if (!i) return null;
+function toMeta(file: string, i: ImageInfo): CommonsMeta {
   const m = i.extmetadata ?? {};
   const v = (k: string) => strip(m[k]?.value);
   return {
@@ -89,6 +108,29 @@ export async function commonsMeta(file: string): Promise<CommonsMeta | null> {
     restrictions: v("Restrictions"),
     categories: v("Categories").split("|").map((s) => s.trim()).filter(Boolean),
   };
+}
+
+export async function commonsMeta(file: string): Promise<CommonsMeta | null> {
+  const api =
+    "https://commons.wikimedia.org/w/api.php?" +
+    new URLSearchParams({ action: "query", titles: `File:${file}`, prop: "imageinfo", iiprop: "url|size|mime|extmetadata", format: "json", formatversion: "2" });
+  const res = await politeFetch(api);
+  if (!res.ok) throw new Error(`Commons-API: HTTP ${res.status}`);
+  const page = ((await res.json()) as { query?: { pages?: { imageinfo?: ImageInfo[] }[] } }).query?.pages?.[0];
+  const i = page?.imageinfo?.[0];
+  return i ? toMeta(file, i) : null;
+}
+
+/** Metadaten der Dateien einer Commons-Kategorie (höchstens `limit`, eine Abfrage für die Liste, eine für alle Metadaten). */
+export async function categoryImages(category: string, limit = 50): Promise<CommonsMeta[]> {
+  const list = ((await wikiApi("commons.wikimedia.org", { action: "query", list: "categorymembers", cmtitle: `Category:${category.replace(/^Category:/, "")}`, cmtype: "file", cmlimit: String(limit) })) as {
+    query?: { categorymembers?: { title: string }[] };
+  }).query?.categorymembers ?? [];
+  if (!list.length) return [];
+  const pages = ((await wikiApi("commons.wikimedia.org", { action: "query", prop: "imageinfo", iiprop: "url|size|mime|extmetadata", titles: list.map((m) => m.title).join("|") })) as {
+    query?: { pages?: { title: string; imageinfo?: ImageInfo[] }[] };
+  }).query?.pages ?? [];
+  return pages.filter((p) => p.imageinfo?.[0]).map((p) => toMeta(p.title.replace(/^File:/, ""), p.imageinfo![0]));
 }
 
 export interface WikiInfo {
@@ -147,4 +189,66 @@ export async function downloadImage(meta: CommonsMeta, maxBytes = 25 * 1024 * 10
   const buf = Buffer.from(await res.arrayBuffer());
   if (buf.length > maxBytes) throw new Error("Bild größer als erlaubt.");
   return buf;
+}
+
+/** Commons-Kategorien mit Werken von US-Bundesbehörden (gemeinfrei, Nachweis über Urheber/Credit wird von der Lizenzprüfung gefordert). */
+export const GOV_CATEGORIES = ["PD NASA", "PD US Army", "PD US Navy", "PD US Air Force", "PD US Coast Guard", "PD USGS"];
+
+async function wikiApi(host: string, params: Record<string, string>): Promise<Record<string, unknown>> {
+  // POST, weil lange Titellisten die URL-Längengrenze (HTTP 414) überschreiten würden.
+  const res = await politeFetch(`https://${host}/w/api.php`, {
+    method: "POST",
+    headers: { "content-type": "application/x-www-form-urlencoded" },
+    body: new URLSearchParams({ format: "json", formatversion: "2", ...params }).toString(),
+  });
+  if (!res.ok) throw new Error(`${host}-API: HTTP ${res.status}`);
+  return (await res.json()) as Record<string, unknown>;
+}
+
+/**
+ * Bild-zuerst-Suche: zufällige Dateien aus Kategorien mit Behördenbildern → deutsche Wikipedia-Artikel, die das Bild nutzen → Wikidata-Ereignis
+ * mit tagesgenauem Datum. Nur Artikel mit Ereignisdatum werden Kandidaten; Lizenz, Datumsabgleich, Quellen und Texte prüft anschließend die Pipeline.
+ */
+export async function findGovCandidates(files = 100, rnd: () => number = Math.random): Promise<Candidate[]> {
+  const cat = GOV_CATEGORIES[Math.floor(rnd() * GOV_CATEGORIES.length)];
+  const hex = Array.from({ length: 16 }, () => "0123456789abcdef"[Math.floor(rnd() * 16)]).join("");
+  const members = ((await wikiApi("commons.wikimedia.org", { action: "query", list: "categorymembers", cmtitle: `Category:${cat}`, cmtype: "file", cmlimit: String(Math.min(50, files)), cmsort: "sortkey", cmstarthexsortkey: hex })) as {
+    query?: { categorymembers?: { title: string }[] };
+  }).query?.categorymembers ?? [];
+  if (!members.length) return [];
+  const usage = ((await wikiApi("commons.wikimedia.org", { action: "query", prop: "globalusage", gulimit: "max", titles: members.map((m) => m.title).join("|") })) as {
+    query?: { pages?: { title: string; globalusage?: { wiki: string; title: string; ns: string | number }[] }[] };
+  }).query?.pages ?? [];
+  const byArticle = new Map<string, string>(); // de-Artikel → Datei
+  for (const p of usage) {
+    const de = p.globalusage?.find((u) => u.wiki === "de.wikipedia.org" && !u.title.includes(":")); // nur Artikel (keine Namensraum-Seiten wie "Benutzer:")
+    if (de && !byArticle.has(de.title)) byArticle.set(de.title, p.title.replace(/^File:/, ""));
+  }
+  if (process.env.DEBUG_GOV) console.log(`[gov] ${cat}: Dateien ${members.length}, mit de-Artikel ${byArticle.size}`);
+  if (!byArticle.size) return [];
+  const props = ((await wikiApi("de.wikipedia.org", { action: "query", prop: "pageprops", ppprop: "wikibase_item", redirects: "1", titles: [...byArticle.keys()].slice(0, 50).join("|") })) as {
+    query?: { pages?: { title: string; pageprops?: { wikibase_item?: string } }[] };
+  }).query?.pages ?? [];
+  const items = props.filter((p) => p.pageprops?.wikibase_item);
+  if (process.env.DEBUG_GOV) console.log(`[gov] Seiten ${props.length}, mit Wikidata ${items.length}`);
+  if (!items.length) return [];
+  const q = `SELECT ?item ?date WHERE {
+    VALUES ?item { ${items.map((p) => "wd:" + p.pageprops!.wikibase_item).join(" ")} }
+    { ?item p:P585 ?st . ?st psv:P585 ?v } UNION { ?item p:P580 ?st . ?st psv:P580 ?v }
+    ?v wikibase:timeValue ?date ; wikibase:timePrecision 11 .
+    FILTER(?date >= "1900-01-01T00:00:00Z"^^xsd:dateTime && ?date < "2021-01-01T00:00:00Z"^^xsd:dateTime)
+  }`;
+  const res = await politeFetch("https://query.wikidata.org/sparql?" + new URLSearchParams({ query: q }), { headers: { Accept: "application/sparql-results+json" } });
+  if (!res.ok) throw new Error(`Wikidata-SPARQL: HTTP ${res.status}`);
+  const dates = new Map<string, string>(((await res.json()) as { results: { bindings: Record<string, { value: string }>[] } }).results.bindings.map((b) => [b.item.value.split("/").pop()!, b.date.value.slice(0, 10)]));
+  if (process.env.DEBUG_GOV) console.log(`[gov] mit Datum ${dates.size}`);
+  const out: Candidate[] = [];
+  for (const p of items) {
+    const q = p.pageprops!.wikibase_item!;
+    const date = dates.get(q);
+    const file = byArticle.get(p.title) ?? [...byArticle].find(([t]) => t.replace(/_/g, " ") === p.title)?.[1];
+    if (!date || !file) continue;
+    out.push({ sourceId: q, date, commonsFile: file, articleUrl: `https://de.wikipedia.org/wiki/${encodeURIComponent(p.title.replace(/ /g, "_"))}`, articleTitle: p.title });
+  }
+  return out;
 }

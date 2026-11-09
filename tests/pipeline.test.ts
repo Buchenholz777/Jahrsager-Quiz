@@ -276,3 +276,17 @@ describe("Unbrauchbare KI-Antworten", () => {
     expect((await processCandidate(db, cand(61), fakeDeps())).decision).toBe("auto_approved"); // später erneut versucht
   });
 });
+
+import { findEventImage } from "@/server/pipeline/imagesearch";
+describe("Bildsuche je Ereignis", () => {
+  const c = { ...cand(80), date: "1941-12-07", commonsCategory: "Attack on Pearl Harbor" };
+  const m = (o: Partial<CommonsMeta> = {}) => meta({ file: "x.jpg", dateOriginal: "1941-12-07", artist: "U.S. Navy", credit: "U.S. Navy", license: "Public domain", ...o });
+  it("wählt das größte Foto, das Lizenz, Tagesdatum und Größe erfüllt", async () => {
+    const pick = await findEventImage(c, async () => [m({ file: "klein.jpg", width: 1300, height: 900 }), m({ file: "gross.jpg", width: 5000, height: 3000 }), m({ file: "falsches-datum.jpg", dateOriginal: "1941-12-08", width: 6000, height: 4000 }), m({ file: "ccby.jpg", license: "CC BY-SA 4.0", copyrighted: true, width: 7000, height: 5000 })]);
+    expect(pick?.file).toBe("gross.jpg");
+  });
+  it("liefert nichts ohne passendes Foto oder ohne Kategorie", async () => {
+    expect(await findEventImage(c, async () => [m({ width: 800, height: 600 })])).toBeNull();
+    expect(await findEventImage({ ...c, commonsCategory: undefined }, async () => [m()])).toBeNull();
+  });
+});
