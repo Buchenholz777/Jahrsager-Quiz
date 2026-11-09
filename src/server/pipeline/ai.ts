@@ -64,28 +64,44 @@ export async function draftCard(
   apiKey: string,
   model = process.env.PIPELINE_MODEL ?? "claude-sonnet-5-5",
 ): Promise<CardDraft> {
-  const res = await fetch("https://api.anthropic.com/v1/messages", {
-    method: "POST",
-    headers: { "x-api-key": apiKey, "anthropic-version": "2023-06-01", "content-type": "application/json" },
-    signal: AbortSignal.timeout(120_000),
-    body: JSON.stringify({
-      model,
-      max_tokens: 2000,
-      system: SYSTEM,
-      messages: [
-        {
-          role: "user",
-          content: [
-            { type: "image", source: { type: "base64", media_type: "image/jpeg", data: input.imageJpegBase64 } },
-            { type: "text", text: `Ereignis (Wikipedia-Titel): ${input.title}\nBelegtes Datum (Wikidata): ${input.date}\n\nWikipedia-Auszug:\n${input.extract.slice(0, 6000)}` },
-          ],
-        },
-      ],
-    }),
-  });
-  if (!res.ok) throw new Error(`Claude-API: HTTP ${res.status} ${(await res.text()).slice(0, 200)}`);
-  const text = ((await res.json()) as { content: { type: string; text?: string }[] }).content.find((c) => c.type === "text")?.text ?? "";
-  const m = /\{[\s\S]*\}/.exec(text);
-  if (!m) throw new Error("Claude-Antwort enthält kein JSON.");
-  return JSON.parse(m[0]) as CardDraft;
+  // Bis zu zwei Versuche: manchmal antwortet das Modell mit Erklärtext, abgeschnittener Ausgabe oder ungültigem JSON.
+  let lastError = "";
+  for (let attempt = 0; attempt < 2; attempt++) {
+    const res = await fetch("https://api.anthropic.com/v1/messages", {
+      method: "POST",
+      headers: { "x-api-key": apiKey, "anthropic-version": "2023-06-01", "content-type": "application/json" },
+      signal: AbortSignal.timeout(120_000),
+      body: JSON.stringify({
+        model,
+        max_tokens: 3500,
+        system: SYSTEM,
+        messages: [
+          {
+            role: "user",
+            content: [
+              { type: "image", source: { type: "base64", media_type: "image/jpeg", data: input.imageJpegBase64 } },
+              {
+                type: "text",
+                text: `Ereignis (Wikipedia-Titel): ${input.title}\nBelegtes Datum (Wikidata): ${input.date}\n\nWikipedia-Auszug:\n${input.extract.slice(0, 6000)}${attempt ? "\n\nWICHTIG: Antworte ausschließlich mit dem vollständigen JSON-Objekt, ohne Einleitung, ohne Markdown." : ""}`,
+              },
+            ],
+          },
+        ],
+      }),
+    });
+    if (!res.ok) throw new Error(`Claude-API: HTTP ${res.status} ${(await res.text()).slice(0, 200)}`);
+    const body = (await res.json()) as { stop_reason?: string; content: { type: string; text?: string }[] };
+    const text = body.content.find((c) => c.type === "text")?.text ?? "";
+    const m = /\{[\s\S]*\}/.exec(text);
+    if (m) {
+      try {
+        return JSON.parse(m[0]) as CardDraft;
+      } catch {
+        lastError = "ungültiges JSON";
+      }
+    } else {
+      lastError = `kein JSON (stop_reason ${body.stop_reason ?? "?"}, Anfang: ${text.slice(0, 80).replace(/\s+/g, " ")})`;
+    }
+  }
+  throw new Error(`Claude-Antwort unbrauchbar: ${lastError}`);
 }

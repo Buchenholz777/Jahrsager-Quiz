@@ -263,3 +263,16 @@ describe("Sperre und Rückzug", () => {
     expect(stats.stock).toBeGreaterThanOrEqual(0);
   });
 });
+
+describe("Unbrauchbare KI-Antworten", () => {
+  it("merkt den Kandidaten und legt nichts an; API-Ausfälle werden dagegen später wiederholt", async () => {
+    const db = await createMemoryDb();
+    const bad = fakeDeps({ draft: async () => { throw new Error("Claude-Antwort unbrauchbar: kein JSON"); } });
+    expect((await processCandidate(db, cand(60), bad)).decision).toBe("fehler");
+    expect((await processCandidate(db, cand(60), fakeDeps())).decision).toBe("uebersprungen"); // nicht erneut bezahlt
+    expect((await db.one<{ n: number }>("select count(*)::int as n from events"))!.n).toBe(0);
+    const outage = fakeDeps({ draft: async () => { throw new Error("Claude-API: HTTP 529"); } });
+    await expect(processCandidate(db, cand(61), outage)).rejects.toThrow("529");
+    expect((await processCandidate(db, cand(61), fakeDeps())).decision).toBe("auto_approved"); // später erneut versucht
+  });
+});

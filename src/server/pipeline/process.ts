@@ -60,7 +60,17 @@ export async function processCandidate(db: Queryable, c: Candidate, deps: Deps, 
 
   let draft: CardDraft | null = null;
   const pending = deps.draft({ title: wiki.title, date: c.date, extract: wiki.extract, imageJpegBase64: await deps.previewJpegBase64(meta) });
-  if (pending) draft = await pending;
+  try {
+    if (pending) draft = await pending;
+  } catch (e) {
+    // Unbrauchbare KI-Antwort (auch nach Wiederholung): Kandidat merken, damit nicht bei jedem Lauf erneut bezahlt wird.
+    // Netz-/API-Fehler (Rate Limit, Ausfall) werden dagegen NICHT gemerkt und später erneut versucht.
+    if ((e as Error).message.includes("unbrauchbar")) {
+      await markSeen(db, c.sourceId, "error", (e as Error).message);
+      return { sourceId: c.sourceId, decision: "fehler", reason: (e as Error).message };
+    }
+    throw e;
+  }
   const a = assess({ eventDate: c.date, meta, wikipediaUrl: c.articleUrl, externalSources: external, draft, duplicate: null, minWidth: opts.minWidth });
   if (a.decision === "rejected") {
     await markSeen(db, c.sourceId, "rejected", a.reasons.join(" | "));
