@@ -7,7 +7,7 @@ import type { ShowcaseEvent } from "@/server/services/showcase";
  * jede Karte führt zum Tagesrätsel. Der Bildnachweis steht direkt unter jedem Foto.
  */
 export function PhotoBand({ events }: { events: ShowcaseEvent[] }) {
-  if (events.length < 2) return null;
+  if (events.length < 3) return null;
   return (
     <section aria-labelledby="bildband" className="bg-ink text-paper">
       <div className="mx-auto max-w-6xl px-4 pb-14 pt-2 sm:px-6">
