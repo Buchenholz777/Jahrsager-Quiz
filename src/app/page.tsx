@@ -52,7 +52,7 @@ export default async function HomePage() {
               </span>
             </h1>
             <p className="mt-5 max-w-lg text-[1.05rem] leading-relaxed text-paper/90 sm:text-lg">
-              Erkennst du die großen Momente der Weltgeschichte? Schätze das richtige Jahr, entdecke spannende Hintergründe und sammle bis zu 5.000 Punkte.
+              JAHRSAGER ist das kostenlose tägliche Geschichtsquiz: Jeden Tag zeigen dir fünf historische Bilder große Momente der Weltgeschichte. Du schätzt die Jahreszahl, erfährst die Hintergründe und sammelst bis zu 5.000 Punkte – ohne Anmeldung.
             </p>
           </div>
           <HeroCollage events={showcase.hero} />

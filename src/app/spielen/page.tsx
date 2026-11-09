@@ -2,7 +2,7 @@ import type { Metadata } from "next";
 import { GameClient } from "@/components/game/game-client";
 
 export const metadata: Metadata = {
-  title: "Jetzt Tagesrätsel spielen",
+  title: "Tagesrätsel spielen",
   description: "Fünf historische Fotos, fünf Jahre schätzen: das tägliche Geschichtsrätsel von JAHRSAGER.",
   robots: { index: false, follow: true }, // Spielzustände werden nicht indexiert
 };

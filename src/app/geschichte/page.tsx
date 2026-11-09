@@ -13,7 +13,7 @@ export const dynamic = "force-dynamic";
 export async function generateMetadata(): Promise<Metadata> {
   const hasContent = (await listIndexableKnowledge(await getDb())).length >= KNOWLEDGE_MIN.listingMinPages;
   return {
-    title: "Historische Ereignisse erklärt – das JAHRSAGER-Wissensarchiv",
+    title: { absolute: "Weltgeschichte entdecken – JAHRSAGER" },
     description:
       "Historische Ereignisse mit Foto, Jahr, Hintergrund und Quellen: Das Wissensarchiv zu den JAHRSAGER-Rätseln – ideal, um Geschichte spielerisch zu lernen.",
     alternates: { canonical: "/geschichte" },

@@ -2,7 +2,7 @@ import type { Metadata, Viewport } from "next";
 import localFont from "next/font/local";
 import { SiteFooter } from "@/components/site-footer";
 import { SiteHeader } from "@/components/site-header";
-import { absoluteUrl, SITE_DESCRIPTION, SITE_TITLE, siteUrl } from "@/lib/site";
+import { absoluteUrl, OG_IMAGE_PATH, SITE_DESCRIPTION, SITE_TITLE, siteUrl } from "@/lib/site";
 import { JsonLd } from "@/components/json-ld";
 import { Beacon } from "@/components/beacon";
 import { AnalyticsProvider } from "@/components/analytics/analytics-provider";
@@ -33,7 +33,7 @@ const inter = localFont({
 
 export const metadata: Metadata = {
   metadataBase: new URL(siteUrl()),
-  title: { default: SITE_TITLE, template: "%s · JAHRSAGER" },
+  title: { default: SITE_TITLE, template: "%s – JAHRSAGER" },
   description: SITE_DESCRIPTION,
   applicationName: "JAHRSAGER",
   alternates: { canonical: "/" },
@@ -41,17 +41,21 @@ export const metadata: Metadata = {
     type: "website",
     siteName: "JAHRSAGER",
     locale: "de_DE",
+    url: "/",
     title: SITE_TITLE,
     description: SITE_DESCRIPTION,
+    images: [{ url: OG_IMAGE_PATH, width: 1200, height: 630, alt: "JAHRSAGER – Das tägliche Geschichtsquiz" }],
   },
-  twitter: { card: "summary_large_image", title: SITE_TITLE, description: SITE_DESCRIPTION },
-  // Vorbereitung Google Search Console (Meta-Tag-Verifizierung); leer = nicht gesetzt
+  twitter: { card: "summary_large_image", title: SITE_TITLE, description: SITE_DESCRIPTION, images: [OG_IMAGE_PATH] },
+  // Marken-Favicons unter stabilen Pfaden (Vielfaches von 48 px für Google, plus klassisches .ico)
   icons: {
     icon: [
-      { url: "/brand/favicon-64.png", sizes: "64x64", type: "image/png" },
-      { url: "/brand/icon-192.png", sizes: "192x192", type: "image/png" },
+      { url: "/favicon.ico", sizes: "any" },
+      { url: "/favicon-48.png", sizes: "48x48", type: "image/png" },
+      { url: "/favicon-96.png", sizes: "96x96", type: "image/png" },
     ],
-    apple: { url: "/brand/apple-touch-icon.png", sizes: "180x180" },
+    shortcut: "/favicon.ico",
+    apple: { url: "/apple-touch-icon.png", sizes: "180x180" },
   },
   verification: { google: process.env.NEXT_PUBLIC_GOOGLE_SITE_VERIFICATION || undefined },
 };
@@ -68,8 +72,8 @@ export default function RootLayout({ children }: { children: React.ReactNode }) 
       <body className="flex min-h-dvh flex-col">
         <JsonLd
           data={[
-            { "@context": "https://schema.org", "@type": "WebSite", name: "JAHRSAGER", alternateName: ["Jahrsager Quiz", "Jahrsager – Das tägliche Geschichtsquiz"], url: absoluteUrl("/"), inLanguage: "de-DE", description: SITE_DESCRIPTION },
-            { "@context": "https://schema.org", "@type": "Organization", name: "JAHRSAGER", url: absoluteUrl("/"), logo: absoluteUrl("/brand/icon-512.png") },
+            { "@context": "https://schema.org", "@type": "WebSite", name: "JAHRSAGER", alternateName: "Jahrsager Quiz", url: absoluteUrl("/"), inLanguage: "de-DE", description: SITE_DESCRIPTION },
+            { "@context": "https://schema.org", "@type": "Organization", name: "JAHRSAGER", url: absoluteUrl("/"), logo: absoluteUrl("/apple-touch-icon.png") },
           ]}
         />
         <a

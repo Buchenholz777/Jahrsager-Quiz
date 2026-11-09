@@ -7,7 +7,7 @@ import { JsonLd } from "@/components/json-ld";
 import { absoluteUrl } from "@/lib/site";
 
 export const metadata: Metadata = {
-  title: "So funktioniert’s – Regeln und Punkteberechnung",
+  title: { absolute: "So funktioniert JAHRSAGER – Spielregeln" },
   description:
     "Die Regeln des täglichen Geschichtsquiz: fünf historische Fotos, Jahr schätzen, bis zu 1.000 Punkte pro Ereignis. So berechnet JAHRSAGER deine Punkte.",
   alternates: { canonical: "/so-funktionierts" },

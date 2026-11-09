@@ -26,7 +26,7 @@ export async function generateMetadata({ params }: Props): Promise<Metadata> {
   if (!events) return { title: "Nicht gefunden", robots: { index: false } };
   const label = CATEGORIES[kategorie as CategoryKey];
   return {
-    title: `${label}: historische Ereignisse erklärt`,
+    title: `${label}: Ereignisse der Weltgeschichte`,
     description: `${events.length} historische Ereignisse aus dem Bereich ${label} mit Foto, Jahr, Hintergrund und Quellen – aus den JAHRSAGER-Rätseln.`,
     alternates: { canonical: `/geschichte/thema/${kategorie}` },
     robots: { index: true, follow: true },

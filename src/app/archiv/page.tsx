@@ -12,7 +12,7 @@ import { readPlayerId } from "@/server/http";
 import { listArchivePacks } from "@/server/services/packs";
 
 export const metadata: Metadata = {
-  title: "Rätselarchiv – frühere Geschichtsrätsel nachspielen",
+  title: "Rätselarchiv: frühere Tagesrätsel nachspielen",
   description:
     "Alle vergangenen JAHRSAGER-Tagesrätsel als Übung nachspielen: fünf historische Fotos, fünf Jahre schätzen. Archivspiele verändern deine Tageswertung nicht.",
   alternates: { canonical: "/archiv" },

@@ -23,7 +23,7 @@ export async function generateMetadata({ params }: Props): Promise<Metadata> {
   if (!ev) return { title: "Nicht gefunden", robots: { index: false } };
   const desc = `${ev.explanation_what} ${ev.explanation_why}`.slice(0, 158).trim();
   return {
-    title: `${ev.public_title} (${ev.correct_year}) – Hintergrund und Bedeutung`,
+    title: `${ev.public_title} (${ev.correct_year})`,
     description: desc,
     alternates: { canonical: `/geschichte/${ev.slug}` },
     // Nur Seiten mit eigenständigem Informationswert und vollständigen Nachweisen werden indexiert (siehe knowledge-quality.ts).

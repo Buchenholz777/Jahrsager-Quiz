@@ -143,7 +143,8 @@ test("SEO-Grundlagen: Sitemap, robots, Canonical, Open Graph", async ({ page, re
   expect(robots).toContain("Sitemap:");
   const sitemap = await (await request.get("/sitemap.xml")).text();
   expect(sitemap).not.toContain("/geschichte/"); // Demo-Inhalte sind nicht in der Sitemap
-  expect((await request.get("/opengraph-image")).headers()["content-type"]).toContain("image/png");
+  expect((await request.get("/brand/og-jahrsager-1200x630.png")).headers()["content-type"]).toContain("image/png");
+  expect((await request.get("/favicon.ico")).status()).toBe(200);
   await page.goto("/");
   await expect(page.locator('link[rel="canonical"]')).toHaveCount(1);
   await expect(page.locator('meta[property="og:title"]')).toHaveCount(1);

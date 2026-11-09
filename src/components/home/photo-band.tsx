@@ -38,7 +38,7 @@ export function PhotoBand({ events }: { events: ShowcaseEvent[] }) {
                   <span className="absolute inset-x-0 bottom-0 bg-gradient-to-t from-ink/90 to-transparent px-3 pb-2.5 pt-8 text-sm font-bold">Wann war das? →</span>
                 </div>
               </Link>
-              <p className="mt-2 max-w-[16rem] text-xs text-paper/70">Foto: {e.creditShort}</p>
+              <p data-nosnippet className="mt-2 max-w-[16rem] text-xs text-paper/70">Foto: {e.creditShort}</p>
             </li>
           ))}
         </ul>

@@ -16,7 +16,7 @@ type Props = { params: Promise<{ nummer: string }> };
 export async function generateMetadata({ params }: Props): Promise<Metadata> {
   const n = Number((await params).nummer);
   return {
-    title: `Tagesrätsel #${n} – Wie gut kennst du unsere Geschichte?`,
+    title: `Tagesrätsel #${n}`,
     description: `Fünf historische Fotos, fünf Jahre schätzen. Spiele Tagesrätsel #${n} und vergleiche dein Ergebnis mit deinen Freunden.`,
     // Einstiegsseite für geteilte Links, nicht für die Suche gedacht (vermeidet inhaltsarme Duplikate)
     robots: { index: false, follow: true },

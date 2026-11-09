@@ -88,7 +88,7 @@ export function HeroCollage({ events }: { events: ShowcaseEvent[] }) {
         <circle cx="260" cy="20" r="8" fill="var(--color-sun)" stroke="var(--color-ink)" strokeWidth="3" />
       </svg>
 
-      <details className="relative mt-3 text-xs text-paper/75">
+      <details data-nosnippet className="relative mt-3 text-xs text-paper/75">
         <summary className="inline-flex min-h-11 cursor-pointer items-center underline-offset-4 hover:text-paper hover:underline">Bildnachweise zur Komposition</summary>
         <ul className="mt-1 space-y-1">
           {four.map((e) => (
