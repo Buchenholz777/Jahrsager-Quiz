@@ -8,6 +8,8 @@ const run = (cmd) => execSync(cmd, { stdio: "inherit", shell: true });
 
 // NEXT_PUBLIC_* wird beim Build fest eingebaut: Standard ist die Produktiv-Domain (per Umgebungsvariable überschreibbar).
 process.env.NEXT_PUBLIC_SITE_URL ||= "https://www.jahrsagerquiz.de";
+// Öffentliche Tag-Manager-Container-ID (kein Geheimnis). Geladen wird Google erst nach Einwilligung (siehe src/lib/tracking.ts).
+process.env.NEXT_PUBLIC_GTM_ID ||= "GTM-NKQN3HHL";
 run("npx opennextjs-cloudflare build");
 
 const open = ".open-next";
@@ -139,6 +141,6 @@ if (mib > 25) throw new Error("Worker größer als 25 MiB – weitere Dateien m�
 // Statische Build-Dateien direkt vom CDN ausliefern, alles andere über den Worker.
 writeFileSync(
   path.join("dist", "_routes.json"),
-  JSON.stringify({ version: 1, include: ["/*"], exclude: ["/_next/static/*", "/brand/*", "/favicon.ico"] }, null, 2),
+  JSON.stringify({ version: 1, include: ["/*"], exclude: ["/_next/static/*", "/brand/*", "/favicon.ico", "/googleca51093de23aed0e.html"] }, null, 2),
 );
 console.log("Pages-Ausgabe in dist/ erstellt.");
