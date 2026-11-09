@@ -29,7 +29,7 @@ export function HeroCollage({ events }: { events: ShowcaseEvent[] }) {
           {events.slice(0, 3).map((e, i) => (
             <div key={e.slug} className={cn("relative", frame, i === 0 ? "row-span-2 aspect-[4/4.1] -rotate-[1.5deg]" : "aspect-[3/2]", i === 1 && "rotate-[1.5deg]", i === 2 && "-rotate-[1deg]")}>
               {/* eslint-disable-next-line @next/next/no-img-element */}
-              <img src={imageSrc(e.image, e.image.ext === "svg" ? undefined : 800)} width={e.image.width} height={e.image.height} alt={e.alt} loading={i === 0 ? "eager" : "lazy"} fetchPriority={i === 0 ? "high" : "auto"} decoding="async" className="size-full object-cover" />
+              <img src={imageSrc(e.image, e.image.ext === "svg" ? undefined : 800)} width={e.image.width} height={e.image.height} alt={e.alt} loading="eager" fetchPriority={i === 0 ? "high" : "auto"} decoding="async" className="size-full object-cover" />
               {i === 0 && <span className="absolute bottom-2 left-2 rounded-full bg-ink/85 px-3 py-1 text-xs font-bold text-paper backdrop-blur">Wann war das?</span>}
             </div>
           ))}
@@ -59,7 +59,7 @@ export function HeroCollage({ events }: { events: ShowcaseEvent[] }) {
                 width={e.image.width}
                 height={e.image.height}
                 alt={e.alt}
-                loading={i === 0 ? "eager" : "lazy"}
+                loading="eager"
                 fetchPriority={i === 0 ? "high" : "auto"}
                 decoding="async"
                 className="size-full object-cover"
