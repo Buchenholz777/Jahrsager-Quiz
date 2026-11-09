@@ -10,6 +10,7 @@ import { checkAdminPassword, createAdminToken, rateLimit } from "@/server/auth";
 import { requireAdminAction } from "@/server/admin-session";
 import { getDb } from "@/server/db/client";
 import { processUpload } from "@/server/images";
+import { blockEvent, unblockEvent } from "@/server/pipeline/admin";
 import { createEvent, getEvent, transitionEvent, updateEvent, emptyEventInput } from "@/server/services/events";
 import { schedulePack, unschedulePack } from "@/server/services/packs";
 import { resolveReport } from "@/server/services/reports";
@@ -162,6 +163,18 @@ export async function unscheduleAction(fd: FormData) {
   await requireAdminAction();
   await unschedulePack(await getDb(), String(fd.get("id")));
   revalidatePath("/admin/pakete");
+}
+
+export async function blockEventAction(fd: FormData) {
+  await requireAdminAction();
+  await blockEvent(await getDb(), String(fd.get("id")), String(fd.get("reason") ?? ""));
+  revalidatePath("/admin/automatik");
+}
+
+export async function unblockEventAction(fd: FormData) {
+  await requireAdminAction();
+  await unblockEvent(await getDb(), String(fd.get("id")));
+  revalidatePath("/admin/automatik");
 }
 
 export async function resolveReportAction(fd: FormData) {

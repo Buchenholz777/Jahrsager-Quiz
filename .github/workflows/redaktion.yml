@@ -1,0 +1,33 @@
+name: Redaktion (Recherche und Tagesrätsel)
+
+# Täglich: Kandidaten recherchieren, prüfen und Tagespakete aus dem geprüften Pool planen.
+# Veröffentlicht werden die Pakete von der Website selbst zum Stichtag 00:00 Uhr (Europe/Berlin).
+on:
+  schedule:
+    - cron: "17 3 * * *" # 03:17 UTC = 04:17/05:17 Uhr Berlin
+  workflow_dispatch:
+
+concurrency:
+  group: redaktion
+  cancel-in-progress: false
+
+jobs:
+  redaktion:
+    runs-on: ubuntu-latest
+    timeout-minutes: 45
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 22
+          cache: npm
+      - run: npm ci
+      - name: Recherche und Planung
+        run: npm run pipeline -- all
+        env:
+          DATABASE_URL: ${{ secrets.DATABASE_URL }}
+          DATABASE_SSL: "true"
+          STORAGE_DRIVER: supabase
+          SUPABASE_URL: https://eawkxaracebrailcwvku.supabase.co
+          SUPABASE_SERVICE_KEY: ${{ secrets.SUPABASE_SERVICE_KEY }}
+          ANTHROPIC_API_KEY: ${{ secrets.ANTHROPIC_API_KEY }}

@@ -13,6 +13,7 @@ export const dynamic = "force-dynamic";
 const LINKS = [
   ["/admin", "Übersicht"],
   ["/admin/ereignisse", "Ereignisse"],
+  ["/admin/automatik", "Automatik"],
   ["/admin/pakete", "Tagespakete"],
   ["/admin/meldungen", "Meldungen"],
   ["/admin/kennzahlen", "Kennzahlen"],

@@ -12,7 +12,7 @@ export type KnowledgeEvent = EventRow & { first_date: string };
  */
 const BASE = `select e.*, min(p.pack_date) as first_date
   from events e join daily_pack_events pe on pe.event_id = e.id join daily_packs p on p.id = pe.pack_id
-  where e.status = 'veroeffentlicht' and e.knowledge_enabled and p.pack_date < $1 ${"__DEMO__"}`;
+  where e.status = 'veroeffentlicht' and e.knowledge_enabled and not e.blocked and p.pack_date < $1 ${"__DEMO__"}`;
 
 function sql(extra: string, demo: boolean) {
   return `${BASE.replace("__DEMO__", demo ? "" : "and not e.is_demo")} ${extra}`;

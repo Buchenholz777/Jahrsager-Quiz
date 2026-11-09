@@ -21,7 +21,7 @@ export async function GET(req: Request, ctx: { params: Promise<{ id: string }> }
   await publishDuePacks(db, today);
 
   const ev = await db.one<{ image_ext: string | null; is_demo: boolean }>(
-    `select image_ext, is_demo from events e where image_id = $1 and exists (
+    `select image_ext, is_demo from events e where image_id = $1 and not blocked and exists (
        select 1 from daily_pack_events pe join daily_packs p on p.id = pe.pack_id where pe.event_id = e.id and p.pack_date <= $2)`,
     [id, today],
   );

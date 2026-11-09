@@ -23,7 +23,8 @@
     "cards:sync": "tsx scripts/cards-sync.ts",
     "build:next": "next build",
     "preview:cf": "npm run build && wrangler pages dev dist",
-    "import:redaktion": "tsx scripts/import-redaktion.ts"
+    "import:redaktion": "tsx scripts/import-redaktion.ts",
+    "pipeline": "tsx scripts/pipeline.ts"
   },
   "dependencies": {
     "@electric-sql/pglite": "^0.5.15",

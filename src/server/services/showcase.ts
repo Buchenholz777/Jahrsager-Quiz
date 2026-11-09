@@ -49,7 +49,7 @@ export async function getShowcase(db: Db, at: Date = clockNow()): Promise<{ hero
             e.image_license, e.image_license_url, e.image_id, e.image_ext, e.image_width, e.image_height,
             exists (select 1 from daily_pack_events pe join daily_packs p on p.id = pe.pack_id where pe.event_id = e.id and p.pack_date < $1) as past
      from events e
-     where e.image_id is not null and not e.image_is_placeholder
+     where e.image_id is not null and not e.image_is_placeholder and not e.blocked
        and ((not e.is_demo and e.image_status = 'freigegeben') or (e.is_demo and $2::boolean))
        and (
          (e.status = 'veroeffentlicht' and exists (select 1 from daily_pack_events pe join daily_packs p on p.id = pe.pack_id where pe.event_id = e.id and p.pack_date < $1))

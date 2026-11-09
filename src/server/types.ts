@@ -39,6 +39,16 @@ export interface ImageCandidate {
   cropBottomPct?: number;
 }
 
+/** Eintrag im Prüfprotokoll eines Ereignisses (Zeitpunkt, Regeln, Belege, Entscheidung). */
+export interface AuditEntry {
+  at: string;
+  actor: string;
+  step: string;
+  decision: "ok" | "manuell" | "abgelehnt" | "info";
+  rules: string[];
+  evidence?: Record<string, unknown>;
+}
+
 export interface Research {
   image?: ImageCandidate;
   factsStatus?: "primaerquellen" | "teilweise_hilfsquellen";
@@ -83,6 +93,11 @@ export interface EventRow {
   research: Research;
   knowledge_enabled: boolean;
   homepage_showcase: boolean;
+  pipeline_state: "candidate" | "checking" | "auto_approved" | "manual_review" | "rejected" | null;
+  source_id: string | null;
+  blocked: boolean;
+  blocked_reason: string;
+  audit: AuditEntry[];
   created_at: Date | string;
   updated_at: Date | string;
   published_at: Date | string | null;
