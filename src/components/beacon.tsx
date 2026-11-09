@@ -3,6 +3,7 @@
 import { usePathname } from "next/navigation";
 import { activeHeroVariant } from "@/lib/experiments";
 import { useEffect } from "react";
+import { routeGroup } from "@/lib/route-group";
 
 function send(name: string, props?: Record<string, string | number>) {
   try {
@@ -24,6 +25,7 @@ export function Beacon() {
   const pathname = usePathname();
   useEffect(() => {
     if (pathname.startsWith("/admin")) return;
+    send("page_view", { path: routeGroup(pathname), device: window.matchMedia("(max-width: 767px)").matches ? "mobil" : "desktop" });
     if (pathname === "/") send("home_view", { variant: activeHeroVariant(), device: window.matchMedia("(max-width: 767px)").matches ? "mobil" : "desktop" });
     try {
       if (sessionStorage.getItem("zs_landed")) return;

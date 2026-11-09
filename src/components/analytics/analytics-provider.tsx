@@ -3,12 +3,14 @@
 import Link from "next/link";
 import { usePathname } from "next/navigation";
 import { useCallback, useEffect, useRef, useState } from "react";
+import { sendMeasurement } from "@/components/beacon";
 import {
   CONSENT_OPEN_EVENT,
   GA_ID,
   GTM_ID,
   TRACKING_MODE,
   gtag,
+  once,
   readConsent,
   setTrackingGranted,
   trackEvent,
@@ -80,6 +82,7 @@ export function AnalyticsProvider() {
       setConsent(c);
       setToggle(Boolean(c?.analytics));
       setOpen(c === null);
+      if (c === null) once("jsq_consent_shown", () => sendMeasurement("consent_shown")); // anonymer Zähler (cookiefrei), nur beim automatischen Öffnen
     });
     const reopen = () => {
       setToggle(Boolean(readConsent()?.analytics));
@@ -91,6 +94,7 @@ export function AnalyticsProvider() {
   }, [configured]);
 
   const apply = useCallback((analytics: boolean) => {
+    sendMeasurement("consent", { choice: analytics ? "ja" : "nein" });
     setConsent(writeConsent(analytics));
     setToggle(analytics);
     setOpen(false);

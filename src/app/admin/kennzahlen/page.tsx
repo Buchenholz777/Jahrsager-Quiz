@@ -2,6 +2,7 @@ import { Card } from "@/components/ui/card";
 import { requireAdminPage } from "@/server/admin-session";
 import { todayKey } from "@/server/clock";
 import { getDb } from "@/server/db/client";
+import { addDays } from "@/lib/time";
 import { getMetrics } from "@/server/services/analytics";
 
 export const metadata = { title: "Kennzahlen" };
@@ -19,7 +20,11 @@ const LABELS: Record<string, string> = {
 
 export default async function MetricsAdmin() {
   await requireAdminPage();
-  const m = await getMetrics(await getDb(), todayKey());
+  const today = todayKey();
+  const m = await getMetrics(await getDb(), today);
+  const timeline = Array.from({ length: 14 }, (_, i) => addDays(m.from, i)).filter((d) => d <= today);
+  const val = (day: string, name: string) => m.counts.find((c) => c.day === day && c.name === name)?.n ?? 0;
+  const maxPv = Math.max(1, ...timeline.map((d) => val(d, "page_view")));
   const totals = new Map<string, number>();
   for (const c of m.counts) totals.set(c.name, (totals.get(c.name) ?? 0) + c.n);
   const rate = m.started ? Math.round((m.completed / m.started) * 100) : 0;
@@ -37,6 +42,61 @@ export default async function MetricsAdmin() {
         ))}
         <Card className="p-4"><p className="text-sm text-ink-soft">Partien mit mindestens einem Tipp</p><p className="font-display text-3xl font-semibold tabular-nums">{m.startedWithGuess}</p><p className="text-xs text-ink-soft">von {m.started} gestarteten offiziellen Partien</p></Card>
         <Card className="p-4"><p className="text-sm text-ink-soft">Abschlussquote (offiziell)</p><p className="font-display text-3xl font-semibold tabular-nums">{rate} %</p><p className="text-xs text-ink-soft">{m.completed} von {m.started}</p></Card>
+      </div>
+      <Card className="p-5">
+        <h2 className="text-xl font-semibold">Zeitverlauf (alle Besucher, ohne Einwilligung messbar)</h2>
+        <table className="mt-3 w-full text-left text-sm">
+          <thead className="text-ink-soft">
+            <tr>
+              <th scope="col" className="py-1">Tag</th>
+              <th scope="col">Seitenaufrufe</th>
+              <th scope="col" className="text-right">Startseite</th>
+              <th scope="col" className="text-right">Spielstarts</th>
+              <th scope="col" className="text-right">Abschlüsse</th>
+            </tr>
+          </thead>
+          <tbody>
+            {timeline.map((d) => (
+              <tr key={d} className="border-t border-line">
+                <td className="py-1.5 whitespace-nowrap">{d.slice(5)}</td>
+                <td className="w-1/2 pr-3">
+                  <div className="flex items-center gap-2">
+                    <div className="h-3 rounded bg-sun" style={{ width: `${Math.round((val(d, "page_view") / maxPv) * 100)}%`, minWidth: val(d, "page_view") ? 4 : 0 }} aria-hidden="true" />
+                    <span className="tabular-nums">{val(d, "page_view")}</span>
+                  </div>
+                </td>
+                <td className="text-right tabular-nums">{val(d, "home_view")}</td>
+                <td className="text-right tabular-nums">{val(d, "game_start")}</td>
+                <td className="text-right tabular-nums">{val(d, "game_complete")}</td>
+              </tr>
+            ))}
+          </tbody>
+        </table>
+        <p className="mt-2 text-xs text-ink-soft">Seitenaufrufe werden erst seit Einführung dieser Messung gezählt; frühere Tage zeigen 0. Besucher mit „Do Not Track“ oder „Global Privacy Control“ werden nicht gezählt.</p>
+      </Card>
+      <div className="grid gap-6 lg:grid-cols-2">
+        <Card className="p-5">
+          <h2 className="text-xl font-semibold">Seitenaufrufe nach Bereich</h2>
+          <table className="mt-3 w-full text-left text-sm">
+            <thead className="text-ink-soft"><tr><th scope="col" className="py-1">Bereich</th><th scope="col">Gerät</th><th scope="col" className="text-right">Aufrufe</th></tr></thead>
+            <tbody>
+              {m.pageViews.map((r) => <tr key={r.path + r.device} className="border-t border-line"><td className="py-1.5">{r.path}</td><td>{r.device}</td><td className="text-right tabular-nums">{r.n}</td></tr>)}
+              {m.pageViews.length === 0 && <tr><td colSpan={3} className="py-3 text-ink-soft">Noch keine Daten.</td></tr>}
+            </tbody>
+          </table>
+        </Card>
+        <Card className="p-5">
+          <h2 className="text-xl font-semibold">Einwilligung (Google Analytics)</h2>
+          <dl className="mt-3 space-y-1 text-sm">
+            <div className="flex justify-between"><dt>Banner angezeigt</dt><dd className="tabular-nums">{m.consent.shown}</dd></div>
+            <div className="flex justify-between"><dt>Zugestimmt</dt><dd className="tabular-nums">{m.consent.yes}</dd></div>
+            <div className="flex justify-between"><dt>Abgelehnt</dt><dd className="tabular-nums">{m.consent.no}</dd></div>
+            <div className="flex justify-between font-semibold"><dt>Zustimmungsquote</dt><dd className="tabular-nums">{m.consent.yes + m.consent.no ? `${Math.round((m.consent.yes / (m.consent.yes + m.consent.no)) * 100)} %` : "–"}</dd></div>
+          </dl>
+          <p className="mt-2 text-xs text-ink-soft">
+            Damit lassen sich die Google-Analytics-Zahlen grob einordnen: GA4 sieht nur zustimmende Besucher. Diese Gruppe ist nicht unbedingt repräsentativ für alle – die Zahlen oben (Zeitverlauf, Spielstarts) sind die Gesamtwerte.
+          </p>
+        </Card>
       </div>
       <Card className="p-5">
         <h2 className="text-xl font-semibold">Startseite: Variante × Gerät</h2>

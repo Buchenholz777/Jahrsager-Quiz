@@ -170,3 +170,14 @@ describe("Spoilerfreies Teilen (JAHRSAGER)", () => {
     expect(buildShareText({ number: 1, points: 0, url: "u", practice: true })).toContain("Tagesrätsel #1 (Übung) – mein Ergebnis: 0 / 5.000");
   });
 });
+
+import { routeGroup } from "@/lib/route-group";
+describe("Eigenmessung: Bereiche statt konkreter Pfade", () => {
+  it("fasst Slugs und Nummern zusammen und kennt unbekannte Pfade nur als Sammelbereich", () => {
+    expect(routeGroup("/")).toBe("/");
+    expect(routeGroup("/geschichte/mondlandung?x=1")).toBe("/geschichte/[slug]");
+    expect(routeGroup("/tagesraetsel/12")).toBe("/tagesraetsel/[nr]");
+    expect(routeGroup("/archiv/")).toBe("/archiv");
+    expect(routeGroup("/irgendwas/geheim-123")).toBe("/sonstige");
+  });
+});

@@ -15,10 +15,13 @@ export const ANALYTICS_EVENTS = [
   "archive_play",
   "share",
   "knowledge_view",
+  "page_view",
+  "consent_shown",
+  "consent",
 ] as const;
 export type AnalyticsEvent = (typeof ANALYTICS_EVENTS)[number];
 
-const ALLOWED_PROPS = new Set(["channel", "method", "round", "points", "path", "variant", "device"]);
+const ALLOWED_PROPS = new Set(["channel", "method", "round", "points", "path", "variant", "device", "choice"]);
 
 export function sanitizeProps(props: Record<string, unknown> | undefined): Record<string, string | number> {
   const out: Record<string, string | number> = {};
@@ -104,5 +107,20 @@ export async function getMetrics(db: Queryable, today: string, days = 14) {
     "select count(*)::int as n from games g where g.official and exists (select 1 from game_rounds r where r.game_id = g.id and r.status <> 'offen')",
   ))!.n;
   const archivePlays = (await db.one<{ n: number }>("select count(*)::int as n from games where not official"))!.n;
-  return { counts, channels, shares, dropoff, started, completed, perEvent, retention, archivePlays, homeByVariant, startedWithGuess, from };
+  // Seitenaufrufe je Bereich und Gerät (alle Besucher, auch ohne Google-Einwilligung; Do-Not-Track/GPC ausgenommen)
+  const pageViews = await db.query<{ path: string; device: string; n: number }>(
+    "select coalesce(props->>'path','?') as path, coalesce(props->>'device','?') as device, count(*)::int as n from analytics_events where name = 'page_view' and day >= $1 group by 1, 2 order by 3 desc",
+    [from],
+  );
+  // Einwilligungsabfrage: angezeigt / zugestimmt / abgelehnt (anonym, nur Zähler)
+  const consentRows = await db.query<{ name: string; choice: string; n: number }>(
+    "select name, coalesce(props->>'choice','') as choice, count(*)::int as n from analytics_events where name in ('consent_shown','consent') and day >= $1 group by 1, 2",
+    [from],
+  );
+  const consent = {
+    shown: consentRows.filter((r) => r.name === "consent_shown").reduce((s, r) => s + r.n, 0),
+    yes: consentRows.find((r) => r.name === "consent" && r.choice === "ja")?.n ?? 0,
+    no: consentRows.find((r) => r.name === "consent" && r.choice === "nein")?.n ?? 0,
+  };
+  return { counts, channels, pageViews, consent, shares, dropoff, started, completed, perEvent, retention, archivePlays, homeByVariant, startedWithGuess, from };
 }
