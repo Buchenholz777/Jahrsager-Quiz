@@ -13,7 +13,7 @@ export const dynamic = "force-dynamic";
 export default async function sitemap(): Promise<MetadataRoute.Sitemap> {
   const db = await getDb();
   const events = (await listKnowledge(db)).filter((e) => !e.is_demo);
-  const last = await db.one<{ d: string | null }>("select max(pack_date)::text as d from daily_packs where status = veroeffentlicht and superseded_at is null");
+  const last = await db.one<{ d: string | null }>("select max(pack_date)::text as d from daily_packs where status = 'veroeffentlicht' and superseded_at is null");
   const packLast = last?.d ? new Date(last.d + "T00:00:00Z") : undefined;
   const newest = events.reduce<Date | undefined>((m, e) => (m && m > new Date(e.updated_at) ? m : new Date(e.updated_at)), undefined);
   return [
