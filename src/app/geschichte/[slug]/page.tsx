@@ -12,6 +12,7 @@ import { absoluteUrl } from "@/lib/site";
 import { formatDateDe } from "@/lib/time";
 import { getDb } from "@/server/db/client";
 import { getKnowledge, relatedKnowledge } from "@/server/services/knowledge";
+import { knowledgeQuality } from "@/server/services/knowledge-quality";
 
 export const dynamic = "force-dynamic";
 type Props = { params: Promise<{ slug: string }> };
@@ -25,7 +26,12 @@ export async function generateMetadata({ params }: Props): Promise<Metadata> {
     title: `${ev.public_title} (${ev.correct_year}) – Hintergrund und Bedeutung`,
     description: desc,
     alternates: { canonical: `/geschichte/${ev.slug}` },
-    robots: ev.is_demo ? { index: false, follow: false } : { index: true, follow: true },
+    // Nur Seiten mit eigenständigem Informationswert und vollständigen Nachweisen werden indexiert (siehe knowledge-quality.ts).
+    robots: ev.is_demo
+      ? { index: false, follow: false }
+      : knowledgeQuality(ev).indexable
+        ? { index: true, follow: true, googleBot: { index: true, follow: true, "max-image-preview": "large" } }
+        : { index: false, follow: true },
     openGraph: { type: "article", title: ev.public_title, description: desc, images: [absoluteUrl(`/bild/${ev.image_id}${ev.image_ext === "svg" ? "" : "?w=1200"}`)] },
   };
 }
@@ -42,7 +48,7 @@ export default async function EventPage({ params }: Props) {
   return (
     <Container>
       <PageEvent name="history_article_view" params={{ page_type: "history_article", event_category: ev.category }} />
-      {!ev.is_demo && (
+      {!ev.is_demo && knowledgeQuality(ev).indexable && (
         <JsonLd
           data={[
             {

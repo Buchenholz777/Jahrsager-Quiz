@@ -9,6 +9,7 @@ import { isUuid } from "@/server/services/games";
 import { EventForm } from "../event-form";
 import { ImportButton } from "../import-button";
 import { IMAGE_STATUS_LABELS } from "@/server/types";
+import { knowledgeQuality } from "@/server/services/knowledge-quality";
 
 export const metadata = { title: "Ereignis bearbeiten" };
 
@@ -21,6 +22,7 @@ export default async function EditEvent({ params, searchParams }: { params: Prom
   const e = await getEvent(db, id);
   if (!e) notFound();
   const approval = eventProblems(e, "approval");
+  const kq = knowledgeQuality(e);
   const revisions = await listRevisions(db, id);
   return (
     <div>
@@ -43,6 +45,20 @@ export default async function EditEvent({ params, searchParams }: { params: Prom
                 {approval.map((p, i) => <li key={i}>{p}</li>)}
               </ul>
             )}
+          </Card>
+          <Card className="p-4">
+            <h2 className="text-lg font-semibold">Wissensseite für Google</h2>
+            {kq.indexable ? (
+              <p className="mt-2 text-sm font-medium text-good">Erfüllt die Qualitätsschranke: indexierbar, sobald das Rätsel vorbei und „Eigene Wissensseite“ aktiv ist.</p>
+            ) : (
+              <>
+                <p className="mt-2 text-sm text-ink-soft">Noch <strong>nicht indexierbar</strong> (noindex, nicht in der Sitemap). Die Seite bleibt für Spieler lesbar. Fehlt:</p>
+                <ul className="mt-2 list-disc space-y-1 pl-5 text-sm text-ink-soft">
+                  {kq.problems.map((p, i) => <li key={i}>{p}</li>)}
+                </ul>
+              </>
+            )}
+            <p className="mt-2 text-xs text-ink-soft">Hintergrundtext: {kq.words.background} Wörter · gesamt: {kq.words.total} Wörter</p>
           </Card>
           <Card className="p-4">
             <h2 className="text-lg font-semibold">Bildrecherche</h2>

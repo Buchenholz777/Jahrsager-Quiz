@@ -4,13 +4,14 @@ import { Container, PageHeader } from "@/components/page-header";
 import { Badge, Card } from "@/components/ui/card";
 import { CATEGORIES, type CategoryKey } from "@/lib/constants";
 import { getDb } from "@/server/db/client";
-import { listKnowledge } from "@/server/services/knowledge";
+import { listIndexableKnowledge, listKnowledge } from "@/server/services/knowledge";
+import { KNOWLEDGE_MIN } from "@/server/services/knowledge-quality";
 import { demoAllowed } from "@/server/services/packs";
 
 export const dynamic = "force-dynamic";
 
 export async function generateMetadata(): Promise<Metadata> {
-  const hasContent = (await listKnowledge(await getDb())).some((e) => !e.is_demo);
+  const hasContent = (await listIndexableKnowledge(await getDb())).length >= KNOWLEDGE_MIN.listingMinPages;
   return {
     title: "Historische Ereignisse erklärt – das JAHRSAGER-Wissensarchiv",
     description:
