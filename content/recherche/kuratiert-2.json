@@ -1,0 +1,130 @@
+{
+  "hinweis": "Kuratierter Import 2 (9. November 2026): starke Startseiten-Motive. Texte aus den deutschen Wikipedia-Auszügen formuliert, Bilder vor dem Import gesichtet. Earthrise und Blue Marble erfüllen die Auto-Allowlist (NASA, gemeinfrei); Aldrin, Wright Flyer und Mauerfall gehen wegen Personen im Bild bzw. wegen Lizenz (Public domain nach Alter, CC BY 3.0) in die manuelle Prüfung.",
+  "events": [
+    {
+      "sourceId": "Q843864",
+      "date": "1968-12-24",
+      "commonsFile": "NASA Earthrise AS08-14-2383 Apollo 8 1968-12-24.jpg",
+      "article": "Earthrise",
+      "extra_sources": ["https://www.nasa.gov/image-article/apollo-8-earthrise/"],
+      "draft": {
+        "insufficient": false,
+        "category": "raumfahrt",
+        "difficulty": 2,
+        "subcategory": "Astronomie",
+        "tags": ["raumfahrt", "apollo", "erde"],
+        "region": "global",
+        "country": "",
+        "topic_key": "earthrise",
+        "neutral_title": "Eine blaue Kugel über grauem Horizont",
+        "description": "Über einer grauen, von Kratern übersäten Oberfläche steht in der Schwärze des Alls eine kleine blaue Kugel. Der Fotograf blickt aus einem Raumschiff, das einen fremden Himmelskörper umkreist, und sieht den Heimatplaneten über dem Horizont aufgehen.",
+        "image_alt": "Farbfoto: Über einer grauen Kraterlandschaft steht vor schwarzem Himmel die kleine, blau-weiße Erde",
+        "public_title": "Earthrise: Der Erdaufgang von Apollo 8",
+        "explanation_what": "Earthrise ist der Name des NASA-Fotos AS8-14-2383HR, das William Anders während des Fluges von Apollo 8 aufnahm. Das Bild entstand am 24. Dezember 1968 während der vierten von zehn geplanten Umkreisungen des Mondes. Anders fotografierte mit einer Hasselblad-500-Kamera, die mit einem Zeiss-Sonnar-Objektiv mit 250 Millimetern Brennweite bestückt war. Die Aufnahme zeigt die Erde, wie sie über dem Horizont des Mondes aufgeht.",
+        "explanation_why": "Aufgenommen wurde das Bild von einem Raumfahrer an Bord von Apollo 8, während die Besatzung den Mond umkreiste; es zeigt die Erde aus der Sicht des Mondes.",
+        "explanation_detail": "Als Kamera diente eine Hasselblad 500 mit einem Zeiss-Sonnar-Objektiv der Lichtstärke 1:5,6.",
+        "image_check": { "matches_event": "yes", "persons_visible": false, "caption_or_date_visible": false, "quality_ok": true, "note": "Sichtprüfung: Erde über Mondhorizont, keine Personen, keine Beschriftung." }
+      }
+    },
+    {
+      "sourceId": "Q202014",
+      "date": "1972-12-07",
+      "commonsFile": "The Blue Marble, AS17-148-22727.jpg",
+      "article": "Blue Marble",
+      "extra_sources": ["https://www.nasa.gov/mission/apollo-17/"],
+      "draft": {
+        "insufficient": false,
+        "category": "natur",
+        "difficulty": 2,
+        "subcategory": "Umweltbewegung",
+        "tags": ["erde", "umweltbewegung", "apollo"],
+        "region": "global",
+        "country": "",
+        "topic_key": "blue-marble",
+        "neutral_title": "Ein ganzer Planet im Bild",
+        "description": "Eine fast vollständig beleuchtete Kugel mit blauen Ozeanen, weißen Wolkenwirbeln und braunen Landflächen schwebt vor tiefschwarzem Hintergrund. Das Foto wurde von einer Raumfahrtbesatzung aus großer Entfernung aufgenommen und wurde später auf Postern, Fahnen und T-Shirts bekannt.",
+        "image_alt": "Farbfoto: Die vollständig beleuchtete Erde mit blauen Ozeanen, weißen Wolken und braunem Land vor schwarzem Hintergrund",
+        "public_title": "Blue Marble: Die Erde aus Apollo 17",
+        "explanation_what": "Blue Marble, auf Deutsch Der blaue Planet, ist ein bekanntes Foto der Erde, das die Besatzung von Apollo 17 im Jahr 1972 aus einer Entfernung von rund 29.000 Kilometern aufnahm. Das Bild wurde unter anderem im Rahmen der Umweltschutzbewegung der 1970er Jahre auf Postern, Fahnen und T-Shirts populär. Es ist außerdem das Symbol des Projekts Weltethos. Das Foto entstand während Apollo 17, dem elften bemannten und letzten Flug des Apollo-Programms.",
+        "explanation_why": "Das Bild wurde im Rahmen der Umweltschutzbewegung der 1970er Jahre populär und dient als Symbol des Projekts Weltethos.",
+        "explanation_detail": "Die Aufnahme entstand aus einer Entfernung von rund 29.000 Kilometern von der Erde.",
+        "image_check": { "matches_event": "yes", "persons_visible": false, "caption_or_date_visible": false, "quality_ok": true, "note": "Sichtprüfung: vollständig beleuchtete Erde, keine Personen, keine Beschriftung." }
+      }
+    },
+    {
+      "sourceId": "Q43653-aldrin",
+      "date": "1969-07-20",
+      "commonsFile": "Buzz Aldrin on the Lunar Surface.jpg",
+      "article": "Apollo 11",
+      "extra_sources": ["https://www.nasa.gov/mission/apollo-11/"],
+      "draft": {
+        "insufficient": false,
+        "category": "raumfahrt",
+        "difficulty": 1,
+        "subcategory": "Mondprogramm",
+        "tags": ["raumfahrt", "apollo", "mond"],
+        "region": "nordamerika",
+        "country": "USA",
+        "topic_key": "apollo",
+        "neutral_title": "Ein Spaziergang auf fremdem Boden",
+        "description": "Ein Mensch in einem weißen Raumanzug steht auf staubigem, von Spuren gezeichnetem Boden. Im spiegelnden Helmvisier ist ein zweiter Raumfahrer zu erkennen, der die Aufnahme macht. Über der Szene liegt tiefschwarzer Himmel; die Umgebung ist trocken und leblos.",
+        "image_alt": "Farbfoto: Ein Astronaut in weißem Raumanzug steht auf grauem, staubigem Boden, im Helmvisier spiegelt sich ein zweiter Raumfahrer",
+        "public_title": "Buzz Aldrin auf dem Mond",
+        "explanation_what": "Am 20. Juli 1969 setzten die Astronauten Neil Armstrong und Edwin „Buzz“ Aldrin mit der Mondlandefähre Eagle auf dem Mond auf. Wenige Stunden später betrat Armstrong als erster Mensch den Mond, kurz danach auch Aldrin. Nach einem knapp 22-stündigen Aufenthalt startete die Landefähre wieder von der Mondoberfläche und kehrte zum Kommandoschiff zurück. Das Foto zeigt Aldrin; aufgenommen hat es Armstrong.",
+        "explanation_why": "Mit Apollo 11 erreichte die NASA das von Präsident John F. Kennedy vorgegebene Ziel, noch vor Ende des Jahrzehnts einen Menschen zum Mond und wieder sicher zurück zur Erde zu bringen.",
+        "explanation_detail": "Weltweit verfolgten rund 600 Millionen Menschen die Fernsehübertragung der Mondlandung.",
+        "image_check": { "matches_event": "yes", "persons_visible": true, "caption_or_date_visible": false, "quality_ok": true, "note": "Sichtprüfung: Astronaut im Raumanzug (Gesicht durch Visier verdeckt), keine Beschriftung. Person im Bild: manuelle Prüfung." }
+      }
+    },
+    {
+      "sourceId": "Q688605",
+      "date": "1903-12-17",
+      "commonsFile": "First flight3.jpg",
+      "article": "Wright Flyer",
+      "extra_sources": ["https://airandspace.si.edu/collection-objects/1903-wright-flyer"],
+      "draft": {
+        "insufficient": false,
+        "category": "technik",
+        "difficulty": 1,
+        "subcategory": "Luftfahrt",
+        "tags": ["luftfahrt", "motorflug", "pionier"],
+        "region": "nordamerika",
+        "country": "USA",
+        "topic_key": "luftfahrt-pioniere",
+        "neutral_title": "Ein Flugapparat hebt knapp vom Boden ab",
+        "description": "Ein zerbrechlich wirkender Doppeldecker mit zwei Propellern hinter den Tragflächen schwebt nur knapp über sandigem Boden. Am Rand steht ein einzelner Mann und sieht zu. Es war der Versuch zweier Brüder, mit einem selbst gebauten Motor zu fliegen.",
+        "image_alt": "Schwarz-Weiß-Foto: Ein Doppeldecker mit zwei Propellern schwebt knapp über sandigem Boden, rechts steht ein Mann",
+        "public_title": "Der erste Flug des Wright Flyers",
+        "explanation_what": "Der Wright Flyer war das erste von den Brüdern Wright hergestellte Motorflugzeug. Als Antrieb diente ein selbst konstruierter Vierzylinder-Ottomotor, dessen Kraft über Kettengetriebe auf zwei gegenläufige Zweiblattpropeller übertragen wurde. Beim ersten Flug am 17. Dezember 1903 blieb Orville Wright zwölf Sekunden in der Luft, erreichte 16 Kilometer pro Stunde und legte 37 Meter zurück. Das Foto hält diesen Flug fest.",
+        "explanation_why": "Lange Zeit wurde angenommen, dass damit der erste Motorflug eines Flugzeugs gelang; mit erheblicher Wahrscheinlichkeit gelang dies jedoch schon früher dem Tüftler Gustav Weißkopf.",
+        "explanation_detail": "Die restaurierte Original-Maschine ist bis heute im Smithsonian Museum ausgestellt.",
+        "image_check": { "matches_event": "yes", "persons_visible": true, "caption_or_date_visible": false, "quality_ok": true, "note": "Sichtprüfung: Doppeldecker kurz nach dem Abheben, rechts eine kleine Person, keine Beschriftung. Public domain nach Alter (Fotograf John T. Daniels): Rechtslage manuell prüfen." }
+      }
+    },
+    {
+      "sourceId": "Q5086",
+      "date": "1989-11-09",
+      "commonsFile": "BerlinWall-BrandenburgGate.jpg",
+      "article": "Berliner Mauer",
+      "extra_sources": ["https://www.bpb.de/themen/deutsche-einheit/"],
+      "draft": {
+        "insufficient": false,
+        "category": "politik",
+        "difficulty": 1,
+        "subcategory": "Kalter Krieg",
+        "tags": ["kalter-krieg", "berlin", "mauerfall"],
+        "region": "europa",
+        "country": "Deutschland",
+        "topic_key": "mauerfall",
+        "neutral_title": "Menschen auf einer Betonwand",
+        "description": "Eine große Menschenmenge steht auf einer breiten Betonwand vor einem klassizistischen Tor mit Säulen. Unten drängen sich weitere Menschen vor bunten Graffiti und einem Warnschild. Die Stimmung wirkt gespannt und zugleich erleichtert, als würde eine Grenze fallen.",
+        "image_alt": "Farbfoto: Viele Menschen stehen auf einer Betonmauer vor einem Tor mit Säulen, darunter eine Menge vor bunten Graffiti und einem Warnschild",
+        "public_title": "Der Fall der Berliner Mauer",
+        "explanation_what": "Die Berliner Mauer war während der Teilung Deutschlands ein Grenzbefestigungssystem der DDR, das West-Berlin vom Gebiet der DDR hermetisch abriegeln sollte. Sie bestand vom 13. August 1961 bis zum 9. November 1989. Am Brandenburger Tor stiegen Menschen auf die Mauer, die als markantes Symbol des Kalten Krieges galt. Das Foto entstand am 9. November 1989, dem Tag, an dem die Mauer nach Jahrzehnten der Teilung ihre abriegelnde Wirkung verlor.",
+        "explanation_why": "Die Mauer war Bestandteil und zugleich markantes Symbol des Konflikts im Kalten Krieg zwischen den von den Vereinigten Staaten dominierten Westmächten und dem Ostblock unter Führung der Sowjetunion.",
+        "explanation_detail": "Die Mauer wurde aufgrund eines Beschlusses der politischen Führung der Sowjetunion Anfang August 1961 und einer Weisung der DDR-Regierung errichtet.",
+        "image_check": { "matches_event": "yes", "persons_visible": true, "caption_or_date_visible": false, "quality_ok": true, "note": "Sichtprüfung: Menschenmenge auf der Mauer am Brandenburger Tor, Schild und Graffiti ohne Jahresangabe. CC BY 3.0: Namensnennung (Sue Ream) nötig; Personen im Bild: manuelle Prüfung." }
+      }
+    }
+  ]
+}

@@ -134,12 +134,15 @@ export async function reachable(url: string): Promise<boolean> {
   }
 }
 
-const IMAGE_HOSTS = new Set(["upload.wikimedia.org"]);
+const IMAGE_HOSTS = new Set(["upload.wikimedia.org", "thumb.wikimedia.org"]);
+/** Lädt eine auf 2400 px Breite skalierte Fassung (Original-Scans sind oft zu groß); nur von upload.wikimedia.org. */
 export async function downloadImage(meta: CommonsMeta, maxBytes = 25 * 1024 * 1024): Promise<Buffer> {
   const u = new URL(meta.url);
   if (u.protocol !== "https:" || !IMAGE_HOSTS.has(u.hostname)) throw new Error(`Bild-Download nur von upload.wikimedia.org erlaubt (${u.hostname}).`);
-  const res = await politeFetch(meta.url);
+  const scaled = `https://commons.wikimedia.org/wiki/Special:FilePath/${encodeURIComponent(meta.file.replace(/ /g, "_"))}?width=2400`;
+  const res = await politeFetch(scaled);
   if (!res.ok) throw new Error(`Bild-Download fehlgeschlagen: HTTP ${res.status}`);
+  if (!IMAGE_HOSTS.has(new URL(res.url).hostname)) throw new Error("Bild-Download wurde auf einen nicht erlaubten Host umgeleitet.");
   const buf = Buffer.from(await res.arrayBuffer());
   if (buf.length > maxBytes) throw new Error("Bild größer als erlaubt.");
   return buf;

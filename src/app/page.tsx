@@ -2,6 +2,7 @@ import type { Metadata } from "next";
 import Link from "next/link";
 import { ArrowRight, BookOpen, CalendarClock, Camera, SlidersHorizontal } from "lucide-react";
 import { HeroCollage } from "@/components/home/hero-collage";
+import { PhotoBand } from "@/components/home/photo-band";
 import { HomeCta } from "@/components/home/home-cta";
 import { buttonVariants } from "@/components/ui/button";
 import { Badge, Card } from "@/components/ui/card";
@@ -28,13 +29,13 @@ const STEPS = [
 ];
 
 export default async function HomePage() {
-  const showcase = await getShowcase(await getDb()).catch(() => ({ hero: [], teaser: [] }));
+  const showcase = await getShowcase(await getDb()).catch(() => ({ hero: [], teaser: [], more: [] }));
   const variant = activeHeroVariant();
 
   return (
     <>
       <section className="hero-bg relative overflow-hidden text-paper" data-hero-variant={variant}>
-        <div className="mx-auto grid max-w-6xl grid-cols-[minmax(0,1fr)] items-center gap-6 px-4 pb-12 pt-6 sm:px-6 md:pt-10 lg:grid-cols-[1.05fr_1fr] lg:gap-x-12 lg:gap-y-0 lg:pb-20 lg:pt-14">
+        <div className="mx-auto grid max-w-6xl grid-cols-[minmax(0,1fr)] items-center gap-6 px-4 pb-12 pt-6 sm:px-6 md:pt-10 lg:grid-cols-[0.9fr_1.1fr] lg:gap-x-10 lg:gap-y-0 lg:pb-20 lg:pt-14">
           <div className="lg:col-start-1 lg:row-start-1 lg:self-end">
             <p className="text-xs font-bold uppercase tracking-[0.18em] text-sun sm:text-sm">Das tägliche Geschichtsquiz</p>
             <h1 className="mt-3 text-[2.35rem] font-extrabold leading-[1.06] text-paper sm:text-5xl lg:text-[3.5rem]">
@@ -67,6 +68,8 @@ export default async function HomePage() {
           </div>
         </div>
       </section>
+
+      <PhotoBand events={showcase.more} />
 
       <section aria-labelledby="so-geht-es" className="mx-auto max-w-6xl px-4 py-14 sm:px-6 sm:py-16">
         <h2 id="so-geht-es" className="text-3xl font-bold sm:text-4xl">

@@ -16,7 +16,7 @@ export interface ShowcaseEvent {
 }
 
 /** Bevorzugte Motive für die Bildkomposition (Vielfalt: Raumfahrt, Luftfahrt, Politik, Gesellschaft). */
-const HERO_ORDER = ["nixon-ruecktritt-1974", "jesse-owens-1936", "berliner-luftbruecke-1948", "lindbergh-paris-1927", "apollo-11-mondlandung", "mauerbau-in-berlin", "kennedy-in-berlin"];
+const HERO_ORDER = ["blue-marble-1972", "berliner-mauer-1989", "wright-flyer-1903", "apollo-11-1969-q43653-aldrin", "earthrise-1968", "nixon-ruecktritt-1974", "jesse-owens-1936", "berliner-luftbruecke-1948", "lindbergh-paris-1927"];
 const TEASER_ORDER = ["wunder-von-bern", "hubble-teleskop-ausgesetzt", "sonnenfinsternis-expedition", "kennedy-in-berlin", "fliessband-bei-ford", "vorstellung-des-ersten-iphone", "live-aid"];
 
 /**
@@ -26,7 +26,7 @@ const TEASER_ORDER = ["wunder-von-bern", "hubble-teleskop-ausgesetzt", "sonnenfi
  *  - Demo-Inhalte nur, wenn ALLOW_DEMO_CONTENT=true (dort bleibt der Bildstatus „noch zu prüfen“ dokumentiert).
  * Gibt es keine geeigneten Ereignisse, bleiben die Listen leer (die Seite zeigt dann keine Bilder, keine Platzhalter).
  */
-export async function getShowcase(db: Db, at: Date = clockNow()): Promise<{ hero: ShowcaseEvent[]; teaser: ShowcaseEvent[] }> {
+export async function getShowcase(db: Db, at: Date = clockNow()): Promise<{ hero: ShowcaseEvent[]; teaser: ShowcaseEvent[]; more: ShowcaseEvent[] }> {
   const today = todayKey(at);
   await publishDuePacks(db, today);
   const rows = await db.query<{
@@ -77,5 +77,6 @@ export async function getShowcase(db: Db, at: Date = clockNow()): Promise<{ hero
     .filter((e) => e.knowledge && !heroSlugs.has(e.slug))
     .sort((a, b) => rank(TEASER_ORDER)(a) - rank(TEASER_ORDER)(b))
     .slice(0, 3);
-  return { hero, teaser };
+  const more = [...all].sort((a, b) => rank(HERO_ORDER)(a) - rank(HERO_ORDER)(b)).filter((e) => !heroSlugs.has(e.slug)).slice(0, 8);
+  return { hero, teaser, more };
 }

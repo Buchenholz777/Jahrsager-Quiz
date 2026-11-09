@@ -79,8 +79,10 @@ export function assess(i: AssessInput): Assessment {
 
   // 5 Bildqualität
   const minW = i.minWidth ?? 1200;
-  const q = i.meta.width >= minW && ["image/jpeg", "image/png", "image/webp"].includes(i.meta.mime);
-  audit.push(auditEntry("bildqualitaet", q ? "ok" : "abgelehnt", [q ? `Breite ${i.meta.width}px ≥ ${minW}px.` : `Breite ${i.meta.width}px (< ${minW}px) oder Format ${i.meta.mime} ungeeignet.`]));
+  const longSide = Math.max(i.meta.width, i.meta.height);
+  const shortSide = Math.min(i.meta.width, i.meta.height);
+  const q = longSide >= minW && shortSide >= Math.round(minW * 0.66) && ["image/jpeg", "image/png", "image/webp"].includes(i.meta.mime);
+  audit.push(auditEntry("bildqualitaet", q ? "ok" : "abgelehnt", [q ? `Bildgröße ${i.meta.width}×${i.meta.height}px ausreichend (lange Seite ≥ ${minW}px).` : `Bildgröße ${i.meta.width}×${i.meta.height}px zu klein (lange Seite ≥ ${minW}px, kurze ≥ ${Math.round(minW * 0.66)}px) oder Format ${i.meta.mime} ungeeignet.`]));
   if (!q) reject.push("Bildqualität nicht ausreichend.");
 
   // 6 Faktenquellen (≥ 2, davon mind. eine externe Institution)
