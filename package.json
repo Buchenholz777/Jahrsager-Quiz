@@ -28,7 +28,8 @@
     "import:kuratiert": "tsx scripts/import-kuratiert.ts",
     "simulate:auswahl": "tsx scripts/simulate-auswahl.ts",
     "reklassifizieren": "tsx scripts/reklassifizieren.ts",
-    "revise:pack": "tsx scripts/revise-pack.ts"
+    "revise:pack": "tsx scripts/revise-pack.ts",
+    "import:hintergrund": "tsx scripts/import-hintergrund.ts"
   },
   "dependencies": {
     "@electric-sql/pglite": "^0.5.15",
