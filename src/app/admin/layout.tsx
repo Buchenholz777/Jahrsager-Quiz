@@ -18,6 +18,7 @@ const LINKS = [
   ["/admin/pakete", "Tagespakete"],
   ["/admin/meldungen", "Meldungen"],
   ["/admin/kennzahlen", "Kennzahlen"],
+  ["/admin/seo", "SEO-Vorschau"],
 ];
 
 export default async function AdminLayout({ children }: { children: React.ReactNode }) {
