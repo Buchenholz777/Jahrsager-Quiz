@@ -4,7 +4,7 @@ import { cookies, headers } from "next/headers";
 import { redirect } from "next/navigation";
 import { revalidatePath } from "next/cache";
 import { z } from "zod";
-import { ADMIN_COOKIE, CATEGORY_KEYS } from "@/lib/constants";
+import { ADMIN_COOKIE, CATEGORY_KEYS, REGIONS } from "@/lib/constants";
 import { importCandidateImage } from "@/server/services/image-import";
 import { checkAdminPassword, createAdminToken, rateLimit } from "@/server/auth";
 import { requireAdminAction } from "@/server/admin-session";
@@ -51,6 +51,10 @@ const EventForm = z.object({
   slug: z.string().trim().min(3, "Slug: mindestens 3 Zeichen").max(80).regex(/^[a-z0-9]+(-[a-z0-9]+)*$/, "Slug: nur Kleinbuchstaben, Ziffern und Bindestriche"),
   category: z.enum(CATEGORY_KEYS as [string, ...string[]], { message: "Themenfeld wählen" }),
   difficulty: z.coerce.number().int().min(1).max(3),
+  subcategory: z.string().trim().max(80),
+  region: z.enum(["", ...Object.keys(REGIONS)] as [string, ...string[]], { message: "Region wählen" }),
+  country: z.string().trim().max(60),
+  topic_key: z.string().trim().max(60),
   neutral_title: z.string().trim().min(3, "Neutrale Überschrift fehlt").max(90),
   description: z.string().trim().min(10, "Beschreibung fehlt").max(900),
   image_alt: z.string().trim().min(5, "Alternativtext fehlt").max(300),
@@ -124,6 +128,7 @@ export async function saveEventAction(_prev: FormState, fd: FormData): Promise<F
       ...image,
       image_status: imageStatus,
       checks: { rights: cb(fd, "check_rights"), facts: cb(fd, "check_facts"), photoMatchesEvent: cb(fd, "check_photo") },
+      tags: String(fd.get("tags") ?? "").split(",").map((t) => t.trim().toLowerCase()).filter(Boolean),
       knowledge_enabled: cb(fd, "knowledge_enabled"),
       homepage_showcase: cb(fd, "homepage_showcase"),
       is_demo: existing ? existing.is_demo : false,
@@ -194,4 +199,35 @@ export async function importImageAction(_prev: FormState, fd: FormData): Promise
     if (e instanceof AppError) return { messages: [e.message] };
     return { messages: ["Import fehlgeschlagen: " + (e as Error).message] };
   }
+}
+
+/** Freigabe-Assistent: bestätigt nach eigener Prüfung des Admins Bild, Rechte, Fakten und Datum und gibt das Ereignis frei. */
+export async function approveQuickAction(fd: FormData) {
+  await requireAdminAction();
+  const db = await getDb();
+  const id = String(fd.get("id"));
+  let fehler = "";
+  try {
+    const ev = await getEvent(db, id);
+    if (!ev || ev.blocked) throw new AppError("NICHT_GEFUNDEN", "Ereignis nicht gefunden oder gesperrt.", 404);
+    if (!cb(fd, "check_rights") || !cb(fd, "check_photo") || !cb(fd, "check_facts")) throw new AppError("BESTAETIGUNG", "Alle drei Bestätigungen sind nötig.");
+    const input = {
+      ...ev,
+      image_alt: String(fd.get("image_alt") ?? "").trim(),
+      image_status: "freigegeben",
+      checks: { rights: true, facts: true, photoMatchesEvent: true },
+      homepage_showcase: cb(fd, "homepage_showcase"),
+    } as EventInput;
+    await updateEvent(db, id, input, "Freigabe-Assistent: Bild, Rechte, Fakten und Datum vom Admin geprüft");
+    if (ev.status === "entwurf") await transitionEvent(db, id, "in_pruefung");
+    await transitionEvent(db, id, "freigegeben");
+    const entry = { at: new Date().toISOString(), actor: "admin", step: "freigabe-assistent", decision: "ok", rules: ["Bild, Urheber, Lizenz, Quelle, Aufnahmedatum und Fakten vom Admin geprüft und bestätigt."] };
+    await db.run("update events set pipeline_state = null, audit = audit || $2::jsonb where id = $1", [id, JSON.stringify([entry])]);
+  } catch (e) {
+    if (!(e instanceof AppError)) throw e;
+    fehler = e.message;
+  }
+  revalidatePath("/admin/freigabe");
+  revalidatePath("/admin/automatik");
+  if (fehler) redirect(`/admin/freigabe?fehler=${encodeURIComponent(fehler)}`);
 }

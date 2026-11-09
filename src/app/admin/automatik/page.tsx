@@ -4,7 +4,7 @@ import { Card } from "@/components/ui/card";
 import { formatDateDe } from "@/lib/time";
 import { requireAdminPage } from "@/server/admin-session";
 import { getDb } from "@/server/db/client";
-import { pipelineStats } from "@/server/pipeline/admin";
+import { diversityStats, pipelineStats } from "@/server/pipeline/admin";
 import { blockEventAction, unblockEventAction } from "../actions";
 
 export const metadata = { title: "Automatik" };
@@ -26,6 +26,8 @@ export default async function AutomatikAdmin() {
   await requireAdminPage();
   const db = await getDb();
   const s = await pipelineStats(db);
+  const dv = await diversityStats(db);
+  const pct = (x: number) => `${(x * 100).toFixed(0)} %`;
   const q = (where: string) =>
     db.query<Row>(`select id, slug, neutral_title, correct_year, pipeline_state, blocked_reason, created_at::text as created_at from events where ${where} order by created_at desc limit 30`);
   const manual = await q("pipeline_state = 'manual_review' and not blocked");
@@ -52,6 +54,47 @@ export default async function AutomatikAdmin() {
         {tile("Fehlgeschlagene Läufe (letzte 10)", s.lastErrors, s.lastErrors > 0)}
       </div>
       <p className="text-sm text-ink-soft">Ziel: {s.target} Ereignisse im Vorrat.</p>
+
+      <Card className="p-5">
+        <h2 className="text-xl font-semibold">Themenvielfalt</h2>
+        <p className="mt-1 text-sm text-ink-soft">
+          Raumfahrt: {pct(dv.all.spaceShare)} des Bestands (Ziel höchstens ca. 5 %), {pct(dv.last30.spaceShare)} der letzten 30 Tage · Wissenschaft + Technik: {pct(dv.all.sciTechShare)}.
+          {dv.unclassified > 0 && ` ${dv.unclassified} Ereignis(se) ohne Region.`}
+        </p>
+        <div className="mt-4 grid gap-6 md:grid-cols-3">
+          <div>
+            <h3 className="font-semibold">Themenfelder (Bestand / 30 Tage)</h3>
+            <ul className="mt-2 space-y-1 text-sm">
+              {dv.all.byCategory.map((c, i) => (
+                <li key={c.key} className="flex justify-between gap-2"><span>{c.label}</span><span className="tabular-nums text-ink-soft">{c.n} ({pct(c.share)}) / {dv.last30.byCategory[i].n}</span></li>
+              ))}
+            </ul>
+          </div>
+          <div>
+            <h3 className="font-semibold">Regionen (Bestand / 30 Tage)</h3>
+            <ul className="mt-2 space-y-1 text-sm">
+              {dv.all.byRegion.map((c) => (
+                <li key={c.key} className="flex justify-between gap-2"><span>{c.label}</span><span className="tabular-nums text-ink-soft">{c.n} ({pct(c.share)}) / {dv.last30.byRegion.find((x) => x.key === c.key)?.n ?? 0}</span></li>
+              ))}
+            </ul>
+          </div>
+          <div>
+            <h3 className="font-semibold">Jahrzehnte (Bestand / 30 Tage)</h3>
+            <ul className="mt-2 space-y-1 text-sm">
+              {dv.all.byDecade.map((c) => (
+                <li key={c.decade} className="flex justify-between gap-2"><span>{c.decade}er</span><span className="tabular-nums text-ink-soft">{c.n} ({pct(c.share)}) / {dv.last30.byDecade.find((x) => x.decade === c.decade)?.n ?? 0}</span></li>
+              ))}
+            </ul>
+          </div>
+        </div>
+        <h3 className="mt-5 font-semibold">Thematisch ähnliche Ereignisse</h3>
+        <ul className="mt-2 space-y-1 text-sm">
+          {dv.similar.map((g) => (
+            <li key={g.topic}><strong>{g.topic}</strong> <span className="text-ink-soft">· {g.titles.join(" · ")}</span></li>
+          ))}
+          {dv.similar.length === 0 && <li className="text-ink-soft">Keine.</li>}
+        </ul>
+      </Card>
 
       <Card className="p-5">
         <h2 className="text-xl font-semibold">Nächste Tagesrätsel</h2>

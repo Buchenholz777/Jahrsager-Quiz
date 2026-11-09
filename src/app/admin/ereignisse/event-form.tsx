@@ -2,7 +2,7 @@
 
 import { useActionState } from "react";
 import { Button } from "@/components/ui/button";
-import { CATEGORIES, DIFFICULTY_LABELS } from "@/lib/constants";
+import { CATEGORIES, DIFFICULTY_LABELS, REGIONS } from "@/lib/constants";
 import { IMAGE_STATUSES, IMAGE_STATUS_LABELS } from "@/server/types";
 import type { EventRow } from "@/server/types";
 import { saveEventAction, type FormState } from "../actions";
@@ -68,6 +68,11 @@ export function EventForm({ event }: { event: EventRow | null }) {
               {Object.entries(CATEGORIES).map(([k, v]) => <option key={k} value={k}>{v}</option>)}
             </select>
           </Field>
+          <Field label="Region"><select name="region" defaultValue={e?.region ?? ""} className={input}><option value="">– unbekannt –</option>{Object.entries(REGIONS).map(([k, v]) => <option key={k} value={k}>{v}</option>)}</select></Field>
+          <Field label="Land"><input name="country" defaultValue={e?.country} className={input} /></Field>
+          <Field label="Unterkategorie"><input name="subcategory" defaultValue={e?.subcategory} className={input} /></Field>
+          <Field label="Themenschlüssel (Ähnlichkeit)" hint="Gleiches Thema = gleicher Schlüssel, z. B. apollo"><input name="topic_key" defaultValue={e?.topic_key} className={input} /></Field>
+          <Field label="Schlagwörter (Komma)"><input name="tags" defaultValue={(e?.tags ?? []).join(", ")} className={input} /></Field>
           <Field label="Schwierigkeit (Einschätzung)">
             <select name="difficulty" defaultValue={e?.difficulty ?? 2} className={input}>
               {Object.entries(DIFFICULTY_LABELS).map(([k, v]) => <option key={k} value={k}>{v}</option>)}

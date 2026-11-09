@@ -1,7 +1,9 @@
-import { ROUNDS_PER_GAME } from "@/lib/constants";
+import { CATEGORIES, ROUNDS_PER_GAME } from "@/lib/constants";
+import { toSel } from "./plan";
+import { distribution, type Distribution } from "./select";
 import type { Queryable } from "../db/client";
 import { todayKey } from "../clock";
-import { AppError, type AuditEntry } from "../types";
+import { AppError, type AuditEntry, type EventRow } from "../types";
 import { auditEntry } from "./license";
 
 export const STOCK_TARGET = 150;
@@ -97,4 +99,33 @@ export async function blockEvent(db: Queryable, id: string, reason: string, acto
 export async function unblockEvent(db: Queryable, id: string, actor = "admin") {
   await db.run("update events set blocked = false, blocked_reason = '', pipeline_state = 'manual_review', updated_at = now() where id = $1", [id]);
   await appendAudit(db, id, auditEntry("sperre_aufgehoben", "info", ["Sperre aufgehoben; zurück in die manuelle Prüfung"], undefined, actor));
+}
+
+export interface DiversityStats {
+  all: Distribution;
+  last30: Distribution;
+  similar: { topic: string; titles: string[] }[];
+  unclassified: number;
+}
+
+/** Verteilung des freigegebenen Bestands und der letzten 30 Tage (Themenfelder, Regionen, Jahrzehnte) samt ähnlicher Ereignisse. */
+export async function diversityStats(db: Queryable, now = new Date()): Promise<DiversityStats> {
+  const labels = CATEGORIES as unknown as Record<string, string>;
+  const rows = await db.query<EventRow & { neutral_title: string }>(
+    "select * from events where not is_demo and not blocked and status in ('freigegeben','eingeplant','veroeffentlicht')",
+  );
+  const since = new Date(now.getTime() - 30 * 86_400_000);
+  const recent = await db.query<EventRow>(
+    `select e.* from daily_pack_events pe join daily_packs p on p.id = pe.pack_id join events e on e.id = pe.event_id
+     where p.pack_date >= $1 and p.pack_date <= $2`,
+    [todayKey(since), todayKey(now)],
+  );
+  const groups = new Map<string, string[]>();
+  for (const r of rows) if (r.topic_key) groups.set(r.topic_key, [...(groups.get(r.topic_key) ?? []), r.neutral_title]);
+  return {
+    all: distribution(rows.map(toSel), labels),
+    last30: distribution(recent.map(toSel), labels),
+    similar: [...groups].filter(([, t]) => t.length > 1).map(([topic, titles]) => ({ topic, titles })),
+    unclassified: rows.filter((r) => !r.region).length,
+  };
 }

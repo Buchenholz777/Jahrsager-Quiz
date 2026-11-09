@@ -2,6 +2,7 @@ import type { Queryable } from "../db/client";
 import type { EventInput, EventRow, ImageCandidate, ImageStatus, Source } from "../types";
 import { EDITABLE_FIELDS } from "../types";
 import { createEvent, getEventBySlug, preTipHints, updateEvent } from "./events";
+import { KLASSIFIKATION } from "./klassifikation";
 
 /** Datensatz aus `content/recherche/jahrsager-10-ereignisse.json` (Schema „seed-v1“). */
 export interface RedaktionEvent {
@@ -175,7 +176,8 @@ function photoDate(img: RedaktionEvent["image"]): string | null {
 
 /** Bildet einen Quelldatensatz auf das bestehende Ereignis-Schema ab – immer als Entwurf, ohne Bilddatei. */
 export function mapRedaktionEvent(r: RedaktionEvent): EventInput {
-  const category = CATEGORY[r.slug];
+  const kl = KLASSIFIKATION[r.slug];
+  const category = kl?.category ?? CATEGORY[r.slug];
   const publicTitle = PUBLIC_TITLE[r.slug];
   if (!category || !publicTitle) throw new Error(`Kein Themenfeld/Titel für ${r.slug} hinterlegt.`);
   const status: ImageStatus = PROBLEM_CASES.has(r.slug) ? "zu_pruefen" : "recherchiert";
@@ -229,6 +231,11 @@ export function mapRedaktionEvent(r: RedaktionEvent): EventInput {
     } as unknown as EventRow["research"],
     knowledge_enabled: false,
     homepage_showcase: false,
+    subcategory: kl?.subcategory ?? "",
+    tags: kl?.tags ?? [],
+    region: kl?.region ?? "",
+    country: kl?.country ?? "",
+    topic_key: kl?.topic_key ?? "",
     is_demo: false,
   };
 }

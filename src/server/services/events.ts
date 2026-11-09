@@ -3,7 +3,7 @@ import { findTimeHints } from "@/lib/hints";
 import type { Queryable } from "../db/client";
 import { AppError, EDITABLE_FIELDS, type EventInput, type EventRow } from "../types";
 
-const JSON_COLUMNS = new Set(["sources", "checks", "research"]);
+const JSON_COLUMNS = new Set(["sources", "checks", "research", "tags"]);
 
 export async function getEvent(db: Queryable, id: string): Promise<EventRow | null> {
   return db.one<EventRow>("select * from events where id = $1", [id]);
@@ -33,7 +33,7 @@ function pickInput(e: EventInput | EventRow): EventInput {
 
 export async function createEvent(db: Queryable, input: EventInput, note = "Angelegt"): Promise<EventRow> {
   const cols = EDITABLE_FIELDS;
-  const values = cols.map((c) => (JSON_COLUMNS.has(c) ? JSON.stringify(input[c] ?? (c === "sources" ? [] : {})) : input[c]));
+  const values = cols.map((c) => (JSON_COLUMNS.has(c) ? JSON.stringify(input[c] ?? (c === "sources" || c === "tags" ? [] : {})) : input[c]));
   const placeholders = cols.map((c, i) => (JSON_COLUMNS.has(c) ? `$${i + 1}::jsonb` : `$${i + 1}`));
   try {
     const row = await db.one<EventRow>(`insert into events (${cols.join(",")}) values (${placeholders.join(",")}) returning *`, values);
@@ -202,6 +202,11 @@ export function emptyEventInput(): EventInput {
     research: {},
     knowledge_enabled: false,
     homepage_showcase: false,
+    subcategory: "",
+    tags: [],
+    region: "",
+    country: "",
+    topic_key: "",
     is_demo: false,
   };
 }

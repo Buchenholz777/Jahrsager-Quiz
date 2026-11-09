@@ -4,7 +4,9 @@ import type { CardDraft } from "@/server/pipeline/ai";
 import { blockEvent, pipelineStats } from "@/server/pipeline/admin";
 import { assess, parseCommonsDay, type AssessInput } from "@/server/pipeline/evaluate";
 import { evaluateLicense, type CommonsMeta } from "@/server/pipeline/license";
-import { planPacks, poolEvents } from "@/server/pipeline/plan";
+import { planPacks, poolEvents, toSel } from "@/server/pipeline/plan";
+import { packViolations, type SelEvent } from "@/server/pipeline/select";
+import { MAIN_CATEGORIES } from "@/lib/constants";
 import { processCandidate, type Deps } from "@/server/pipeline/process";
 import type { Candidate } from "@/server/pipeline/sources";
 import { createEvent } from "@/server/services/events";
@@ -34,6 +36,11 @@ const draft = (over: Partial<CardDraft> = {}): CardDraft => ({
   insufficient: false,
   category: "technik",
   difficulty: 2,
+  subcategory: "Test",
+  tags: ["test", "beispiel"],
+  region: "europa",
+  country: "Deutschland",
+  topic_key: "test",
   neutral_title: "Ein großer Moment",
   description: words(40),
   image_alt: "Ein Raumfahrzeug auf der Startrampe",
@@ -175,55 +182,76 @@ describe("Kandidatenverarbeitung", () => {
   });
 });
 
-const cats = ["politik", "technik", "sport", "gesellschaft", "kultur", "wissenschaft", "wirtschaft"];
+const cats12 = MAIN_CATEGORIES;
+const regionsCycle = ["europa", "nordamerika", "asien", "afrika", "suedamerika", "ozeanien", "global"];
+/** Synthetisches Pool-Ereignis (nur Testdaten): zyklisch verteilte Themenfelder, Regionen, Jahrzehnte, Schwierigkeiten. */
 async function poolEvent(db: Awaited<ReturnType<typeof createMemoryDb>>, i: number, over = {}) {
-  const e = await createEvent(db, eventInput({ category: cats[i % cats.length], correct_year: 1910 + ((i * 17) % 100), difficulty: i % 3 === 0 ? 3 : 1, image_status: "freigegeben", image_is_placeholder: false, is_demo: false, ...over }));
+  const cat = cats12[i % 12];
+  const e = await createEvent(
+    db,
+    eventInput({
+      category: cat,
+      correct_year: 1905 + ((i * 13) % 115),
+      difficulty: [1, 1, 2, 2, 3][i % 5],
+      region: regionsCycle[i % 7],
+      tags: [`thema-${i}`, `kat-${cat}`],
+      topic_key: `synthetisch-${i}`,
+      image_status: "freigegeben",
+      image_is_placeholder: false,
+      is_demo: false,
+      ...over,
+    }),
+  );
   await db.run("update events set status = 'freigegeben' where id = $1", [e.id]);
   return e;
 }
 
 describe("Paketplanung und Vorrat", () => {
-  it("plant nur aus dem geprüften Pool, nie mit Ungeprüftem aufgefüllt", async () => {
+  it("plant nur aus dem geprüften Pool, hält alle Vielfaltsregeln ein und füllt nie mit Ungeprüftem auf", async () => {
     const db = await createMemoryDb();
-    for (let i = 0; i < 12; i++) await poolEvent(db, i);
-    await poolEvent(db, 20, { image_status: "zu_pruefen" }); // Bild nicht freigegeben
-    await poolEvent(db, 21, { homepage_showcase: true }); // Startseite
-    const r = await planPacks(db, { days: 3, now: NOON });
-    expect(r.planned).toHaveLength(2); // 12 Ereignisse = 2 Pakete; Tag 3 fehlt
-    expect(r.missing).toHaveLength(1);
-    expect(r.stock).toBe(2);
-    const used = await db.query<{ slug: string; image_status: string; homepage_showcase: boolean }>(
-      "select e.slug, e.image_status, e.homepage_showcase from daily_pack_events pe join events e on e.id = pe.event_id",
+    for (let i = 0; i < 24; i++) await poolEvent(db, i);
+    await poolEvent(db, 40, { image_status: "zu_pruefen" }); // Bild nicht freigegeben
+    await poolEvent(db, 41, { homepage_showcase: true }); // Startseite
+    const r = await planPacks(db, { days: 4, now: NOON });
+    expect(r.planned.length).toBeGreaterThanOrEqual(2);
+    expect(r.planned.length + r.missing.length).toBe(4);
+    const rows = await db.query<Record<string, unknown>>(
+      "select p.pack_date::text as d, e.* from daily_pack_events pe join daily_packs p on p.id = pe.pack_id join events e on e.id = pe.event_id order by p.pack_date, pe.position",
     );
-    expect(used).toHaveLength(10);
-    expect(used.every((u) => u.image_status === "freigegeben" && !u.homepage_showcase)).toBe(true);
+    expect(rows.every((u) => u.image_status === "freigegeben" && !u.homepage_showcase)).toBe(true);
+    const hist: SelEvent[] = [];
+    for (const d of r.planned.sort()) {
+      const set = rows.filter((u) => u.d === d).map((u) => toSel(u as never));
+      expect(set).toHaveLength(5);
+      expect(packViolations(set, hist)).toEqual([]);
+      hist.push(...set);
+    }
     // wiederholter Lauf ändert nichts
-    const again = await planPacks(db, { days: 3, now: NOON });
+    const again = await planPacks(db, { days: 4, now: NOON });
     expect(again.planned).toEqual([]);
-    expect((await db.one<{ n: number }>("select count(*)::int as n from daily_packs"))!.n).toBe(2);
   });
-  it("wählt unterschiedliche Themenfelder und verwendet kein Ereignis zweimal", async () => {
+  it("veröffentlicht nichts, wenn keine regelkonforme Auswahl möglich ist (nur Raumfahrt im Pool)", async () => {
     const db = await createMemoryDb();
-    for (let i = 0; i < 35; i++) await poolEvent(db, i);
-    await planPacks(db, { days: 7, now: NOON });
-    const rows = await db.query<{ pack_id: string; category: string; event_id: string }>("select pe.pack_id, e.category, pe.event_id from daily_pack_events pe join events e on e.id = pe.event_id");
-    expect(new Set(rows.map((r) => r.event_id)).size).toBe(35);
-    for (const id of new Set(rows.map((r) => r.pack_id))) expect(new Set(rows.filter((r) => r.pack_id === id).map((r) => r.category)).size).toBeGreaterThanOrEqual(3);
+    for (let i = 0; i < 10; i++) await poolEvent(db, i * 12 + 11); // alle Themenfeld Raumfahrt
+    const r = await planPacks(db, { days: 2, now: NOON });
+    expect(r.planned).toEqual([]);
+    expect(r.missing).toHaveLength(2);
+    expect(r.warnings.join(" ")).toMatch(/Themenfeld|Raumfahrt/);
+    expect((await db.one<{ n: number }>("select count(*)::int as n from daily_packs"))!.n).toBe(0);
   });
 });
 
 describe("Sperre und Rückzug", () => {
   it("sperrt Ereignisse sofort, nimmt künftige Pakete zurück und entfernt sie aus der Startseite", async () => {
     const db = await createMemoryDb();
-    const evs = [];
-    for (let i = 0; i < 6; i++) evs.push(await poolEvent(db, i));
+    for (let i = 0; i < 24; i++) await poolEvent(db, i);
     await planPacks(db, { days: 1, now: NOON });
     const packEvent = (await db.one<{ event_id: string }>("select pe.event_id from daily_pack_events pe join daily_packs p on p.id = pe.pack_id where p.pack_date = '2026-11-08'"))!;
     // heutiges Paket ist aktiv: Sperre ändert das Paket nicht, Ereignis ist aber gesperrt (Bildauslieferung endet)
     await blockEvent(db, packEvent.event_id, "Bildrechte widerrufen");
     expect((await db.one<{ blocked: boolean }>("select blocked from events where id = $1", [packEvent.event_id]))!.blocked).toBe(true);
     // Startseiten-Ereignis wird nach Sperre nicht mehr gezeigt
-    const s = await poolEvent(db, 30, { homepage_showcase: true });
+    const s = await poolEvent(db, 50, { homepage_showcase: true });
     expect((await getShowcase(db, NOON)).hero.map((h) => h.slug)).toContain(s.slug);
     await blockEvent(db, s.id, "Fehler im Text");
     expect((await getShowcase(db, NOON)).hero).toEqual([]);

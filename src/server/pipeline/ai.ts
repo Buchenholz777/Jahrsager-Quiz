@@ -1,10 +1,15 @@
-import { CATEGORY_KEYS } from "@/lib/constants";
+import { CATEGORY_KEYS, REGIONS } from "@/lib/constants";
 import { findTimeHints } from "@/lib/hints";
 
 export interface CardDraft {
   insufficient: boolean;
   category: string;
   difficulty: number;
+  subcategory: string;
+  tags: string[];
+  region: string;
+  country: string;
+  topic_key: string;
   neutral_title: string;
   description: string;
   image_alt: string;
@@ -34,6 +39,9 @@ export function validateDraft(d: CardDraft, year: number): string[] {
   if (words(d.explanation_detail ?? "") < 8) p.push("„Ein Detail“ ist zu kurz.");
   if (!CATEGORY_KEYS.includes(d.category as never)) p.push(`Ungültiges Themenfeld: ${d.category}`);
   if (![1, 2, 3].includes(d.difficulty)) p.push("Ungültiger Schwierigkeitsgrad.");
+  if (!(d.region in REGIONS)) p.push(`Ungültige Region: ${d.region}`);
+  if (!Array.isArray(d.tags) || d.tags.length < 2) p.push("Mindestens zwei Schlagwörter erforderlich.");
+  if (!d.topic_key?.trim()) p.push("Themenschlüssel fehlt.");
   for (const [label, text] of [["Titel", d.neutral_title], ["Beschreibung", d.description], ["Alternativtext", d.image_alt]] as const) {
     if (!text?.trim()) p.push(`${label} fehlt.`);
     for (const h of findTimeHints(text ?? "")) p.push(`${label}: Zeitlicher Hinweis „${h.match}“.`);
@@ -47,9 +55,9 @@ const SYSTEM = `Du bist Redakteur eines historischen Bilderquiz. Du erhältst ei
 Regeln: Verwende ausschließlich Informationen aus dem Auszug und dem sichtbaren Bildinhalt. Erfinde nichts. Reicht der Auszug für die geforderten Texte nicht aus, setze "insufficient": true.
 Vor dem Tipp sichtbare Felder (neutral_title, description, image_alt) dürfen KEINE Jahreszahl, kein Datum, keinen Jahrzehnt- oder Jahrhundertbezug und keine zeitlich verräterischen Epochennamen enthalten.
 description: 30-55 Wörter, beschreibt neutral, was auf dem Bild zu sehen ist und worum es geht. explanation_what: 60-100 Wörter, Auflösung "Was geschah?". explanation_why: Bedeutung. explanation_detail: ein interessantes Detail aus dem Auszug.
-category aus: ${CATEGORY_KEYS.join(", ")}. difficulty: 1 (bekannt), 2 (mittel), 3 (knifflig).
+category aus: ${CATEGORY_KEYS.join(", ")}. difficulty: 1 (bekannt), 2 (mittel), 3 (knifflig). Nutze Raumfahrt NUR für echte Raumfahrt-/Astronomieereignisse. region aus: ${Object.keys(REGIONS).join(", ")}; country: deutscher Ländername oder leer; subcategory: kurzer Begriff; tags: 2-5 kleingeschriebene Schlagwörter; topic_key: kurzer Schlüssel für das konkrete Thema (z. B. "apollo", "olympia-1936"), damit ähnliche Ereignisse erkannt werden.
 image_check: Beurteile ehrlich, ob das Foto das Ereignis zeigt ("yes"/"no"/"unclear"), ob Personen erkennbar sind, ob Beschriftung oder Datum im Bild das Jahr verrät, ob die Qualität reicht.
-Antworte NUR mit einem JSON-Objekt mit genau diesen Feldern: insufficient, category, difficulty, neutral_title, description, image_alt, public_title, explanation_what, explanation_why, explanation_detail, image_check{matches_event, persons_visible, caption_or_date_visible, quality_ok, note}.`;
+Antworte NUR mit einem JSON-Objekt mit genau diesen Feldern: insufficient, category, difficulty, subcategory, tags, region, country, topic_key, neutral_title, description, image_alt, public_title, explanation_what, explanation_why, explanation_detail, image_check{matches_event, persons_visible, caption_or_date_visible, quality_ok, note}.`;
 
 export async function draftCard(
   input: { title: string; date: string; extract: string; imageJpegBase64: string },

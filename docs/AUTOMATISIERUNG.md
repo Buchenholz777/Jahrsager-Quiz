@@ -46,3 +46,22 @@ Hängt vollständig vom Vorrat ab. Heute: **0 automatisch freigegebene Ereigniss
 
 ## Einrichtung (einmalig, durch Sie)
 GitHub → Repository → Settings → Secrets and variables → Actions: `DATABASE_URL`, `SUPABASE_SERVICE_KEY`, `ANTHROPIC_API_KEY`. Danach Actions → „Redaktion" → *Run workflow*.
+
+---
+
+## Vielfalt und Auswahlalgorithmus (9. November 2026)
+
+**Datenmodell** (Migration `20261109000002_vielfalt.sql`): `category` (zwölf Themenfelder: Politik, Gesellschaft, Sport, Musik & Popkultur, Film & Fernsehen, Wissenschaft, Technik, Architektur, Natur & Umwelt, Wirtschaft, Entdeckungen, Raumfahrt & Astronomie; Altwert „kultur“ bleibt gültig), `subcategory`, `tags`, `region` (Europa, Nordamerika, Südamerika, Afrika, Asien, Ozeanien, global), `country`, `topic_key` (Ähnlichkeit); das Jahrzehnt folgt aus dem Ereignisjahr. Bestehende Ereignisse wurden zugeordnet (`npm run reklassifizieren`, ändert nur diese Metadaten; keine Texte, Bilder, Pakete oder Spielstände). Vor dem Umbau war der Bestand 8 von 16 Ereignissen Raumfahrt.
+
+**Harte Regeln je Tagesrätsel** (`src/server/pipeline/select.ts`): ≥ 4 Themenfelder, ≤ 2 je Themenfeld, ≥ 3 Jahrzehnte, keine Region mit ≥ 3 von 5 (ohne „global“), höchstens 1 Raumfahrtereignis je Paket und höchstens 1 je 20 Ereignisse (zählt Kategorie **und** Schlagwort „raumfahrt“), keine ähnlichen Ereignisse (gleicher Themenschlüssel oder ≥ 2 gemeinsame Schlagwörter) im Paket und in den letzten 10 Ereignissen, Schwierigkeit 2 leicht / 2 mittel / 1 schwer (nur wenn nicht erreichbar, gelockert und protokolliert), keine Wiederholung. Ist keine regelkonforme Auswahl möglich, wird **nichts** geplant; das Dashboard und der Lauf warnen mit Gründen.
+
+**Gewichtung der übrigen Auswahl:** Bevorzugt werden unterrepräsentierte Themenfelder (Ziel gleich verteilt, Raumfahrt 5 %), Regionen (Ziel Europa 30, Nordamerika 20, Asien 20, Afrika 10, Südamerika 10, Ozeanien 5, global 5 %), Jahrzehnte (gleich verteilt) und bessere Bildqualität; Wissenschaft + Technik werden ab 25 % Gesamtanteil gebremst. Die Gewichtung nutzt die letzten 60 Ereignisse aus Veröffentlichungen und Planung.
+
+**Dashboard:** Admin → *Automatik* zeigt Verteilung nach Themenfeldern, Regionen und Jahrzehnten (Bestand und letzte 30 Tage), Raumfahrtanteil, Wissenschaft + Technik, ähnliche Ereignisse, Vorrat, Läufe. Admin → *Freigabe* ist der Freigabe-Assistent für Ausnahmefälle (Bild neben Urheber, Lizenz, Quelle und Prüfgründen; Freigabe nur mit drei Bestätigungen; Startseiten-Schalter).
+
+**Simulation** (`docs/AUSWAHL-SIMULATION.md`, `npm run simulate:auswahl`): 30 Tage / 150 Plätze mit **synthetischen** Metadaten. Ausgewogener Pool: Raumfahrt 3,3 % der Auswahl, Wissenschaft + Technik 16,7 %. Einseitiger Pool (28 % Raumfahrt): Raumfahrt 4,0 % der Auswahl, Wissenschaft + Technik 29,3 %. Keine Regelverstöße, kein unplanbarer Tag. **Das beweist die Regeltreue des Algorithmus, nicht das Vorhandensein von 150 echten, freigegebenen Ereignissen.**
+
+### Ehrlicher Stand
+* **Echter Bestand:** 16 Ereignisse (6 automatisch freigegeben, 10 Entwürfe). Der Pool reicht für **kein** regelkonformes Tagesrätsel mehr; das erste Paket (heute) wurde vor den neuen Regeln geplant und enthält 4 Raumfahrt-/Technikereignisse. Es bleibt bestehen (bereits veröffentlicht).
+* **Nicht umgesetzt:** (a) quoten-gesteuerte Themenrecherche (die automatische Recherche sucht weiterhin über Wikidata-Ereignistypen, nicht gezielt je Themenfeld); (b) weitere Bildquellen (Europeana, Library of Congress, Bundesarchiv, Deutsche Digitale Bibliothek) – sie brauchen teils API-Schlüssel und je eigene, fachlich zu prüfende Lizenzregeln; (c) „Eignung als Bilderrätsel“ und „historische Bedeutung“ als Bewertungsmerkmale (bisher nur Bildqualität); (d) Personen-Häufigkeit (nur über Schlagwörter/Themenschlüssel erfassbar).
+* Der Freigabe-Assistent und das erweiterte Dashboard sind **nicht im Browser geprüft**.

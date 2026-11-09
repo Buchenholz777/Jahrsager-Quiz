@@ -93,6 +93,11 @@ export interface EventRow {
   research: Research;
   knowledge_enabled: boolean;
   homepage_showcase: boolean;
+  subcategory: string;
+  tags: string[];
+  region: string;
+  country: string;
+  topic_key: string;
   pipeline_state: "candidate" | "checking" | "auto_approved" | "manual_review" | "rejected" | null;
   source_id: string | null;
   blocked: boolean;
@@ -138,6 +143,11 @@ export const EDITABLE_FIELDS = [
   "research",
   "knowledge_enabled",
   "homepage_showcase",
+  "subcategory",
+  "tags",
+  "region",
+  "country",
+  "topic_key",
   "is_demo",
 ] as const;
 export type EditableField = (typeof EDITABLE_FIELDS)[number];

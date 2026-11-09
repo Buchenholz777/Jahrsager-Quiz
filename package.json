@@ -25,7 +25,9 @@
     "preview:cf": "npm run build && wrangler pages dev dist",
     "import:redaktion": "tsx scripts/import-redaktion.ts",
     "pipeline": "tsx scripts/pipeline.ts",
-    "import:kuratiert": "tsx scripts/import-kuratiert.ts"
+    "import:kuratiert": "tsx scripts/import-kuratiert.ts",
+    "simulate:auswahl": "tsx scripts/simulate-auswahl.ts",
+    "reklassifizieren": "tsx scripts/reklassifizieren.ts"
   },
   "dependencies": {
     "@electric-sql/pglite": "^0.5.15",

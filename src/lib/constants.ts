@@ -12,15 +12,39 @@ export const PENALTY_PER_YEAR = 50;
 
 export const CATEGORIES = {
   politik: "Politik",
+  gesellschaft: "Gesellschaft",
+  sport: "Sport",
+  musik: "Musik & Popkultur",
+  film: "Film & Fernsehen",
   wissenschaft: "Wissenschaft",
   technik: "Technik",
-  gesellschaft: "Gesellschaft",
-  kultur: "Kultur",
-  sport: "Sport",
+  architektur: "Architektur",
+  natur: "Natur & Umwelt",
   wirtschaft: "Wirtschaft",
+  entdeckung: "Entdeckungen",
+  raumfahrt: "Raumfahrt & Astronomie",
+  kultur: "Kultur", // Altwert aus der ersten Version; neue Ereignisse nutzen Musik oder Film
 } as const;
 export type CategoryKey = keyof typeof CATEGORIES;
 export const CATEGORY_KEYS = Object.keys(CATEGORIES) as CategoryKey[];
+
+/** Zwölf Hauptthemenfelder der Auswahl (Altwert „kultur“ zählt zu Film). */
+export const CATEGORY_GROUP: Record<CategoryKey, CategoryKey> = {
+  politik: "politik", gesellschaft: "gesellschaft", sport: "sport", musik: "musik", film: "film", wissenschaft: "wissenschaft",
+  technik: "technik", architektur: "architektur", natur: "natur", wirtschaft: "wirtschaft", entdeckung: "entdeckung", raumfahrt: "raumfahrt", kultur: "film",
+};
+export const MAIN_CATEGORIES = CATEGORY_KEYS.filter((k) => k !== "kultur");
+
+export const REGIONS = {
+  europa: "Europa",
+  nordamerika: "Nordamerika",
+  suedamerika: "Südamerika",
+  afrika: "Afrika",
+  asien: "Asien",
+  ozeanien: "Ozeanien",
+  global: "International/global",
+} as const;
+export type RegionKey = keyof typeof REGIONS;
 
 export const EVENT_STATUSES = ["entwurf", "in_pruefung", "freigegeben", "eingeplant", "veroeffentlicht"] as const;
 export type EventStatus = (typeof EVENT_STATUSES)[number];

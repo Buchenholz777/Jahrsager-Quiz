@@ -6,7 +6,9 @@
       "date": "1944-06-06",
       "commonsFile": "Infantry landing craft approach Omaha Beach in June 1944.jpg",
       "article": "Landung in der Normandie",
-      "extra_sources": ["https://www.archives.gov/education/lessons/d-day"],
+      "extra_sources": [
+        "https://www.archives.gov/education/lessons/d-day"
+      ],
       "draft": {
         "insufficient": false,
         "category": "politik",
@@ -18,7 +20,22 @@
         "explanation_what": "Mit der Operation Overlord begann am 6. Juni 1944 die Landung der Westalliierten an der französischen Küste des Ärmelkanals östlich von Cherbourg in der Normandie. Die Landung erfolgte vorwiegend mit Hilfe von Schiffen und massiver Luftunterstützung. Bis zum 12. Juni kamen laut der Quelle 326.000 Mann, 104.000 Tonnen Material und 54.000 Fahrzeuge an Land. Der erste Tag wird auch D-Day oder der längste Tag genannt. Damit entstand im Westen Europas die zweite Front gegen das Deutsche Reich.",
         "explanation_why": "Die erfolgreiche Landung brachte der Sowjetunion die seit Langem geforderte Entlastung der Roten Armee im Kampf gegen die Wehrmacht.",
         "explanation_detail": "Die deutsche Führung hatte an der Atlantikküste den Atlantikwall errichtet und rechnete wegen der alliierten Täuschungsoperation Fortitude mit einer Invasion weiter östlich am Pas-de-Calais.",
-        "image_check": { "matches_event": "yes", "persons_visible": false, "caption_or_date_visible": false, "quality_ok": true, "note": "Sichtprüfung in der Redaktionssitzung: Landungsboote und Rauch, keine erkennbaren Personen, keine Beschriftung im Bild." }
+        "image_check": {
+          "matches_event": "yes",
+          "persons_visible": false,
+          "caption_or_date_visible": false,
+          "quality_ok": true,
+          "note": "Sichtprüfung in der Redaktionssitzung: Landungsboote und Rauch, keine erkennbaren Personen, keine Beschriftung im Bild."
+        },
+        "subcategory": "Zweiter Weltkrieg",
+        "region": "europa",
+        "country": "Frankreich",
+        "topic_key": "d-day",
+        "tags": [
+          "weltkrieg",
+          "invasion",
+          "d-day"
+        ]
       }
     },
     {
@@ -26,10 +43,12 @@
       "date": "1969-07-16",
       "commonsFile": "Apollo 11 Launch - GPN-2000-000630.jpg",
       "article": "Apollo 11",
-      "extra_sources": ["https://www.nasa.gov/mission/apollo-11/"],
+      "extra_sources": [
+        "https://www.nasa.gov/mission/apollo-11/"
+      ],
       "draft": {
         "insufficient": false,
-        "category": "technik",
+        "category": "raumfahrt",
         "difficulty": 1,
         "neutral_title": "Eine Rakete verlässt die Startrampe",
         "description": "Eine riesige, mehrstufige Rakete steigt an der Küste Floridas von ihrer Startrampe auf, aus ihrem Fuß schlagen Flammen und Rauch. Neben ihr steht ein hoher Gittermast. An Bord befinden sich drei Astronauten, deren Ziel der Erdtrabant ist.",
@@ -38,7 +57,22 @@
         "explanation_what": "Am 16. Juli 1969 starteten die Astronauten Neil Armstrong, Edwin „Buzz“ Aldrin und Michael Collins mit einer Saturn-V-Rakete vom Launch Complex 39A des Kennedy Space Center in Florida. Sie erreichten am 19. Juli die Mondumlaufbahn. Am nächsten Tag setzten Armstrong und Aldrin mit der Mondlandefähre Eagle auf dem Mond auf, während Collins im Kommandomodul Columbia zurückblieb. Armstrong betrat als erster Mensch den Mond.",
         "explanation_why": "Mit Apollo 11 erreichte die NASA das von Präsident John F. Kennedy vorgegebene Ziel, noch vor Ende des Jahrzehnts einen Menschen zum Mond und wieder sicher zurück zur Erde zu bringen.",
         "explanation_detail": "Mit Apollo 11 wurden erstmals Gesteinsproben von einem anderen Himmelskörper zur Erde geholt, und weltweit verfolgten rund 600 Millionen Menschen die Fernsehübertragung.",
-        "image_check": { "matches_event": "yes", "persons_visible": false, "caption_or_date_visible": false, "quality_ok": true, "note": "Sichtprüfung in der Redaktionssitzung: Saturn-V-Start mit Gittermast, keine Personen, keine Beschriftung." }
+        "image_check": {
+          "matches_event": "yes",
+          "persons_visible": false,
+          "caption_or_date_visible": false,
+          "quality_ok": true,
+          "note": "Sichtprüfung in der Redaktionssitzung: Saturn-V-Start mit Gittermast, keine Personen, keine Beschriftung."
+        },
+        "subcategory": "Mondprogramm",
+        "region": "nordamerika",
+        "country": "USA",
+        "topic_key": "apollo",
+        "tags": [
+          "raumfahrt",
+          "apollo",
+          "mond"
+        ]
       }
     },
     {
@@ -46,10 +80,12 @@
       "date": "1972-12-07",
       "commonsFile": "Apollo 17 Night Launch - GPN-2000-001150.jpg",
       "article": "Apollo 17",
-      "extra_sources": ["https://www.nasa.gov/mission/apollo-17/"],
+      "extra_sources": [
+        "https://www.nasa.gov/mission/apollo-17/"
+      ],
       "draft": {
         "insufficient": false,
-        "category": "wissenschaft",
+        "category": "raumfahrt",
         "difficulty": 2,
         "neutral_title": "Ein Start im Dunkeln",
         "description": "Eine große Rakete hebt in tiefer Dunkelheit ab und beleuchtet mit ihren Flammen Rauchwolken, Wasser und Boden. Es war der erste Start dieser Art in der bemannten Raumfahrt des Landes. An Bord befanden sich drei Männer, die später auf einem anderen Himmelskörper arbeiten sollten.",
@@ -58,7 +94,22 @@
         "explanation_what": "Apollo 17 startete am 7. Dezember 1972 um 00:33 Uhr Eastern Standard Time vom Kennedy Space Center in Florida. Es war der erste Nachtstart in der bemannten US-amerikanischen Raumfahrt. An Bord waren Kommandant Eugene Cernan, Ron Evans und Harrison „Jack“ Schmitt. Cernan und Schmitt verbrachten etwas mehr als drei Tage im Taurus-Littrow-Tal auf dem Mond, während Evans im Mondorbit blieb. Sie unternahmen drei Außenbordeinsätze und sammelten Mondgestein.",
         "explanation_why": "Mit Apollo 17 landeten zum sechsten und vorerst letzten Mal Menschen auf dem Mond. Es war der elfte bemannte und letzte Flug des Apollo-Programms.",
         "explanation_detail": "Der Landeplatz wurde mit dem vorrangigen Ziel gewählt, Mondgestein aus einem Hochland zu untersuchen, das älter ist als die Folgen der Entstehung des Mare Imbrium.",
-        "image_check": { "matches_event": "yes", "persons_visible": false, "caption_or_date_visible": false, "quality_ok": true, "note": "Sichtprüfung in der Redaktionssitzung: Nachtstart, keine Personen, keine Beschriftung." }
+        "image_check": {
+          "matches_event": "yes",
+          "persons_visible": false,
+          "caption_or_date_visible": false,
+          "quality_ok": true,
+          "note": "Sichtprüfung in der Redaktionssitzung: Nachtstart, keine Personen, keine Beschriftung."
+        },
+        "subcategory": "Mondprogramm",
+        "region": "nordamerika",
+        "country": "USA",
+        "topic_key": "apollo",
+        "tags": [
+          "raumfahrt",
+          "apollo",
+          "mond"
+        ]
       }
     },
     {
@@ -66,10 +117,12 @@
       "date": "1977-09-05",
       "commonsFile": "Voyager 1 Launch.jpg",
       "article": "Voyager 1",
-      "extra_sources": ["https://science.nasa.gov/mission/voyager/"],
+      "extra_sources": [
+        "https://science.nasa.gov/mission/voyager/"
+      ],
       "draft": {
         "insufficient": false,
-        "category": "wissenschaft",
+        "category": "raumfahrt",
         "difficulty": 2,
         "neutral_title": "Eine Sonde auf dem Weg ins Unbekannte",
         "description": "Eine schlanke Rakete mit seitlichen Zusatzantrieben steigt in einer Wolke aus Dampf und Rauch von ihrer Rampe auf. Das Schwarz-Weiß-Foto zeigt den Moment des Starts einer unbemannten Forschungssonde, die das äußere Sonnensystem erkunden sollte.",
@@ -78,7 +131,21 @@
         "explanation_what": "Voyager 1 wurde am 5. September 1977 vom Space Launch Complex 41 auf Cape Canaveral mit einer Titan-IIIE-Centaur-Rakete gestartet. Die Raumsonde der NASA sollte das äußere Planetensystem erforschen. Voyager 2 war bereits 16 Tage früher auf einer anderen Flugbahn gestartet. Voyager 1 flog zunächst Jupiter und Saturn an und trat am 25. August 2012 als erstes von Menschen geschaffenes Objekt in den interstellaren Raum ein.",
         "explanation_why": "Die Mission gilt als einer der größten Erfolge der NASA und der Raumfahrt allgemein. Voyager 1 ist das am weitesten von der Erde entfernte von Menschen gebaute Objekt.",
         "explanation_detail": "Die Sonde sendet noch heute regelmäßig Daten zur Erde.",
-        "image_check": { "matches_event": "yes", "persons_visible": false, "caption_or_date_visible": false, "quality_ok": true, "note": "Sichtprüfung in der Redaktionssitzung: Titan-Centaur-Start, keine Personen, keine Beschriftung." }
+        "image_check": {
+          "matches_event": "yes",
+          "persons_visible": false,
+          "caption_or_date_visible": false,
+          "quality_ok": true,
+          "note": "Sichtprüfung in der Redaktionssitzung: Titan-Centaur-Start, keine Personen, keine Beschriftung."
+        },
+        "subcategory": "Raumsonden",
+        "region": "nordamerika",
+        "country": "USA",
+        "topic_key": "raumsonden",
+        "tags": [
+          "raumfahrt",
+          "raumsonde"
+        ]
       }
     },
     {
@@ -86,10 +153,12 @@
       "date": "1997-10-15",
       "commonsFile": "Titan IV with Cassini-Huygens launches with Liberty Star vessel in foreground.jpg",
       "article": "Cassini-Huygens",
-      "extra_sources": ["https://science.nasa.gov/mission/cassini/"],
+      "extra_sources": [
+        "https://science.nasa.gov/mission/cassini/"
+      ],
       "draft": {
         "insufficient": false,
-        "category": "wissenschaft",
+        "category": "raumfahrt",
         "difficulty": 3,
         "neutral_title": "Nächtlicher Start mit Schiff im Vordergrund",
         "description": "In der Nacht steigt eine Rakete über einer Küste auf und zieht eine leuchtende Spur in den Himmel. Im Vordergrund liegt ein beleuchtetes Schiff. An Bord befinden sich zwei gekoppelte Raumsonden, die ein fernes Planetensystem erforschen sollen.",
@@ -98,7 +167,22 @@
         "explanation_what": "Cassini-Huygens startete am 15. Oktober 1997 vom Launch Complex 40 auf Cape Canaveral mit einer Titan-IVB-Rakete. Die Mission bestand aus zwei Sonden zur Erforschung des Saturn und seiner Monde: dem NASA-Orbiter Cassini und dem von der ESA beauftragten Lander Huygens. Cassini schwenkte am 1. Juli 2004 in die Umlaufbahn um den Saturn ein, Huygens landete am 14. Januar 2005 auf dem Mond Titan. Die Mission endete am 15. September 2017 mit dem geplanten Absturz in den Saturn.",
         "explanation_why": "Der Orbiter lieferte mit seiner umfangreichen Ausstattung an wissenschaftlichen Instrumenten viele neue, teils revolutionäre Erkenntnisse über den Saturn und seine Monde.",
         "explanation_detail": "Huygens sendete 72 Minuten lang Daten, die das Verständnis über den Mond Titan deutlich verbesserten.",
-        "image_check": { "matches_event": "yes", "persons_visible": false, "caption_or_date_visible": false, "quality_ok": true, "note": "Sichtprüfung in der Redaktionssitzung: Nachtstart einer Titan-IV, beleuchtetes Schiff, keine erkennbaren Personen, keine Beschriftung." }
+        "image_check": {
+          "matches_event": "yes",
+          "persons_visible": false,
+          "caption_or_date_visible": false,
+          "quality_ok": true,
+          "note": "Sichtprüfung in der Redaktionssitzung: Nachtstart einer Titan-IV, beleuchtetes Schiff, keine erkennbaren Personen, keine Beschriftung."
+        },
+        "subcategory": "Raumsonden",
+        "region": "global",
+        "country": "",
+        "topic_key": "raumsonden",
+        "tags": [
+          "raumfahrt",
+          "raumsonde",
+          "saturn"
+        ]
       }
     },
     {
@@ -106,10 +190,12 @@
       "date": "1986-01-28",
       "commonsFile": "STS-51-L.jpg",
       "article": "Space Shuttle Challenger",
-      "extra_sources": ["https://history.nasa.gov/sts51l.html"],
+      "extra_sources": [
+        "https://history.nasa.gov/sts51l.html"
+      ],
       "draft": {
         "insufficient": false,
-        "category": "technik",
+        "category": "raumfahrt",
         "difficulty": 2,
         "neutral_title": "Ein Raumtransporter hebt ab",
         "description": "Ein geflügeltes Raumfahrzeug hebt mit zwei seitlichen Raketen von seiner Startrampe ab, begleitet von Rauchwolken und Flammen. Über der Szene fliegt ein Schwarm Vögel. Das Foto zeigt den Beginn eines Fluges, der nicht wie geplant endete.",
@@ -118,7 +204,22 @@
         "explanation_what": "Das Space Shuttle Challenger der NASA absolvierte zwischen April 1983 und Januar 1986 zehn Raumflüge. Beim Challenger-Unglück am 28. Januar 1986 wurde die Raumfähre kurz nach dem Start aufgrund eines Defekts an den Feststoffraketen zerstört, wobei ihre Besatzung ums Leben kam. Das Foto zeigt den Start der Mission an diesem Tag. Die interne Bezeichnung der Raumfähre lautete OV-099, und sie war ursprünglich als Plattform für Bodentests gebaut worden.",
         "explanation_why": "Das Unglück zeigte, wie ein Defekt an den Feststoffraketen eine ganze Raumfähre samt Besatzung zerstören konnte.",
         "explanation_detail": "Für Einsätze im Weltraum wurde die Challenger erst nachträglich umgerüstet.",
-        "image_check": { "matches_event": "yes", "persons_visible": false, "caption_or_date_visible": false, "quality_ok": true, "note": "Sichtprüfung in der Redaktionssitzung: Shuttle-Start mit Vögeln, keine Personen, keine Beschriftung. Sensibles Thema (Unglück mit Todesopfern); Text bleibt sachlich." }
+        "image_check": {
+          "matches_event": "yes",
+          "persons_visible": false,
+          "caption_or_date_visible": false,
+          "quality_ok": true,
+          "note": "Sichtprüfung in der Redaktionssitzung: Shuttle-Start mit Vögeln, keine Personen, keine Beschriftung. Sensibles Thema (Unglück mit Todesopfern); Text bleibt sachlich."
+        },
+        "subcategory": "Space Shuttle",
+        "region": "nordamerika",
+        "country": "USA",
+        "topic_key": "space-shuttle",
+        "tags": [
+          "raumfahrt",
+          "space-shuttle",
+          "unglueck"
+        ]
       }
     }
   ]

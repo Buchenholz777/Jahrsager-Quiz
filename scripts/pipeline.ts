@@ -72,7 +72,7 @@ try {
     await logRun(db, "plan", async () => {
       const r = await planPacks(db, { days: arg("days", 14) });
       console.log(`Pakete geplant: ${r.planned.join(", ") || "–"}; ohne ausreichenden Pool: ${r.missing.join(", ") || "–"}; Vorrat ${r.stock} (${r.stockDays} Tage).`);
-      if (r.missing.length) console.warn("WARNUNG: Vorrat zu klein für alle geplanten Tage.");
+      if (r.missing.length) console.warn(["WARNUNG: Für manche Tage ist keine regelkonforme Auswahl möglich:", ...r.warnings].join(String.fromCharCode(10)));
       return r;
     });
   }
