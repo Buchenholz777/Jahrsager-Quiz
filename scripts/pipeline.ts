@@ -91,6 +91,10 @@ try {
       }
       const after = (await poolEvents(db)).length;
       console.log(`Vorrat: ${before} → ${after} (Ziel ${target}); KI-Aufrufe: ${aiCalls}.`, stats);
+      // Gründe je Kandidat (gekürzt), damit im Protokoll sichtbar ist, woran die Ausbeute scheitert
+      const reasons = new Map<string, number>();
+      for (const o of outcomes) for (const r of o.reason.split(" | ")) reasons.set(`${o.decision}: ${r.slice(0, 110)}`, (reasons.get(`${o.decision}: ${r.slice(0, 110)}`) ?? 0) + 1);
+      for (const [r, n] of [...reasons].sort((x, y) => y[1] - x[1]).slice(0, 15)) console.log(`  ${n}× ${r}`);
       return { before, after, target, aiCalls, ...stats, apiKey: Boolean(apiKey) };
     });
   }
