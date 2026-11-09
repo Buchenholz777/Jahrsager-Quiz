@@ -75,7 +75,7 @@ export function HomeCta({ variant }: { variant: string }) {
         ) : s?.state === "laufend" ? (
           `Weiter mit Ereignis ${s.answered + 1} von 5`
         ) : (
-          "Kostenlos · Ohne Anmeldung"
+          "Kostenlos · Ohne Anmeldung · Jeden Tag neu"
         )}
       </p>
       {s?.openOlder && (

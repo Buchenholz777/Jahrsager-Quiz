@@ -34,8 +34,8 @@ export default async function HomePage() {
   return (
     <>
       <section className="hero-bg relative overflow-hidden text-paper" data-hero-variant={variant}>
-        <div className="mx-auto grid max-w-6xl grid-cols-[minmax(0,1fr)] items-center gap-9 px-4 pb-14 pt-6 sm:px-6 md:pt-10 lg:grid-cols-[1.05fr_1fr] lg:gap-12 lg:pb-20 lg:pt-14">
-          <div>
+        <div className="mx-auto grid max-w-6xl grid-cols-[minmax(0,1fr)] items-center gap-6 px-4 pb-12 pt-6 sm:px-6 md:pt-10 lg:grid-cols-[1.05fr_1fr] lg:gap-x-12 lg:gap-y-0 lg:pb-20 lg:pt-14">
+          <div className="lg:col-start-1 lg:row-start-1 lg:self-end">
             <p className="text-xs font-bold uppercase tracking-[0.18em] text-sun sm:text-sm">Das tägliche Geschichtsquiz</p>
             <h1 className="mt-3 text-[2.35rem] font-extrabold leading-[1.06] text-paper sm:text-5xl lg:text-[3.5rem]">
               <span className="sr-only">JAHRSAGER – </span>
@@ -51,9 +51,12 @@ export default async function HomePage() {
               </span>
             </h1>
             <p className="mt-5 max-w-lg text-[1.05rem] leading-relaxed text-paper/90 sm:text-lg">
-              Erkennst du, wann Geschichte geschrieben wurde? Schätze fünf historische Momente und sammle bis zu 5.000 Punkte.
+              Erkennst du die großen Momente der Weltgeschichte? Schätze das richtige Jahr, entdecke spannende Hintergründe und sammle bis zu 5.000 Punkte.
             </p>
-            <div className="mt-6">
+          </div>
+          <HeroCollage events={showcase.hero} />
+          <div className="lg:col-start-1 lg:row-start-2 lg:self-start">
+            <div className="mt-0 lg:mt-6">
               <HomeCta variant={variant} />
             </div>
             <p className="mt-5 flex flex-wrap items-center gap-x-3 text-sm font-medium text-paper/80">
@@ -62,7 +65,6 @@ export default async function HomePage() {
               <span>Bis zu 5.000 Punkte</span>
             </p>
           </div>
-          <HeroCollage events={showcase.hero} />
         </div>
       </section>
 
