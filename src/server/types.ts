@@ -53,6 +53,8 @@ export interface Research {
   image?: ImageCandidate;
   factsStatus?: "primaerquellen" | "teilweise_hilfsquellen";
   openPoints?: string[];
+  /** Rechtedaten und Bildnachweis (src/lib/bildrechte.ts) */
+  bildrechte?: import("@/lib/bildrechte").ImageRights;
 }
 
 export interface EventRow {

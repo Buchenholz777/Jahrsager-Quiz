@@ -107,6 +107,9 @@ function toMeta(file: string, i: ImageInfo): CommonsMeta {
     copyrighted: m.Copyrighted?.value === undefined ? null : /true/i.test(m.Copyrighted.value),
     restrictions: v("Restrictions"),
     categories: v("Categories").split("|").map((s) => s.trim()).filter(Boolean),
+    title: v("ObjectName"),
+    attribution: v("Attribution"),
+    attributionRequired: m.AttributionRequired?.value === undefined ? null : /true/i.test(m.AttributionRequired.value),
   };
 }
 

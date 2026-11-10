@@ -6,6 +6,7 @@ import { draftCard, type CardDraft } from "./ai";
 import { assess, type Assessment } from "./evaluate";
 import type { CommonsMeta } from "./license";
 import { auditEntry } from "./license";
+import { AUTO_TECHNICAL_EDITS, buildAttribution } from "@/lib/bildrechte";
 import { allowedSource, type Candidate, type WikiInfo } from "./sources";
 
 /** Austauschbare Abhängigkeiten (Netzwerk, Bildverarbeitung, KI) – in Tests durch Attrappen ersetzt. */
@@ -88,10 +89,9 @@ export async function processCandidate(db: Queryable, c: Candidate, deps: Deps, 
     ...external.map((u) => ({ label: new URL(u).hostname.replace(/^www\./, ""), url: u })),
     { label: `Wikidata ${c.sourceId}`, url: `https://www.wikidata.org/wiki/${c.sourceId}` },
   ];
-  // Commons-Credit-Felder enthalten oft lange URLs/Wayback-Hinweise: nur kurze, URL-freie Angaben in den Nachweis übernehmen.
-  const creditExtra = meta.credit && meta.credit.length <= 100 && !/https?:|wayback/i.test(meta.credit) ? meta.credit : "";
-  const credit = [meta.artist, creditExtra].filter(Boolean).join(" / ");
-  const creditShort = [meta.artist || meta.credit, meta.license].filter(Boolean).join(" · ").slice(0, 80);
+  // Bildnachweis zentral aus den gespeicherten Rechtedaten erzeugen (src/lib/bildrechte.ts)
+  const attribution = buildAttribution(a.rights);
+  const creditShort = attribution.short;
   const auto = a.decision === "auto_approved";
   const input: EventInput = {
     ...emptyEventInput(),
@@ -121,11 +121,12 @@ export async function processCandidate(db: Queryable, c: Candidate, deps: Deps, 
     image_height: img.height,
     image_photographer: meta.artist,
     image_institution: meta.credit,
-    image_credit_full: `${credit}${credit ? ", " : ""}${meta.license}, über Wikimedia Commons`,
+    image_credit_full: `${attribution.full}, über Wikimedia Commons`,
     image_license: meta.license,
     image_license_url: meta.licenseUrl,
     image_source_url: meta.pageUrl,
-    image_edits: "Automatischer Import: skaliert auf max. 2000 px Breite, in WebP konvertiert, Metadaten entfernt.",
+    image_edits: "Automatischer Import: " + AUTO_TECHNICAL_EDITS.join(" "),
+    research: { bildrechte: a.rights },
     checks: auto ? { rights: true, facts: true, photoMatchesEvent: true } : {},
     image_status: auto ? "freigegeben" : "zu_pruefen",
   };

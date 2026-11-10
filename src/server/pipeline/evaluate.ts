@@ -1,9 +1,41 @@
 import type { AuditEntry } from "../types";
 import type { CardDraft } from "./ai";
 import { validateDraft } from "./ai";
-import { auditEntry, evaluateLicense, type CommonsMeta } from "./license";
+import { AUTO_TECHNICAL_EDITS, buildAttribution, classifyEdits, type ImageEdits, type ImageRights, type RightsStatus } from "@/lib/bildrechte";
+import { auditEntry, evaluateLicense, parseCreativeCommons, type CommonsMeta, type LicenseDecision } from "./license";
 
 export type PipelineDecision = "auto_approved" | "manual_review" | "rejected";
+
+/** Die drei fachlichen Statuskategorien (siehe docs/LIZENZPOLITIK.md). */
+export const DECISION_STATUS: Record<PipelineDecision, RightsStatus> = {
+  auto_approved: "automatisch_freigabefaehig",
+  manual_review: "rechtepruefung_erforderlich",
+  rejected: "abgelehnt",
+};
+
+/** Baut die Rechtedaten eines Bildes aus den Commons-Metadaten und der Lizenzentscheidung (Status wird von assess() gesetzt). */
+export function buildRights(meta: CommonsMeta, lic: LicenseDecision, edits: ImageEdits, checkedBy: "auto" | "admin"): ImageRights {
+  const cc = parseCreativeCommons(meta.license, meta.licenseUrl);
+  const notice = /(©|(c)s*d{4}|copyright)/i.test(meta.artist) ? meta.artist : "";
+  return {
+    workTitle: (meta.title ?? "").trim(),
+    author: (meta.artist ?? "").trim(),
+    rightsHolder: "",
+    institution: /^(own work|eigenes werk)/i.test(meta.credit ?? "") ? "" : (meta.credit ?? "").length <= 100 && !/https?:|wayback/i.test(meta.credit ?? "") ? (meta.credit ?? "").trim() : "",
+    originalSourceUrl: meta.pageUrl,
+    originalFileUrl: meta.url,
+    license: meta.license,
+    licenseVersion: cc?.version ?? "",
+    licenseUrl: meta.licenseUrl,
+    copyrightNotice: notice,
+    edits,
+    rightsCheckedAt: new Date().toISOString(),
+    status: lic.allowed ? "automatisch_freigabefaehig" : lic.manual ? "rechtepruefung_erforderlich" : "abgelehnt",
+    basis: lic.basis ?? lic.reasons.join(" "),
+    checkedBy,
+    restrictions: meta.restrictions ? [meta.restrictions] : [],
+  };
+}
 
 const MONTHS: Record<string, number> = {
   january: 1, januar: 1, february: 2, februar: 2, march: 3, märz: 3, april: 4, may: 5, mai: 5, june: 6, juni: 6, july: 7, juli: 7,
@@ -33,11 +65,15 @@ export interface AssessInput {
   minWidth?: number;
   /** Mindestzahl unabhängiger externer Quellen (verschiedene Institutionen/Domains); Standard 2 bzw. MIN_EXTERNAL_SOURCES */
   minExternal?: number;
+  /** Bearbeitungsvermerke (Standard: technische Anpassung ohne Zuschnitt) */
+  edits?: string[];
 }
 export interface Assessment {
   decision: PipelineDecision;
   reasons: string[];
   audit: AuditEntry[];
+  /** Rechtedaten und Bildnachweis des geprüften Bildes */
+  rights: ImageRights;
 }
 
 /**
@@ -57,9 +93,23 @@ export function assess(i: AssessInput): Assessment {
   if (i.duplicate) reject.push(`Dublette: ${i.duplicate}`);
 
   // 3 Lizenz (strikte Allowlist)
-  const lic = evaluateLicense(i.meta);
-  audit.push(auditEntry("lizenz", lic.allowed ? "ok" : lic.manual ? "manuell" : "abgelehnt", lic.reasons, { license: i.meta.license, licenseUrl: i.meta.licenseUrl, artist: i.meta.artist, credit: i.meta.credit, klasse: lic.licenseClass ?? null }));
+  const lic = evaluateLicense(i.meta, { eventYear: year });
+  audit.push(auditEntry("lizenz", lic.allowed ? "ok" : lic.manual ? "manuell" : "abgelehnt", lic.reasons, { license: i.meta.license, licenseUrl: i.meta.licenseUrl, artist: i.meta.artist, credit: i.meta.credit, klasse: lic.licenseClass ?? null, grundlage: lic.basis ?? null }));
   if (!lic.allowed) (lic.manual ? manual : reject).push(...lic.reasons);
+
+  // 3a Bilddatei, Bearbeitung und Pflichtangaben des Bildnachweises
+  const edits = classifyEdits(i.edits ?? AUTO_TECHNICAL_EDITS);
+  const rights = buildRights(i.meta, lic, edits, "auto");
+  audit.push(auditEntry("bilddatei", "info", ["Verwendete Bilddatei"], { datei: i.meta.file, dateiseite: i.meta.pageUrl, original: i.meta.url, groesse: `${i.meta.width}×${i.meta.height}`, format: i.meta.mime }));
+  audit.push(auditEntry("bearbeitung", edits.licenseRelevant.length ? "manuell" : "ok", [edits.licenseRelevant.length ? `Lizenzrechtlich relevante Bearbeitung: ${edits.licenseRelevant.join("; ")}` : "Nur technische Anpassungen (kein Zuschnitt, keine inhaltliche Veränderung)."], { technisch: edits.technical, relevant: edits.licenseRelevant }));
+  if (edits.licenseRelevant.length) manual.push("Bild wurde zugeschnitten oder inhaltlich bearbeitet: Kennzeichnung und Kontext prüfen.");
+  const attribution = buildAttribution(rights);
+  if (lic.allowed && attribution.missing.length) {
+    manual.push(`Pflichtangaben für den Bildnachweis fehlen: ${attribution.missing.join(", ")}.`);
+    audit.push(auditEntry("bildnachweis", "manuell", [`Unvollständig: ${attribution.missing.join(", ")}`]));
+  } else {
+    audit.push(auditEntry("bildnachweis", "ok", ["Bildnachweis vollständig erzeugt."], { nachweis: attribution.full }));
+  }
 
   // 4 Datierung: Aufnahmedatum muss zum Ereignis passen
   const taken = parseCommonsDay(i.meta.dateOriginal);
@@ -112,9 +162,12 @@ export function assess(i: AssessInput): Assessment {
     if (!c.quality_ok) v.push("Bildkontrolle: Qualität zweifelhaft.");
     audit.push(auditEntry("bildkontrolle", c.matches_event === "no" ? "abgelehnt" : v.length ? "manuell" : "ok", v.length ? v : ["Bildkontrolle ohne Beanstandung (nur Veto-Funktion, kein Nachweis)."], { note: c.note }));
     manual.push(...v);
+    audit.push(auditEntry("personenrechte", c.persons_visible ? "manuell" : "ok", [c.persons_visible ? "Identifizierbare Personen erkennbar: Verwendung (Recht am eigenen Bild, §§ 22, 23 KUG) muss im redaktionellen Kontext vertretbar sein – keine automatische Freigabe." : "Keine identifizierbaren Personen erkannt (nur Veto-Funktion, kein Nachweis)."], { werblicheVerwendung: "Nicht für Startseite/Werbung ohne gesonderte Prüfung" }));
   }
 
   const decision: PipelineDecision = reject.length ? "rejected" : manual.length ? "manual_review" : "auto_approved";
   audit.push(auditEntry("entscheidung", decision === "auto_approved" ? "ok" : decision === "rejected" ? "abgelehnt" : "manuell", [...reject, ...manual, ...(decision === "auto_approved" ? ["Alle Auto-Freigabe-Regeln erfüllt."] : [])]));
-  return { decision, reasons: [...reject, ...manual], audit };
+  rights.status = DECISION_STATUS[decision];
+  audit.push(auditEntry("rechtepruefung", decision === "auto_approved" ? "ok" : decision === "rejected" ? "abgelehnt" : "manuell", [`Status: ${DECISION_STATUS[decision]}`, `Grundlage: ${rights.basis || "–"}`], { geprueftAm: rights.rightsCheckedAt, lizenz: `${rights.license}`, version: rights.licenseVersion, quelle: rights.originalSourceUrl, nachweis: attribution.full }));
+  return { decision, reasons: [...reject, ...manual], audit, rights };
 }

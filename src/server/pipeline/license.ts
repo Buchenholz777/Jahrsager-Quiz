@@ -16,50 +16,170 @@ export interface CommonsMeta {
   copyrighted: boolean | null;
   restrictions: string;
   categories: string[];
+  /** Werktitel (Commons ObjectName), soweit vorhanden */
+  title?: string;
+  /** Von der Quelle vorgegebener Attributionstext (Commons Attribution) */
+  attribution?: string;
+  attributionRequired?: boolean | null;
 }
 
-export type LicenseClass = "cc0" | "pd-usgov";
+export type LicenseClass = "cc0" | "pd-usgov" | "cc-by-4.0" | "cc-by-3.0" | "cc-by-2.0" | "cc-by-sa-4.0" | "cc-by-sa-3.0";
+
 export interface LicenseDecision {
-  /** true = darf automatisch freigegeben werden; false + manual = Prüfung durch Menschen; false + !manual = abgelehnt */
+  /** true = darf nach den geprüften Regeln unbeaufsichtigt freigegeben werden; false + manual = zusätzliche Rechteprüfung; false + !manual = abgelehnt */
   allowed: boolean;
   manual: boolean;
   licenseClass?: LicenseClass;
+  /** Alle Automatikregeln der Lizenzklasse sind erfüllt (auch wenn die Klasse noch nicht für die unbeaufsichtigte Freigabe geschaltet ist). */
+  rulesMet?: boolean;
+  /** Grundlage der Rechteprüfung, z. B. institutionelle Herkunft */
+  basis?: string;
   reasons: string[];
 }
 
 /**
- * STRIKTE ALLOWLIST für die automatische Freigabe (fachlich festgelegt, siehe docs/AUTOMATISIERUNG.md):
+ * Lizenzen, die erkannt, aber (noch) nicht unbeaufsichtigt freigegeben werden dürfen: Ihre Anforderungen
+ * (Titel, ShareAlike bei Bearbeitung, Versionsunterschiede) sind noch nicht vollständig umgesetzt und getestet.
+ */
+const PREPARED: LicenseClass[] = ["cc-by-3.0", "cc-by-2.0", "cc-by-sa-4.0", "cc-by-sa-3.0"];
+
+/**
+ * Unbeaufsichtigt freigegebene Lizenzklassen. CC BY 4.0 ist grundsätzlich zugelassen, wird aber erst nach fachlicher Freigabe der Regeln
+ * (docs/LIZENZPOLITIK.md) mit AUTO_APPROVE_CC_BY_4=true für die automatische Veröffentlichung geschaltet. Bis dahin: „Zusätzliche Rechteprüfung“.
+ */
+export function autoLicenseClasses(env: Record<string, string | undefined> = process.env): LicenseClass[] {
+  return env.AUTO_APPROVE_CC_BY_4 === "true" ? ["cc0", "pd-usgov", "cc-by-4.0"] : ["cc0", "pd-usgov"];
+}
+
+/** Erkennt Creative-Commons-Familie und Version aus Kurzbezeichnung und Lizenz-URL. */
+export function parseCreativeCommons(license: string, licenseUrl = ""): { family: "by" | "by-sa" | "other"; version: string } | null {
+  const url = /creativecommons\.org\/licenses\/(by-sa|by)\/(\d\.\d)/i.exec(licenseUrl);
+  if (url) return { family: url[1].toLowerCase() === "by-sa" ? "by-sa" : "by", version: url[2] };
+  const l = license.trim();
+  if (!/^cc[ -]by/i.test(l)) return null;
+  const family = /^cc[ -]by[ -]sa/i.test(l) ? "by-sa" : "by";
+  const ver = /(\d\.\d)/.exec(l)?.[1];
+  return ver ? { family, version: ver } : { family: "other", version: "" };
+}
+
+/**
+ * STRIKTE ALLOWLIST für die automatische Freigabe (fachlich festgelegt, siehe docs/AUTOMATISIERUNG.md und docs/LIZENZPOLITIK.md):
  *  - CC0 (ausdrücklicher Verzicht),
  *  - „Public domain“ NUR mit Nachweis eines Werks der US-Bundesregierung (NASA, National Archives, White House Photo Office,
- *    US-Streitkräfte, USIA) im Credit/Urheber/Kategorien – eine bloße Commons-Angabe „Public domain“ reicht nicht.
- * Alles andere (CC BY, CC BY-SA, nur „PD-old“, Library of Congress mit Drittrechten, unbekannt) bleibt manuell bzw. wird abgelehnt.
+ *    US-Streitkräfte, USIA) im Credit/Urheber/Kategorien – eine bloße Commons-Angabe „Public domain“ reicht nicht,
+ *  - CC BY 4.0 nur mit vollständigen Herkunfts- und Pflichtangaben (ccByProvenance) und nur, wenn die Klasse geschaltet ist.
+ * CC BY 2.0/3.0 und CC BY-SA sind vorbereitet (werden zusätzlich manuell geprüft). NC/ND bleiben ausgeschlossen.
  */
 const USGOV = /\b(NASA|National Aeronautics and Space Administration|National Archives and Records Administration|U\.?S\.? National Archives|White House Photo Office|U\.?S\.? Air Force|U\.?S\.? Army|U\.?S\.? Navy|U\.?S\.? Marine Corps|United States Information Agency|U.?S.? Geological Survey|USGS)\b/i;
 const NONFREE = /(non-?free|fair use|all rights reserved|no derivatives|\bnd\b|\bnc\b|non-?commercial)/i;
-const COPYRIGHT_HINT = /(©|\bcopyright\b|\(c\)\s*\d{4}|getty|alamy|reuters|associated press|\bap photo\b|dpa|ullstein)/i;
+export const AGENCY = /(getty|alamy|reuters|associated press|\bap photo\b|\bdpa\b|ullstein|imago|keystone)/i;
+const COPYRIGHT_HINT = /(©|\bcopyright\b|\(c\)\s*\d{4}|getty|alamy|reuters|associated press|\bap photo\b|\bdpa\b|ullstein)/i;
+const UNKNOWN_AUTHOR = /^(unknown|unbekannt|anonymous|anonym|n\/a|none|keine angabe|various|verschiedene|\?+|-+)(\b.*)?$/i;
 
-export function evaluateLicense(m: CommonsMeta): LicenseDecision {
+/** Institutionen, deren Commons-Veröffentlichungen unter CC BY auf institutioneller Berechtigung beruhen. Bewusst konservativ. */
+const INSTITUTIONS =
+  /(wellcome collection|te papa|museum of new zealand|museovirasto|finnish heritage agency|riksantikvarie|swedish national heritage board|nationaal archief|rijksmuseum|national library of (norway|australia|new zealand)|nasjonalbiblioteket|europeana|smithsonian|metropolitan museum|archives new zealand|alexander turnbull library|state library (of|victoria)|deutsche fotothek)/i;
+const OWN_WORK = /(own work|eigenes werk|selbst fotografiert|self-photographed)/i;
+
+export interface Provenance {
+  ok: boolean;
+  basis: string;
+  problems: string[];
+}
+
+/**
+ * Herkunftsprüfung für CC BY 4.0. Eine bloße Lizenzmarkierung genügt nicht: nötig sind benannter Urheber, konkrete Originalquelle, exakte Lizenz mit Link
+ * und eine nachvollziehbare Berechtigung zur Lizenzvergabe (institutionelle Herkunft oder eigenes Werk des genannten Urhebers bei zeitlich plausiblem Ereignis).
+ */
+export function ccByProvenance(m: CommonsMeta, eventYear?: number): Provenance {
+  const problems: string[] = [];
+  const author = (m.artist || "").trim();
+  if (!author || author.length < 3 || UNKNOWN_AUTHOR.test(author)) problems.push("Kein identifizierbarer Urheber bzw. Rechteinhaber.");
+  if (!/^https?:\/\/commons\.wikimedia\.org\/wiki\/File:/i.test(m.pageUrl || "")) problems.push("Keine konkrete Originalquelle (Dateiseite) vorhanden.");
+  if (!/^https?:\/\//i.test(m.url || "")) problems.push("Keine Original-Datei-URL.");
+  if (!(m.credit || "").trim() && !author) problems.push("Keine Quellenangabe (Credit).");
+  const cc = parseCreativeCommons(m.license, m.licenseUrl);
+  if (!cc || cc.family !== "by" || cc.version !== "4.0") problems.push("Lizenzbezeichnung/-version nicht eindeutig CC BY 4.0.");
+  if (!/^https?:\/\/creativecommons\.org\/licenses\/by\/4\.0/i.test(m.licenseUrl || "")) problems.push("Kein Link zum Lizenztext (CC BY 4.0).");
+  if ((m.restrictions || "").trim()) problems.push(`Zusätzliche Einschränkung laut Commons: ${m.restrictions.trim()}`);
+  if (AGENCY.test(`${m.artist} ${m.credit}`)) problems.push("Agentur-/Bildarchiv-Angabe: Berechtigung zur Lizenzvergabe nicht nachvollziehbar.");
+
+  const hay = `${m.artist} ${m.credit}`;
+  const inst = INSTITUTIONS.exec(hay)?.[0];
+  let basis = "";
+  if (inst) basis = `Institutionelle Herkunft: ${inst}`;
+  else if (OWN_WORK.test(m.credit || "")) {
+    const taken = /\b(19\d{2}|20[012]\d)\b/.exec(m.dateOriginal || "")?.[1];
+    if (eventYear !== undefined && eventYear >= 1995 && taken && Number(taken) === eventYear && author) {
+      basis = "Eigenes Werk des genannten Urhebers (Aufnahme im Ereignisjahr, Ereignis ab 1995)";
+    } else {
+      problems.push("„Eigenes Werk“ bei einem Ereignis vor 1995 oder ohne passendes Aufnahmejahr: Berechtigung des Uploaders nicht nachvollziehbar.");
+    }
+  } else {
+    problems.push("Herkunft/Berechtigung zur Lizenzvergabe nicht nachvollziehbar (weder bekannte Institution noch eigenes Werk).");
+  }
+  return { ok: problems.length === 0 && !!basis, basis, problems };
+}
+
+export function evaluateLicense(m: CommonsMeta, ctx: { eventYear?: number; auto?: LicenseClass[] } = {}): LicenseDecision {
   const reasons: string[] = [];
+  const auto = ctx.auto ?? autoLicenseClasses();
   const lic = (m.license || "").trim();
   if (!lic) return { allowed: false, manual: false, reasons: ["Keine Lizenzangabe."] };
   if (NONFREE.test(lic)) return { allowed: false, manual: false, reasons: [`Nicht freie Lizenz: ${lic}`] };
-  if (m.copyrighted === true && !/^cc0/i.test(lic)) {
-    return { allowed: false, manual: /^cc[ -]by/i.test(lic), reasons: [`Urheberrechtlich geschützt (${lic}); nicht in der Auto-Allowlist.`] };
+
+  const cc = parseCreativeCommons(lic, m.licenseUrl);
+  const isCc0 = /^cc0/i.test(lic);
+  if (m.copyrighted === true && !isCc0 && !cc) {
+    return { allowed: false, manual: false, reasons: [`Urheberrechtlich geschützt (${lic}); keine freie Lizenz erkannt.`] };
   }
-  if (m.restrictions.trim()) reasons.push(`Zusätzliche Einschränkung laut Commons: ${m.restrictions.trim()}`);
+
+  // Creative Commons mit Namensnennung (kommerzielle Nutzung erlaubt)
+  if (cc && cc.family !== "other") {
+    const klass = `cc-${cc.family}-${cc.version}` as LicenseClass;
+    if (cc.family === "by" && cc.version === "4.0") {
+      const prov = ccByProvenance(m, ctx.eventYear);
+      if (!prov.ok) return { allowed: false, manual: true, licenseClass: klass, rulesMet: false, reasons: [`CC BY 4.0: Regeln nicht vollständig erfüllt: ${prov.problems.join(" ")}`] };
+      if (auto.includes("cc-by-4.0")) return { allowed: true, manual: false, licenseClass: klass, rulesMet: true, basis: prov.basis, reasons: [`CC BY 4.0: alle Automatikregeln erfüllt. ${prov.basis}.`] };
+      return {
+        allowed: false,
+        manual: true,
+        licenseClass: klass,
+        rulesMet: true,
+        basis: prov.basis,
+        reasons: [`CC BY 4.0: Automatikregeln erfüllt (${prov.basis}); unbeaufsichtigte Freigabe noch nicht geschaltet – zusätzliche Rechteprüfung.`],
+      };
+    }
+    if (PREPARED.includes(klass)) {
+      return { allowed: false, manual: true, licenseClass: klass, rulesMet: false, reasons: [`Lizenz ${lic}: erkannt, aber noch nicht für die unbeaufsichtigte Freigabe vorbereitet (Anforderungen werden manuell geprüft).`] };
+    }
+    return { allowed: false, manual: true, reasons: [`Lizenzvariante ${lic} ist nicht in der Allowlist.`] };
+  }
+
+  if ((m.restrictions || "").trim()) reasons.push(`Zusätzliche Einschränkung laut Commons: ${m.restrictions.trim()}`);
   if (COPYRIGHT_HINT.test(`${m.artist} ${m.credit}`)) reasons.push("Urheber-/Credit-Angabe enthält Copyright-Hinweis oder Agentur.");
   if (reasons.length) return { allowed: false, manual: true, reasons };
 
-  if (/^cc0/i.test(lic)) return { allowed: true, manual: false, licenseClass: "cc0", reasons: ["CC0 (Allowlist)."] };
+  if (isCc0) return { allowed: true, manual: false, licenseClass: "cc0", rulesMet: true, reasons: ["CC0 (Allowlist)."] };
   if (/^(public domain|pd[- ])/i.test(lic)) {
     const hay = `${m.artist} ${m.credit} ${m.categories.join(" ")}`;
     if (USGOV.test(hay) && m.copyrighted !== true) {
-      return { allowed: true, manual: false, licenseClass: "pd-usgov", reasons: ["Public domain mit Nachweis eines Werks der US-Bundesregierung (Allowlist)."] };
+      return { allowed: true, manual: false, licenseClass: "pd-usgov", rulesMet: true, reasons: ["Public domain mit Nachweis eines Werks der US-Bundesregierung (Allowlist)."] };
     }
-    return { allowed: false, manual: true, reasons: ["Public domain ohne Nachweis eines Regierungswerks: Rechtsgrundlage (z. B. Alter nach Landesrecht) manuell prüfen."] };
+    return {
+      allowed: false,
+      manual: true,
+      reasons: ["Public domain ohne Nachweis eines Regierungswerks: Rechtsgrundlage (z. B. Alter nach Landesrecht) manuell prüfen. Unklare Public-Domain-Kennzeichnungen gelten nicht als Nachweis."],
+    };
   }
   return { allowed: false, manual: true, reasons: [`Lizenz „${lic}“ ist nicht in der Allowlist für automatische Freigabe.`] };
 }
+
+/** Für die Bildsuche: Die Lizenz ist nach allen Regeln nutzbar (auch wenn die Freigabe noch eine Prüfung braucht). */
+export const licenseUsable = (m: CommonsMeta, eventYear?: number) => {
+  const d = evaluateLicense(m, { eventYear });
+  return d.allowed || (d.manual && d.rulesMet === true);
+};
 
 export const auditEntry = (step: string, decision: AuditEntry["decision"], rules: string[], evidence?: Record<string, unknown>, actor = "auto"): AuditEntry => ({
   at: new Date().toISOString(),
