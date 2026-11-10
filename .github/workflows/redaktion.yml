@@ -28,6 +28,12 @@ jobs:
         env:
           DATABASE_URL: ${{ secrets.DATABASE_URL }}
           DATABASE_SSL: "true"
+      - name: Fragenbestand prüfen (nur Lesen, Ergebnis im Protokoll)
+        continue-on-error: true
+        run: npm run bestand
+        env:
+          DATABASE_URL: ${{ secrets.DATABASE_URL }}
+          DATABASE_SSL: "true"
       - name: Recherche und Planung
         run: npm run pipeline -- all --max 80
         env:
