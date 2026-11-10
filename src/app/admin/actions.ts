@@ -231,3 +231,46 @@ export async function approveQuickAction(fd: FormData) {
   revalidatePath("/admin/automatik");
   if (fehler) redirect(`/admin/freigabe?fehler=${encodeURIComponent(fehler)}`);
 }
+
+/**
+ * Sammel-Freigabe: gibt alle Entwürfe MIT echtem Foto frei, nachdem der Admin die drei Prüfungen für den ganzen Stapel ausdrücklich bestätigt hat.
+ * Jedes Ereignis durchläuft dieselben Prüfungen wie die Einzelfreigabe (Foto im Speicher, Lizenz, Quelle, Texte); was sie nicht besteht, wird übersprungen und genannt.
+ */
+export async function approveAllAction(fd: FormData) {
+  await requireAdminAction();
+  const db = await getDb();
+  let msg = "";
+  let isError = false;
+  try {
+    if (!cb(fd, "check_rights") || !cb(fd, "check_photo") || !cb(fd, "check_facts")) throw new AppError("BESTAETIGUNG", "Alle drei Bestätigungen sind nötig.");
+    const rows = await db.query<{ id: string; neutral_title: string }>(
+      "select id, neutral_title from events where status = 'entwurf' and image_id is not null and not image_is_placeholder and not blocked and not is_demo order by created_at",
+    );
+    const done: string[] = [];
+    const skipped: string[] = [];
+    for (const r of rows) {
+      try {
+        const ev = await getEvent(db, r.id);
+        if (!ev) continue;
+        const input = { ...ev, image_status: "freigegeben", checks: { rights: true, facts: true, photoMatchesEvent: true } } as EventInput;
+        await updateEvent(db, r.id, input, "Sammel-Freigabe: Bild, Rechte, Fakten und Datum vom Admin bestätigt");
+        await transitionEvent(db, r.id, "in_pruefung");
+        await transitionEvent(db, r.id, "freigegeben");
+        const entry = { at: new Date().toISOString(), actor: "admin", step: "sammel-freigabe", decision: "ok", rules: ["Vom Admin als Stapel bestätigt (Bild, Rechte, Fakten, Datum)."] };
+        await db.run("update events set pipeline_state = null, audit = audit || $2::jsonb where id = $1", [r.id, JSON.stringify([entry])]);
+        done.push(r.neutral_title);
+      } catch (e) {
+        skipped.push(`${r.neutral_title}: ${e instanceof AppError ? e.message : "Fehler"}`);
+      }
+    }
+    msg = `${done.length} freigegeben${skipped.length ? `. Übersprungen (${skipped.length}): ${skipped.join(" | ")}` : "."}`;
+    isError = skipped.length > 0 && done.length === 0;
+  } catch (e) {
+    if (!(e instanceof AppError)) throw e;
+    msg = e.message;
+    isError = true;
+  }
+  revalidatePath("/admin/freigabe");
+  revalidatePath("/admin/automatik");
+  redirect(`/admin/freigabe?${isError ? "fehler" : "ok"}=${encodeURIComponent(msg)}`);
+}
