@@ -1,10 +1,11 @@
 name: Redaktion (Recherche und Tagesrätsel)
 
-# Täglich: Kandidaten recherchieren, prüfen und Tagespakete aus dem geprüften Pool planen.
+# Mehrmals täglich: Kandidaten recherchieren, prüfen und Tagespakete aus dem geprüften Pool planen.
 # Veröffentlicht werden die Pakete von der Website selbst zum Stichtag 00:00 Uhr (Europe/Berlin).
 on:
   schedule:
     - cron: "17 3 * * *" # 03:17 UTC = 04:17/05:17 Uhr Berlin
+    - cron: "47 9,15,21 * * *" # zusätzliche Recherche-Läufe, solange der Vorrat klein ist
   workflow_dispatch:
 
 concurrency:
@@ -23,7 +24,7 @@ jobs:
           cache: npm
       - run: npm ci
       - name: Recherche und Planung
-        run: npm run pipeline -- all
+        run: npm run pipeline -- all --max 80
         env:
           DATABASE_URL: ${{ secrets.DATABASE_URL }}
           DATABASE_SSL: "true"
