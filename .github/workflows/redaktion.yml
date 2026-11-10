@@ -23,6 +23,11 @@ jobs:
           node-version: 22
           cache: npm
       - run: npm ci
+      - name: Datenbank-Migrationen (idempotent, u. a. Foto-Pflicht)
+        run: npm run db:migrate
+        env:
+          DATABASE_URL: ${{ secrets.DATABASE_URL }}
+          DATABASE_SSL: "true"
       - name: Recherche und Planung
         run: npm run pipeline -- all --max 80
         env:

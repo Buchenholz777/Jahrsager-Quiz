@@ -7,6 +7,7 @@ import { answerRound, getGameState, startGame } from "@/server/services/games";
 import { getPublicPack, getTodayPack, publishDuePacks, schedulePack, unschedulePack, validatePack } from "@/server/services/packs";
 import { getKnowledge, listKnowledge } from "@/server/services/knowledge";
 import { classifyReferrer, sanitizeProps } from "@/server/services/analytics";
+import { putImage } from "@/server/storage";
 import { eventInput, freshDb, makeEvents, newPlayer, NOON, TODAY } from "./helpers";
 
 describe("Admin-Authentifizierung und Berechtigungen", () => {
@@ -70,8 +71,18 @@ describe("Redaktionsworkflow", () => {
     const prod = await createEvent(db, eventInput({ is_demo: false, image_is_placeholder: true }));
     expect(eventProblems(prod, "approval").join(" ")).toContain("Platzhalter");
     const real = await createEvent(db, eventInput({ is_demo: false, image_is_placeholder: false }));
+    // Foto-Pflicht: ohne Bilddatei im Speicher keine Prüfung/Freigabe
+    await expect(transitionEvent(db, real.id, "in_pruefung")).rejects.toMatchObject({ code: "FOTO_FEHLT" });
+    await putImage(`${real.image_id}.${real.image_ext}`, Buffer.alloc(4000, 1), "image/webp");
     await transitionEvent(db, real.id, "in_pruefung");
     expect((await transitionEvent(db, real.id, "freigegeben")).status).toBe("freigegeben");
+  });
+
+  it("lässt Ereignisse ohne Foto nie in Prüfung, Freigabe oder Tagespaket", async () => {
+    const ohne = await createEvent(db, eventInput({ is_demo: false, image_id: null, image_ext: null }));
+    await expect(transitionEvent(db, ohne.id, "in_pruefung")).rejects.toMatchObject({ code: "PRUEFUNG_FEHLGESCHLAGEN" });
+    expect(eventProblems(ohne, "approval").join(" ")).toContain("kein Foto");
+    expect(validatePack([ohne, ohne, ohne, ohne, ohne]).errors.join(" ")).toContain("kein Foto");
   });
 
   it("verbietet unzulässige Statuswechsel", async () => {

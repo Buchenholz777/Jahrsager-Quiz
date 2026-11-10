@@ -15,7 +15,7 @@ export default async function FreigabeAssistent({ searchParams }: { searchParams
   const { fehler } = await searchParams;
   const db = await getDb();
   const rows = await db.query<EventRow>(
-    "select * from events where status = 'entwurf' and image_id is not null and not blocked and not is_demo order by created_at",
+    "select * from events where status = 'entwurf' and image_id is not null and not image_is_placeholder and not blocked and not is_demo order by created_at",
   );
   return (
     <div className="space-y-8">

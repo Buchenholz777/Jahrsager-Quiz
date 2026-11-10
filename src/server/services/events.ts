@@ -14,8 +14,14 @@ export async function getEventBySlug(db: Queryable, slug: string): Promise<Event
 }
 
 export async function listEvents(db: Queryable, status?: EventStatus): Promise<EventRow[]> {
+  // Entwürfe ohne Foto stehen nicht unter „Entwurf“, sondern nur unter „Ohne Foto“ (listEventsWithoutPhoto).
+  if (status === "entwurf") return db.query<EventRow>("select * from events where status = 'entwurf' and image_id is not null order by updated_at desc");
   if (status) return db.query<EventRow>("select * from events where status = $1 order by updated_at desc", [status]);
   return db.query<EventRow>("select * from events order by updated_at desc");
+}
+
+export async function listEventsWithoutPhoto(db: Queryable): Promise<EventRow[]> {
+  return db.query<EventRow>("select * from events where image_id is null and not is_demo order by updated_at desc");
 }
 
 /** Inhalt einer bestimmten Fassung (Partien behalten die Fassung, mit der sie begonnen wurden). */
@@ -121,7 +127,8 @@ export function eventProblems(e: EventRow, stage: "review" | "approval"): string
   ];
   for (const [k, label] of req) if (!String(e[k] ?? "").trim()) p.push(`${label} fehlt.`);
   if (!CATEGORY_KEYS.includes(e.category as never)) p.push("Themenfeld fehlt.");
-  if (!e.image_id) p.push("Es ist kein Bild hinterlegt.");
+  if (!e.image_id || !e.image_ext) p.push("Es ist kein Foto hinterlegt. Ohne passendes Foto kann ein Ereignis nicht geprüft oder freigegeben werden.");
+  if (!e.is_demo && e.image_is_placeholder) p.push("Ein Platzhalterbild ist kein Foto des Ereignisses.");
   if (!e.sources?.length) p.push("Mindestens eine Faktenquelle ist erforderlich.");
   const words = wordCount(e.description);
   if (e.description.trim() && (words < 20 || words > 90)) p.push(`Beschreibung hat ${words} Wörter (Richtwert 30–55).`);
@@ -135,7 +142,6 @@ export function eventProblems(e: EventRow, stage: "review" | "approval"): string
     if (!e.image_license.trim()) p.push("Bildlizenz fehlt.");
     if (!e.image_source_url.trim()) p.push("Originalfundstelle des Bildes fehlt.");
     if (!e.is_demo) {
-      if (e.image_is_placeholder) p.push("Platzhalterbilder dürfen nicht für Produktionsinhalte freigegeben werden.");
       if (!e.sources.some((s) => s.url && /^https?:\/\//.test(s.url))) p.push("Mindestens eine Faktenquelle mit URL ist erforderlich.");
     }
   }
@@ -150,6 +156,14 @@ const TRANSITIONS: Record<EventStatus, EventStatus[]> = {
   veroeffentlicht: [],
 };
 
+/** Die Bilddatei muss tatsächlich im Bildspeicher liegen (ein eingetragener Bildverweis allein genügt nicht). Demo-Inhalte sind ausgenommen. */
+async function assertPhotoStored(e: EventRow) {
+  if (e.is_demo || !e.image_id) return;
+  const { getImage } = await import("../storage");
+  const data = await getImage(`${e.image_id}.${e.image_ext}`).catch(() => null);
+  if (!data || data.length < 1000) throw new AppError("FOTO_FEHLT", "Die Bilddatei ist im Bildspeicher nicht vorhanden. Ohne Foto kann das Ereignis nicht freigegeben werden.", 422);
+}
+
 export async function transitionEvent(db: Queryable, id: string, to: EventStatus): Promise<EventRow> {
   const e = await getEvent(db, id);
   if (!e) throw new AppError("NICHT_GEFUNDEN", "Ereignis nicht gefunden", 404);
@@ -160,6 +174,7 @@ export async function transitionEvent(db: Queryable, id: string, to: EventStatus
     const probs = eventProblems(e, "review");
     if (probs.length) throw new AppError("PRUEFUNG_FEHLGESCHLAGEN", probs.join(" "), 422);
   }
+  if (to === "in_pruefung" || to === "freigegeben") await assertPhotoStored(e);
   if (to === "freigegeben") {
     const probs = eventProblems(e, "approval");
     if (probs.length) throw new AppError("FREIGABE_VERWEIGERT", probs.join(" "), 422);

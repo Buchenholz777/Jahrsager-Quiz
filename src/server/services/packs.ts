@@ -78,6 +78,7 @@ export async function getTodayPack(db: Db, at: Date = clockNow()): Promise<Today
   const events = await getPackEvents(db, pack.id);
   if (events.length !== ROUNDS_PER_GAME) return null;
   if (!demoAllowed() && events.some((e) => e.is_demo)) return null;
+  if (events.some((e) => !e.image_id)) return null; // ohne Foto wird nichts gespielt
   return { pack, events };
 }
 
@@ -90,6 +91,7 @@ export async function getPublicPack(db: Db, number: number, at: Date = clockNow(
   const events = await getPackEvents(db, pack.id);
   if (events.length !== ROUNDS_PER_GAME) return null;
   if (!demoAllowed() && events.some((e) => e.is_demo)) return null;
+  if (events.some((e) => !e.image_id)) return null; // ohne Foto wird nichts gespielt
   return { pack, events };
 }
 
@@ -115,6 +117,7 @@ export function validatePack(events: EventRow[], packId?: string): { errors: str
     if (e.status !== "freigegeben" && !(packId && e.status === "eingeplant"))
       errors.push(`„${e.neutral_title}“ ist nicht freigegeben (Status: ${e.status}).`);
   }
+  for (const e of events) if (!e.image_id || (!e.is_demo && e.image_is_placeholder)) errors.push(`„${e.neutral_title}“ hat kein Foto und darf nicht in ein Tagesrätsel.`);
   for (const e of events) if (e.homepage_showcase) errors.push(`„${e.neutral_title}“ ist für die Startseite freigegeben und darf nicht im Tagesrätsel vorkommen.`);
   if (new Set(events.map((e) => e.is_demo)).size > 1) errors.push("Demo- und Produktionsinhalte dürfen nicht gemischt werden.");
   if (new Set(events.map((e) => e.correct_year)).size < events.length) warnings.push("Mehrere Ereignisse haben dasselbe Jahr.");
