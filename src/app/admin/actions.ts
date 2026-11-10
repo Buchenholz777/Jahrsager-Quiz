@@ -274,3 +274,39 @@ export async function approveAllAction(fd: FormData) {
   revalidatePath("/admin/automatik");
   redirect(`/admin/freigabe?${isError ? "fehler" : "ok"}=${encodeURIComponent(msg)}`);
 }
+
+/**
+ * Löscht einen noch nicht eingeplanten Entwurf endgültig (Freigabe-Assistent: „passt nicht“).
+ * Eingeplante/veröffentlichte Ereignisse und Ereignisse mit Spielständen sind ausgenommen. Der Kandidat wird in der Recherche als „abgelehnt“ vermerkt,
+ * damit die Pipeline ihn nicht erneut anlegt.
+ */
+export async function deleteDraftAction(fd: FormData) {
+  await requireAdminAction();
+  const db = await getDb();
+  const id = String(fd.get("id"));
+  let msg = "";
+  let isError = false;
+  try {
+    if (fd.get("confirm") !== "on") throw new AppError("BESTAETIGUNG", "Bitte bestätige das endgültige Löschen.");
+    const ev = await getEvent(db, id);
+    if (!ev) throw new AppError("NICHT_GEFUNDEN", "Ereignis nicht gefunden (vielleicht schon gelöscht).", 404);
+    if (ev.status !== "entwurf" && ev.status !== "in_pruefung") throw new AppError("NICHT_LOESCHBAR", "Nur Entwürfe können gelöscht werden. Dieses Ereignis ist freigegeben oder eingeplant.", 409);
+    const used = await db.one("select 1 from daily_pack_events where event_id = $1 union all select 1 from game_rounds where event_id = $1", [id]);
+    if (used) throw new AppError("NICHT_LOESCHBAR", "Dieses Ereignis steckt in einem Tagespaket oder einer Partie und kann nicht gelöscht werden.", 409);
+    if (ev.source_id) {
+      await db.run(
+        "insert into pipeline_seen(source_id, decision, reason) values ($1, 'rejected', 'Vom Admin gelöscht') on conflict (source_id) do update set decision = 'rejected', reason = 'Vom Admin gelöscht', seen_at = now()",
+        [ev.source_id],
+      );
+    }
+    await db.run("delete from events where id = $1", [id]);
+    msg = `„${ev.neutral_title}“ wurde gelöscht.`;
+  } catch (e) {
+    if (!(e instanceof AppError)) throw e;
+    msg = e.message;
+    isError = true;
+  }
+  revalidatePath("/admin/freigabe");
+  revalidatePath("/admin/ereignisse");
+  redirect(`/admin/freigabe?${isError ? "fehler" : "ok"}=${encodeURIComponent(msg)}`);
+}

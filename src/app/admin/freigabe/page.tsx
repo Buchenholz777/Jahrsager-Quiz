@@ -4,7 +4,7 @@ import { Card } from "@/components/ui/card";
 import { CATEGORIES } from "@/lib/constants";
 import { requireAdminPage } from "@/server/admin-session";
 import { getDb } from "@/server/db/client";
-import { approveAllAction, approveQuickAction } from "../actions";
+import { approveAllAction, approveQuickAction, deleteDraftAction } from "../actions";
 import type { AuditEntry, EventRow } from "@/server/types";
 
 export const metadata = { title: "Freigabe-Assistent" };
@@ -83,6 +83,14 @@ export default async function FreigabeAssistent({ searchParams }: { searchParams
                     <Link href={`/admin/ereignisse/${e.id}`} className={buttonVariants({ size: "sm", variant: "quiet" })}>Bearbeiten</Link>
                   </div>
                 </form>
+                <details className="border-t border-line pt-3">
+                  <summary className="min-h-11 cursor-pointer font-semibold text-ink-soft hover:text-ink">Löschen (passt nicht)</summary>
+                  <form action={deleteDraftAction} className="mt-2 space-y-2">
+                    <input type="hidden" name="id" value={e.id} />
+                    <label className="flex items-start gap-2"><input type="checkbox" name="confirm" required className="mt-1 size-5" /> <span>Ich möchte „{e.neutral_title}“ endgültig löschen. Das lässt sich nicht rückgängig machen.</span></label>
+                    <button className={buttonVariants({ size: "sm", variant: "secondary" })}>Endgültig löschen</button>
+                  </form>
+                </details>
               </div>
             </div>
           </Card>
