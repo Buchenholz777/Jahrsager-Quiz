@@ -145,6 +145,17 @@ test("SEO-Grundlagen: Sitemap, robots, Canonical, Open Graph", async ({ page, re
   expect(sitemap).not.toContain("/geschichte/"); // Demo-Inhalte sind nicht in der Sitemap
   expect((await request.get("/brand/og-jahrsager-1200x630.png")).headers()["content-type"]).toContain("image/png");
   expect((await request.get("/favicon.ico")).status()).toBe(200);
+  // Favicon für die Google-Suche: PNG 96 × 96 unter stabiler URL, ohne Anmeldung, gültige PNG-Datei
+  const fav = await request.get("/favicon.png");
+  expect(fav.status()).toBe(200);
+  expect(fav.headers()["content-type"]).toContain("image/png");
+  const bytes = await fav.body();
+  expect([...bytes.subarray(0, 8)]).toEqual([0x89, 0x50, 0x4e, 0x47, 0x0d, 0x0a, 0x1a, 0x0a]);
+  expect(bytes.readUInt32BE(16)).toBe(96);
+  expect(bytes.readUInt32BE(20)).toBe(96);
+  await page.goto("/");
+  await expect(page.locator('link[rel="icon"][type="image/png"][sizes="96x96"][href="/favicon.png"]')).toHaveCount(1);
+  expect(robots).not.toContain("Disallow: /favicon");
   await page.goto("/");
   await expect(page.locator('link[rel="canonical"]')).toHaveCount(1);
   await expect(page.locator('meta[property="og:title"]')).toHaveCount(1);

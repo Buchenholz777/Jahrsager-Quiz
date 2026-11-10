@@ -47,14 +47,12 @@ export const metadata: Metadata = {
     images: [{ url: OG_IMAGE_PATH, width: 1200, height: 630, alt: "JAHRSAGER – Das tägliche Geschichtsquiz" }],
   },
   twitter: { card: "summary_large_image", title: SITE_TITLE, description: SITE_DESCRIPTION, images: [OG_IMAGE_PATH] },
-  // Marken-Favicons unter stabilen Pfaden (Vielfaches von 48 px für Google, plus klassisches .ico)
+  // Favicon aus dem Logo (Kalender mit „?“): PNG 96 × 96 für Google (Vielfaches von 48 px), .ico zeigt dasselbe Motiv
   icons: {
     icon: [
+      { url: "/favicon.png", sizes: "96x96", type: "image/png" },
       { url: "/favicon.ico", sizes: "any" },
-      { url: "/favicon-48.png", sizes: "48x48", type: "image/png" },
-      { url: "/favicon-96.png", sizes: "96x96", type: "image/png" },
     ],
-    shortcut: "/favicon.ico",
     apple: { url: "/apple-touch-icon.png", sizes: "180x180" },
   },
   verification: { google: process.env.NEXT_PUBLIC_GOOGLE_SITE_VERIFICATION || undefined },
