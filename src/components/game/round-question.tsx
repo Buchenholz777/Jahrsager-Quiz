@@ -51,14 +51,15 @@ export function RoundQuestion({
             if (year !== null && !busy) onGuess(year);
           }}
         >
-          <p className="mb-4 font-display text-2xl font-bold leading-tight">In welchem Jahr war das?</p>
+          <p className="font-display text-2xl font-bold leading-tight">In welchem Jahr war das?</p>
+          <p className="mb-4 mt-1 text-[0.95rem] text-ink-soft" data-testid="guess-intro">Schätze das Jahr des Ereignisses. Je näher du liegst, desto mehr Punkte bekommst du.</p>
           <YearPicker value={year} onChange={setYear} disabled={busy} />
           <Button type="submit" size="lg" className="mt-3 w-full" disabled={year === null || busy}>
-            {busy ? "Wird eingeloggt …" : "Jahr einloggen"}
+            {busy ? "Schätzung wird abgegeben …" : "Schätzung abgeben"}
             {!busy && <ArrowRight className="size-5" aria-hidden="true" />}
           </Button>
           <p className="mt-2 text-center text-sm text-ink-soft">
-            {year === null ? "Schritt 1: Jahr wählen · Schritt 2: einloggen" : `Du tippst auf ${year}. Bestätige mit „Jahr einloggen“.`}
+            {year === null ? "Schritt 1: Jahr wählen · Schritt 2: Schätzung abgeben" : `Du schätzt ${year}. Bestätige mit „Schätzung abgeben“.`}
           </p>
           <div aria-live="polite" className="mt-1">
             {error && (

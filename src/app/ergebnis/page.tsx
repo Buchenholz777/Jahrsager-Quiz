@@ -12,6 +12,7 @@ import { MAX_POINTS_PER_GAME } from "@/lib/constants";
 import { buildShareText } from "@/lib/share";
 import { absoluteUrl } from "@/lib/site";
 import { formatPoints } from "@/lib/scoring";
+import { describeDeviation } from "@/lib/timeline";
 import { formatDateDe } from "@/lib/time";
 import { todayKey } from "@/server/clock";
 import { getDb } from "@/server/db/client";
@@ -91,6 +92,33 @@ export default async function ErgebnisPage({ searchParams }: { searchParams: Pro
                 </span>
               )}
             </div>
+          </div>
+
+          <h2 className="mb-3 mt-10 text-2xl font-bold">Übersicht deiner Runden</h2>
+          <div className="overflow-x-auto rounded-card border border-line bg-card shadow-card">
+            <table className="w-full min-w-[20rem] text-left text-sm" data-testid="round-table">
+              <caption className="sr-only">Tipp, richtiges Jahr und Abweichung je Runde</caption>
+              <thead className="bg-paper-2/70 text-ink-soft">
+                <tr>
+                  <th scope="col" className="px-3 py-2">Runde</th>
+                  <th scope="col" className="px-3 py-2">Dein Tipp</th>
+                  <th scope="col" className="px-3 py-2">Richtig</th>
+                  <th scope="col" className="px-3 py-2">Abweichung</th>
+                  <th scope="col" className="px-3 py-2 text-right">Punkte</th>
+                </tr>
+              </thead>
+              <tbody>
+                {[...game.rounds].sort((a, b) => a.position - b.position).map((r) => (
+                  <tr key={r.position} className="border-t border-line">
+                    <th scope="row" className="px-3 py-2 font-semibold">{r.position}</th>
+                    <td className="px-3 py-2 tabular-nums">{r.result!.guess ?? "–"}</td>
+                    <td className="px-3 py-2 tabular-nums">{r.result!.correct}</td>
+                    <td className="px-3 py-2">{describeDeviation(r.result!.guess, r.result!.correct)?.text ?? "ohne Tipp"}</td>
+                    <td className="px-3 py-2 text-right tabular-nums">{formatPoints(r.result!.points)}</td>
+                  </tr>
+                ))}
+              </tbody>
+            </table>
           </div>
 
           <h2 className="mb-4 mt-10 text-2xl font-bold">Deine fünf Ereignisse in zeitlicher Reihenfolge</h2>

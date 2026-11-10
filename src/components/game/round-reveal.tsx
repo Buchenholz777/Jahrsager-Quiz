@@ -1,13 +1,14 @@
 "use client";
 
 import { ArrowRight, BookOpen, Lightbulb, Sparkles } from "lucide-react";
-import { useEffect, useRef } from "react";
+import { useEffect, useRef, useState } from "react";
 import type { RoundState } from "@/lib/game-types";
-import { describeDifference } from "@/lib/scoring";
+import { describeDeviation, resolutionAnnouncement } from "@/lib/timeline";
 import { Badge } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { CountUp } from "@/components/count-up";
-import { MiniTimeline } from "./mini-timeline";
+import { Confetti } from "./confetti";
+import { ResultTimeline } from "./result-timeline";
 import { PhotoFrame } from "./photo-frame";
 import { ReportDialog } from "./report-dialog";
 
@@ -17,8 +18,11 @@ export function RoundReveal({
   gameId,
   isLast,
   onNext,
+  celebrate = false,
 }: {
   round: RoundState;
+  /** true nur beim ersten Auflösen in dieser Sitzung (kein Konfetti beim Neuladen) */
+  celebrate?: boolean;
   total?: number;
   gameId: string;
   isLast: boolean;
@@ -30,6 +34,14 @@ export function RoundReveal({
     heading.current?.focus();
   }, [round.position]);
   const exact = r.difference === 0;
+  const dev = describeDeviation(r.guess, r.correct);
+  const [announce, setAnnounce] = useState("");
+  useEffect(() => {
+    const t = setTimeout(() => setAnnounce(resolutionAnnouncement(r.guess, r.correct, r.points)), 50);
+    return () => clearTimeout(t);
+  }, [r.guess, r.correct, r.points, round.position]);
+  const firstSource = r.reveal.sources.find((x) => x.url?.startsWith("http"));
+  const firstSentence = (r.reveal.what.match(/^.*?[.!?](\s|$)/)?.[0] ?? r.reveal.what).trim();
 
   return (
     <section aria-labelledby="aufloesung-titel" className="animate-rise">
@@ -53,36 +65,46 @@ export function RoundReveal({
         </div>
 
         <div className="space-y-5">
-          {/* Ergebnis-Karte: dunkler Kopf mit gelben Zahlen, heller Fuß mit Zeitachse */}
-          <div className="overflow-hidden rounded-card bg-ink text-paper shadow-card">
-            <div className="flex flex-wrap items-end justify-between gap-x-6 gap-y-3 p-5">
-              <div>
-                <p className="text-sm font-medium text-paper/80">Richtiges Jahr</p>
-                <p className="animate-pop font-display text-[4.25rem] font-extrabold leading-none tabular-nums text-sun sm:text-7xl" data-testid="correct-year">
-                  {r.correct}
-                </p>
+          {/* Auflösung direkt an der Stelle der Eingabe: Zeitleiste bleibt, Tipp ist fixiert */}
+          <div className="overflow-hidden rounded-card border border-line bg-card shadow-card" data-testid="reveal-card">
+            <div className="p-4 sm:p-5">
+              <ResultTimeline guess={r.guess} correct={r.correct} />
+              <div className="mt-4 flex flex-wrap items-end justify-between gap-x-6 gap-y-2">
+                <div>
+                  <p
+                    className={"font-display text-[2rem] font-extrabold leading-tight " + (exact ? "text-good" : "text-ink")}
+                    data-testid="deviation-text"
+                  >
+                    {exact && <Sparkles className="mr-2 inline size-7 align-[-0.1em]" aria-hidden="true" />}
+                    {dev ? dev.text : "Ohne Tipp aufgelöst"}
+                  </p>
+                  <p className="mt-1 text-sm font-medium text-ink-soft">
+                    Richtiges Jahr: <span className="font-bold text-ink" data-testid="correct-year">{r.correct}</span>
+                    {r.guess !== null && <> · Dein Tipp: <span className="font-bold text-ink">{r.guess}</span></>}
+                  </p>
+                </div>
+                <div className="text-right">
+                  <p className="font-display text-4xl font-extrabold tabular-nums leading-none text-ink">
+                    +<CountUp to={r.points} />
+                  </p>
+                  <p className="text-sm font-medium text-ink-soft">Punkte</p>
+                </div>
               </div>
-              <div className="text-right">
-                <p className="text-sm font-medium text-paper/80">{r.guess === null ? "Kein Tipp" : `Dein Tipp: ${r.guess}`}</p>
-                <p className="mt-1 font-display text-4xl font-extrabold tabular-nums leading-none">
-                  +<CountUp to={r.points} />
-                </p>
-                <p className="text-sm font-medium text-paper/80">Punkte</p>
-              </div>
-            </div>
-            <div className="bg-card p-4 text-ink">
-              <p
-                className={
-                  "inline-flex items-center gap-2 rounded-full px-3 py-1.5 text-sm font-bold " +
-                  (exact ? "bg-good-soft text-good" : r.difference === null ? "bg-paper-2 text-ink-soft" : "bg-sun-soft text-ink ring-1 ring-sun")
-                }
-              >
-                {exact && <Sparkles className="size-4" aria-hidden="true" />}
-                {describeDifference(r.difference)}
+              <p className="mt-3 text-[0.95rem] leading-relaxed text-ink" data-testid="context-sentence">
+                {firstSentence}
+                {firstSource && (
+                  <>
+                    {" "}
+                    <a href={firstSource.url} target="_blank" rel="noopener noreferrer" className="whitespace-nowrap font-semibold text-ink underline decoration-sun decoration-2 underline-offset-2">
+                      Quelle: {firstSource.label}
+                    </a>
+                  </>
+                )}
               </p>
-              <MiniTimeline className="mt-3" correct={r.correct} guess={r.guess} />
             </div>
           </div>
+          <p className="sr-only" aria-live="polite" data-testid="sr-resolution">{announce}</p>
+          {exact && celebrate && <Confetti />}
 
           {/* Wissenskarte */}
           <div className="space-y-4 rounded-card border border-line bg-card p-5 shadow-card">
@@ -151,7 +173,7 @@ export function RoundReveal({
 
           <div className="flex flex-wrap items-center gap-3 pt-1">
             <Button size="lg" onClick={onNext} className="w-full sm:w-auto sm:min-w-60">
-              {isLast ? "Ergebnis ansehen" : "Nächstes Ereignis"}
+              {isLast ? "Ergebnis ansehen" : "Nächste Runde"}
               <ArrowRight className="size-5" aria-hidden="true" />
             </Button>
             <ReportDialog eventId={round.eventId} gameId={gameId} />

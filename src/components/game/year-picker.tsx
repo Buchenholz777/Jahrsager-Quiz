@@ -18,17 +18,19 @@ const pct = (year: number) => ((year - MIN_YEAR) / SPAN) * 100;
  * - Grobe Auswahl per Maus/Finger auf der Leiste (Ziehen oder Tippen)
  * - Feinjustierung mit −1/+1 (und −10/+10), Pfeiltasten, Bild↑/↓, Pos1/Ende
  * - Direkteingabe im Zahlenfeld
- * Es gibt bewusst keinen Vorgabewert: erst nach einer Auswahl kann ein Jahr eingeloggt werden.
+ * Es gibt bewusst keinen Vorgabewert: erst nach einer Auswahl kann eine Schätzung abgegeben werden.
  */
 export function YearPicker({ value, onChange, disabled }: { value: number | null; onChange: (y: number | null) => void; disabled?: boolean }) {
   const trackRef = useRef<HTMLDivElement>(null);
   const [dragging, setDragging] = useState(false);
   const [draft, setDraft] = useState<string | null>(null);
+  const [msg, setMsg] = useState("");
   const inputId = useId();
   const hintId = useId();
 
   const set = (y: number | null) => {
     setDraft(null);
+    setMsg("");
     onChange(y === null ? null : clamp(y));
   };
   const step = (d: number) => set(value === null ? START_YEAR : value + d);
@@ -52,13 +54,18 @@ export function YearPicker({ value, onChange, disabled }: { value: number | null
   };
 
   const text = draft ?? (value === null ? "" : String(value));
-  const invalid = draft !== null && draft.length === 4 && !(Number(draft) >= MIN_YEAR && Number(draft) <= MAX_YEAR);
+  const invalid = msg !== "";
+  const rangeMsg = `Bitte gib ein Jahr zwischen ${MIN_YEAR} und ${MAX_YEAR} ein.`;
 
   const onText = (raw: string) => {
     const digits = raw.replace(/\D/g, "").slice(0, 4);
     setDraft(digits);
     const n = Number(digits);
-    onChange(digits.length === 4 && n >= MIN_YEAR && n <= MAX_YEAR ? n : null);
+    const ok = digits.length === 4 && n >= MIN_YEAR && n <= MAX_YEAR;
+    if (raw !== digits && /\D/.test(raw)) setMsg("Bitte gib nur Ziffern ein, zum Beispiel 1969.");
+    else if (digits.length === 4 && !ok) setMsg(rangeMsg);
+    else setMsg("");
+    onChange(ok ? n : null);
   };
 
   const left = value === null ? 0 : pct(value);
@@ -179,7 +186,7 @@ export function YearPicker({ value, onChange, disabled }: { value: number | null
         )}
       </div>
 
-      <div className="mt-3 flex items-stretch gap-1.5">
+      <div className="mt-3 flex items-end gap-1.5">
         <StepButton label="10 Jahre zurück" onClick={() => step(-10)} disabled={disabled}>
           <span className="text-sm font-bold">−10</span>
         </StepButton>
@@ -187,8 +194,8 @@ export function YearPicker({ value, onChange, disabled }: { value: number | null
           <Minus className="size-5" />
         </StepButton>
         <div className="min-w-0 flex-1">
-          <label htmlFor={inputId} className="sr-only">
-            Jahr eingeben (1900 bis 2020)
+          <label htmlFor={inputId} className="mb-1 block text-center text-xs font-semibold text-ink-soft">
+            Jahr eingeben (1900–2020)
           </label>
           <input
             id={inputId}
@@ -202,7 +209,10 @@ export function YearPicker({ value, onChange, disabled }: { value: number | null
             aria-invalid={invalid}
             aria-describedby={invalid ? `${inputId}-err` : undefined}
             onChange={(e) => onText(e.target.value)}
-            onBlur={() => setDraft(null)}
+            onBlur={() => {
+              if (draft !== null && draft.length > 0 && draft.length < 4) setMsg(rangeMsg);
+              setDraft(null);
+            }}
             className={cn(
               "h-14 w-full rounded-xl border-2 bg-card text-center font-display text-2xl font-bold tabular-nums text-ink placeholder:text-line-strong",
               invalid ? "border-ink bg-sun-soft" : "border-field focus:border-ink",
@@ -217,7 +227,7 @@ export function YearPicker({ value, onChange, disabled }: { value: number | null
         </StepButton>
       </div>
       <p id={`${inputId}-err`} role="alert" className="mt-2 min-h-5 text-sm font-semibold text-ink">
-        {invalid ? `Bitte gib ein Jahr zwischen ${MIN_YEAR} und ${MAX_YEAR} ein.` : ""}
+        {msg}
       </p>
     </div>
   );
@@ -232,6 +242,7 @@ function StepButton({ children, label, onClick, disabled, big }: { children: Rea
       disabled={disabled}
       className={cn(
         "inline-flex shrink-0 items-center justify-center rounded-xl border-2 border-field bg-card text-ink transition-[background-color,border-color,transform] duration-150 hover:border-ink hover:bg-sun-soft active:scale-95 disabled:opacity-50",
+        "h-14",
         big ? "w-14" : "w-11",
       )}
     >

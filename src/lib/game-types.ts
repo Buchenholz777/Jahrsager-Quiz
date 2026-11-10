@@ -50,7 +50,9 @@ export interface RoundState {
 
 export interface GameState {
   gameId: string;
-  mode: "daily" | "practice";
+  mode: "daily" | "practice" | "party";
+  /** Gesetzt bei Party-Spielen: Code der Party */
+  partyCode?: string | null;
   official: boolean;
   status: "laufend" | "abgeschlossen";
   packNumber: number;

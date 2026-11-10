@@ -70,7 +70,7 @@ describe("Redaktionsworkflow", () => {
 
     const prod = await createEvent(db, eventInput({ is_demo: false, image_is_placeholder: true }));
     expect(eventProblems(prod, "approval").join(" ")).toContain("Platzhalter");
-    const real = await createEvent(db, eventInput({ is_demo: false, image_is_placeholder: false }));
+    const real = await createEvent(db, eventInput({ is_demo: false, image_is_placeholder: false, image_id: `phtest${Date.now()}` }));
     // Foto-Pflicht: ohne Bilddatei im Speicher keine Prüfung/Freigabe
     await expect(transitionEvent(db, real.id, "in_pruefung")).rejects.toMatchObject({ code: "FOTO_FEHLT" });
     await putImage(`${real.image_id}.${real.image_ext}`, Buffer.alloc(4000, 1), "image/webp");

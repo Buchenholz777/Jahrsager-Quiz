@@ -23,7 +23,7 @@ test("Smartphone: kein horizontales Scrollen, Jahresauswahl per Touch", async ({
     await page.getByRole("button", { name: "1 Jahr vor" }).tap();
     await expect(slider).toHaveAttribute("aria-valuenow", String(value + 1));
     // große Bedienelemente (≥ 44 px)
-    for (const name of ["1 Jahr vor", "1 Jahr zurück", "Jahr einloggen"]) {
+    for (const name of ["1 Jahr vor", "1 Jahr zurück", "Schätzung abgeben"]) {
       const b = (await page.getByRole("button", { name }).boundingBox())!;
       expect(b.height, name).toBeGreaterThanOrEqual(44);
     }

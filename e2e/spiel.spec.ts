@@ -1,9 +1,9 @@
 import { expect, test, type Page } from "@playwright/test";
 
 async function guess(page: Page, year: number) {
-  await page.getByLabel("Jahr eingeben (1900 bis 2020)").fill(String(year));
-  await page.getByRole("button", { name: "Jahr einloggen" }).click();
-  await expect(page.getByText("Richtiges Jahr")).toBeVisible();
+  await page.getByLabel("Jahr eingeben (1900–2020)").fill(String(year));
+  await page.getByRole("button", { name: "Schätzung abgeben" }).click();
+  await expect(page.getByTestId("deviation-text")).toBeVisible();
 }
 
 test("kompletter Ablauf: spielen, Neuladen, Ergebnis, Teilen, Statistik", async ({ page }) => {
@@ -15,7 +15,7 @@ test("kompletter Ablauf: spielen, Neuladen, Ergebnis, Teilen, Statistik", async 
   await expect(page.getByText("Ereignis 1 von 5")).toBeVisible();
 
   // Kein Tipp ohne bewusste Auswahl
-  const submit = page.getByRole("button", { name: "Jahr einloggen" });
+  const submit = page.getByRole("button", { name: "Schätzung abgeben" });
   await expect(submit).toBeDisabled();
 
   // Tastaturbedienung der Zeitleiste
@@ -29,7 +29,7 @@ test("kompletter Ablauf: spielen, Neuladen, Ergebnis, Teilen, Statistik", async 
   await expect(slider).toHaveAttribute("aria-valuenow", "1900");
 
   // Ungültige Eingabe verbraucht nichts und blockiert das Absenden
-  const input = page.getByLabel("Jahr eingeben (1900 bis 2020)");
+  const input = page.getByLabel("Jahr eingeben (1900–2020)");
   await input.fill("2099");
   await expect(page.getByRole("alert").filter({ hasText: "zwischen 1900 und 2020" })).toBeVisible();
   await expect(submit).toBeDisabled();
@@ -40,18 +40,18 @@ test("kompletter Ablauf: spielen, Neuladen, Ergebnis, Teilen, Statistik", async 
   await expect(page.getByText("Ereignis 2 von 5")).toBeVisible();
   // frühere Auflösung bleibt über die Navigation erreichbar
   await page.getByRole("button", { name: /Ereignis 1 \(aufgelöst/ }).click();
-  await expect(page.getByText("Richtiges Jahr")).toBeVisible();
+  await expect(page.getByTestId("deviation-text")).toBeVisible();
 
   // Rest spielen; Runde 3 ohne Tipp auflösen
   await page.getByRole("button", { name: /Ereignis 2 \(aktuell\)/ }).click();
   await guess(page, 1971);
-  await page.getByRole("button", { name: "Nächstes Ereignis" }).click();
+  await page.getByRole("button", { name: "Nächste Runde" }).click();
   await page.getByRole("button", { name: "Auflösen ohne Tipp" }).click();
   await page.getByRole("button", { name: "Ja, auflösen" }).click();
   await expect(page.getByText("Ohne Tipp aufgelöst").first()).toBeVisible();
-  await page.getByRole("button", { name: "Nächstes Ereignis" }).click();
+  await page.getByRole("button", { name: "Nächste Runde" }).click();
   await guess(page, 2000);
-  await page.getByRole("button", { name: "Nächstes Ereignis" }).click();
+  await page.getByRole("button", { name: "Nächste Runde" }).click();
   await guess(page, 1902);
   await page.getByRole("button", { name: "Ergebnis ansehen" }).click();
 
@@ -97,10 +97,10 @@ test("Doppelklick wertet nur einmal und Lösungen zukünftiger Runden sind nicht
   });
   await page.goto("/spielen");
   await expect(page.getByText("Ereignis 1 von 5")).toBeVisible();
-  await page.getByLabel("Jahr eingeben (1900 bis 2020)").fill("1960");
-  const submit = page.getByRole("button", { name: /Jahr einloggen|Wird eingeloggt/ });
+  await page.getByLabel("Jahr eingeben (1900–2020)").fill("1960");
+  const submit = page.getByRole("button", { name: /Schätzung abgeben|Schätzung wird abgegeben/ });
   await submit.dblclick();
-  await expect(page.getByText("Richtiges Jahr")).toBeVisible();
+  await expect(page.getByTestId("deviation-text")).toBeVisible();
   expect(answerCalls).toBe(1);
 
   // Antwort der Start-API enthält keine Lösung und nur die erste offene Runde
@@ -115,12 +115,12 @@ test("Netzwerkfehler verbrauchen keinen Tipp (Erneut versuchen)", async ({ page 
   await expect(page.getByText(/Ereignis \d von 5/).first()).toBeVisible();
   let fail = true;
   await page.route("**/api/spiel/*/antwort", (route) => (fail ? route.abort("failed") : route.continue()));
-  await page.getByLabel("Jahr eingeben (1900 bis 2020)").fill("1950");
-  await page.getByRole("button", { name: "Jahr einloggen" }).click();
+  await page.getByLabel("Jahr eingeben (1900–2020)").fill("1950");
+  await page.getByRole("button", { name: "Schätzung abgeben" }).click();
   await expect(page.getByRole("alert").filter({ hasText: "nicht verbraucht" })).toBeVisible();
   fail = false;
   await page.getByRole("button", { name: "Erneut versuchen" }).click();
-  await expect(page.getByText("Richtiges Jahr")).toBeVisible();
+  await expect(page.getByTestId("deviation-text")).toBeVisible();
 });
 
 test("Wissensseite des heutigen Rätsels verrät nichts, frühere Ereignisse sind lesbar", async ({ page, request }) => {
@@ -179,7 +179,7 @@ test("Startseite: historischer Hero ohne Demokarte, ohne zweites Logo, direkter 
   await expect(page.getByRole("slider")).toHaveCount(0);
   await expect(page.getByText("Selbst spielen")).toHaveCount(0);
   await expect(page.getByText("Designplatzhalter")).toHaveCount(0);
-  await expect(page.getByLabel("Jahr eingeben (1900 bis 2020)")).toHaveCount(0);
+  await expect(page.getByLabel("Jahr eingeben (1900–2020)")).toHaveCount(0);
   // kein großes Logo-Artwork im Hero (nur die Wortmarke im Header)
   await expect(page.locator("section.hero-bg img[alt*=\"JAHRSAGER\"]")).toHaveCount(0);
   await expect(page.locator("header").getByRole("img", { name: "JAHRSAGER QUIZ" })).toBeVisible();

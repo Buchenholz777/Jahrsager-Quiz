@@ -1,6 +1,7 @@
 import { MAX_YEAR, MIN_YEAR } from "@/lib/constants";
 import type { RoundState } from "@/lib/game-types";
-import { describeDifference, formatPoints } from "@/lib/scoring";
+import { formatPoints } from "@/lib/scoring";
+import { describeDeviation } from "@/lib/timeline";
 
 const pos = (y: number) => `calc(14px + (100% - 28px) * ${(y - MIN_YEAR) / (MAX_YEAR - MIN_YEAR)})`;
 
@@ -26,7 +27,7 @@ export function ResultChart({ rounds }: { rounds: RoundState[] }) {
               <div
                 className="relative mt-3 h-9"
                 role="img"
-                aria-label={`${res.reveal.publicTitle}: Lösung ${res.correct}, ${res.guess === null ? "kein Tipp" : `dein Tipp ${res.guess}`}. ${describeDifference(res.difference)}`}
+                aria-label={`${res.reveal.publicTitle}: Lösung ${res.correct}, ${res.guess === null ? "kein Tipp" : `dein Tipp ${res.guess}`}. ${describeDeviation(res.guess, res.correct)?.text ?? "ohne Tipp"}`}
               >
                 <div className="absolute inset-x-3.5 top-4 h-0.5 bg-line-strong" />
                 {res.guess !== null && res.guess !== res.correct && (
@@ -48,7 +49,7 @@ export function ResultChart({ rounds }: { rounds: RoundState[] }) {
                 </div>
               </div>
               <p className="mt-1 text-sm text-ink-soft">
-                {res.guess === null ? "Ohne Tipp aufgelöst" : `Dein Tipp: ${res.guess}`} · {describeDifference(res.difference)}
+                {res.guess === null ? "Ohne Tipp aufgelöst" : `Dein Tipp: ${res.guess}`} · {describeDeviation(res.guess, res.correct)?.text ?? ""}
               </p>
               <div className="mt-2 h-1.5 overflow-hidden rounded-full bg-paper-2" aria-hidden="true">
                 <div className="h-full rounded-full bg-sun" style={{ width: `${(res.points / 1000) * 100}%` }} />

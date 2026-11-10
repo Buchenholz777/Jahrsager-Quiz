@@ -12,11 +12,12 @@ interface GameRow {
   id: string;
   player_id: string;
   pack_id: string;
-  mode: "daily" | "practice";
+  mode: "daily" | "practice" | "party";
   official: boolean;
   status: "laufend" | "abgeschlossen";
   scoring_version: number;
   total_points: number;
+  party_id: string | null;
 }
 interface RoundRow {
   game_id: string;
@@ -96,8 +97,10 @@ export async function buildState(db: Queryable, game: GameRow, at: Date = clockN
     }
     visible.push(state);
   }
+  const partyCode = game.party_id ? ((await db.one<{ code: string }>("select code from parties where id = $1", [game.party_id]))?.code ?? null) : null;
   return {
     gameId: game.id,
+    partyCode,
     mode: game.mode,
     official: game.official,
     status: game.status,
@@ -112,18 +115,25 @@ export async function buildState(db: Queryable, game: GameRow, at: Date = clockN
   };
 }
 
-async function createGame(db: Db, playerId: string, pack: PackInfo, events: EventRow[], official: boolean): Promise<GameRow> {
+export async function createGame(
+  db: Db,
+  playerId: string,
+  pack: PackInfo,
+  events: { id: string; version: number }[],
+  official: boolean,
+  party: { id: string } | null = null,
+): Promise<GameRow> {
   // Eine einzige Anweisung: Partie und Runden werden atomar angelegt.
   const rounds = JSON.stringify(events.map((e, i) => ({ position: i + 1, event_id: e.id, event_version: e.version })));
   return (await db.one<GameRow>(
     `with g as (
-       insert into games(player_id, pack_id, mode, official, scoring_version) values ($1, $2, $3, $4, $5) returning *
+       insert into games(player_id, pack_id, mode, official, scoring_version, party_id) values ($1, $2, $3, $4, $5, $7) returning *
      ), r as (
        insert into game_rounds(game_id, position, event_id, event_version)
        select g.id, v.position, v.event_id, v.event_version from g, jsonb_to_recordset($6::jsonb) as v(position int, event_id uuid, event_version int)
        returning 1
      ) select * from g`,
-    [playerId, pack.id, official ? "daily" : "practice", official, SCORING_VERSION, rounds],
+    [playerId, pack.id, party ? "party" : official ? "daily" : "practice", official, SCORING_VERSION, rounds, party?.id ?? null],
   ))!;
 }
 
@@ -135,7 +145,7 @@ async function officialOfDate(db: Db, playerId: string, pack: PackInfo): Promise
   );
 }
 
-const PRACTICE_Q = "select * from games where player_id = $1 and pack_id = $2 and not official and status = 'laufend'";
+const PRACTICE_Q = "select * from games where player_id = $1 and pack_id = $2 and not official and party_id is null and status = 'laufend'";
 
 /**
  * Startet bzw. setzt eine Partie fort.

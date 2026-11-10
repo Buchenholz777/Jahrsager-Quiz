@@ -3,6 +3,7 @@ import Link from "next/link";
 import { ArrowRight, BookOpen, CalendarClock, Camera, SlidersHorizontal } from "lucide-react";
 import { HeroCollage } from "@/components/home/hero-collage";
 import { PhotoBand } from "@/components/home/photo-band";
+import { ModeSelect } from "@/components/home/mode-select";
 import { HomeCta } from "@/components/home/home-cta";
 import { buttonVariants } from "@/components/ui/button";
 import { Badge, Card } from "@/components/ui/card";
@@ -70,6 +71,8 @@ export default async function HomePage() {
       </section>
 
       <PhotoBand events={showcase.more} />
+
+      <ModeSelect />
 
       <section aria-labelledby="so-geht-es" className="mx-auto max-w-6xl px-4 py-14 sm:px-6 sm:py-16">
         <h2 id="so-geht-es" className="text-3xl font-bold sm:text-4xl">

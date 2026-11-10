@@ -14,7 +14,7 @@ import { ProgressSegments } from "./progress";
 import { RoundQuestion } from "./round-question";
 import { RoundReveal } from "./round-reveal";
 
-type StartOpts = { packNumber?: number; practice?: boolean };
+type StartOpts = { packNumber?: number; practice?: boolean; partyCode?: string };
 
 async function api<T>(url: string, body?: unknown): Promise<T> {
   const res = await fetch(url, {
@@ -32,12 +32,14 @@ async function api<T>(url: string, body?: unknown): Promise<T> {
   return data as T;
 }
 
-export function GameClient({ packNumber, practice }: { packNumber?: number; practice?: boolean }) {
+export function GameClient({ packNumber, practice, partyCode }: { packNumber?: number; practice?: boolean; partyCode?: string }) {
   const router = useRouter();
   const [game, setGame] = useState<GameState | null>(null);
   const [view, setView] = useState<number | null>(null);
   const [loadError, setLoadError] = useState<{ code?: string; message: string } | null>(null);
   const [busy, setBusy] = useState(false);
+  // Position, die in dieser Sitzung gerade erstmals aufgelöst wurde (nur dafür gibt es Konfetti – nie beim Neuladen)
+  const [fresh, setFresh] = useState<number | null>(null);
   const [actionError, setActionError] = useState<string | null>(null);
   const lock = useRef(false);
   const last = useRef<(() => void) | null>(null);
@@ -45,11 +47,12 @@ export function GameClient({ packNumber, practice }: { packNumber?: number; prac
   const start = useCallback(async (opts: StartOpts) => {
     setLoadError(null);
     try {
-      const { state } = await api<{ state: GameState }>("/api/spiel/start", opts);
+      const { state } = await api<{ state: GameState }>(opts.partyCode ? `/api/party/${encodeURIComponent(opts.partyCode)}/start` : "/api/spiel/start", opts.partyCode ? {} : opts);
       setGame(state);
       setView(state.currentPosition ?? ROUNDS_PER_GAME);
       // Messung (nur mit Einwilligung, je Partie höchstens einmal): erst NACH erfolgreichem Start
-      if (!state.official) once(`jsq_ev_arch_${state.gameId}`, () => trackEvent("archive_quiz_started", { quiz_mode: "practice" }));
+      if (state.mode === "party") void 0;
+      else if (!state.official) once(`jsq_ev_arch_${state.gameId}`, () => trackEvent("archive_quiz_started", { quiz_mode: "practice" }));
       else if (state.status === "laufend" && state.answered === 0) once(`jsq_ev_start_${state.gameId}`, () => trackEvent("daily_quiz_started", { quiz_mode: "daily" }));
       else if (state.status === "laufend") once(`jsq_ev_res_${state.gameId}`, () => trackEvent("daily_quiz_resumed", { quiz_mode: "daily", round_number: state.currentPosition ?? 0 }));
     } catch (e) {
@@ -61,12 +64,12 @@ export function GameClient({ packNumber, practice }: { packNumber?: number; prac
   useEffect(() => {
     let cancelled = false;
     queueMicrotask(() => {
-      if (!cancelled) void start({ packNumber, practice });
+      if (!cancelled) void start({ packNumber, practice, partyCode });
     });
     return () => {
       cancelled = true;
     };
-  }, [start, packNumber, practice]);
+  }, [start, packNumber, practice, partyCode]);
 
   const submit = useCallback(
     (position: number, year: number | null) => {
@@ -77,8 +80,10 @@ export function GameClient({ packNumber, practice }: { packNumber?: number; prac
         setBusy(true);
         setActionError(null);
         try {
-          const { state } = await api<{ state: GameState }>(`/api/spiel/${game.gameId}/antwort`, { position, year });
+          const { state, alreadyAnswered } = await api<{ state: GameState; alreadyAnswered?: boolean }>(`/api/spiel/${game.gameId}/antwort`, { position, year });
           const wasDone = game.status === "abgeschlossen";
+          const wasResolved = !!game.rounds.find((r) => r.position === position)?.result;
+          setFresh(!wasResolved && !alreadyAnswered ? position : null);
           setGame(state);
           setView(position);
           const mode = state.official ? "daily" : "practice";
@@ -100,7 +105,7 @@ export function GameClient({ packNumber, practice }: { packNumber?: number; prac
     [game],
   );
 
-  if (loadError) return <LoadProblem error={loadError} onRetry={() => start({ packNumber, practice })} />;
+  if (loadError) return <LoadProblem error={loadError} onRetry={() => start({ packNumber, practice, partyCode })} partyCode={partyCode} />;
   if (!game || view === null) return <GameSkeleton />;
 
   const round = game.rounds.find((r) => r.position === view) ?? game.rounds[game.rounds.length - 1];
@@ -114,21 +119,23 @@ export function GameClient({ packNumber, practice }: { packNumber?: number; prac
         <div className="mb-6 flex flex-wrap items-center gap-3 rounded-card border border-line bg-card p-4 shadow-card">
           <Check className="size-6 text-good" aria-hidden="true" />
           <p className="flex-1 font-medium">
-            {game.official ? "Du hast das heutige Tagesrätsel abgeschlossen." : "Übungsrunde abgeschlossen."} Du kannst die Auflösungen ansehen oder das Ergebnis öffnen.
+            {game.mode === "party" ? "Du hast die Party-Runde abgeschlossen." : game.official ? "Du hast das heutige Tagesrätsel abgeschlossen." : "Übungsrunde abgeschlossen."} Du kannst die Auflösungen ansehen oder das Ergebnis öffnen.
           </p>
-          <Link href={`/ergebnis?spiel=${game.gameId}`} className={buttonVariants({ size: "sm" })}>
-            Ergebnis ansehen
+          <Link href={game.mode === "party" ? `/party/${game.partyCode}` : `/ergebnis?spiel=${game.gameId}`} className={buttonVariants({ size: "sm" })}>
+            {game.mode === "party" ? "Party-Ergebnis ansehen" : "Ergebnis ansehen"}
           </Link>
-          <Button
-            variant="secondary"
-            size="sm"
-            onClick={() => {
-              setGame(null);
-              void start({ packNumber: game.packNumber, practice: true });
-            }}
-          >
-            <RotateCcw className="size-4" aria-hidden="true" /> Als Übung spielen
-          </Button>
+          {game.mode !== "party" && (
+            <Button
+              variant="secondary"
+              size="sm"
+              onClick={() => {
+                setGame(null);
+                void start({ packNumber: game.packNumber, practice: true });
+              }}
+            >
+              <RotateCcw className="size-4" aria-hidden="true" /> Als Übung spielen
+            </Button>
+          )}
         </div>
       )}
 
@@ -139,8 +146,9 @@ export function GameClient({ packNumber, practice }: { packNumber?: number; prac
           total={ROUNDS_PER_GAME}
           gameId={game.gameId}
           isLast={round.position === ROUNDS_PER_GAME}
+          celebrate={fresh === round.position}
           onNext={() => {
-            if (round.position === ROUNDS_PER_GAME) router.push(`/ergebnis?spiel=${game.gameId}`);
+            if (round.position === ROUNDS_PER_GAME) router.push(game.mode === "party" ? `/party/${game.partyCode}` : `/ergebnis?spiel=${game.gameId}`);
             else {
               setView(round.position + 1);
               window.scrollTo({ top: 0 });
@@ -174,15 +182,16 @@ function GameHeader({ game, view, onView }: { game: GameState; view: number; onV
         </p>
         <div className="flex flex-wrap items-center gap-2">
           <Badge tone={game.official ? "accent" : "neutral"}>
-            {game.official ? "Tagesrätsel" : "Übung"} #{game.packNumber}
+            {game.mode === "party" ? `Party ${game.partyCode ?? ""}` : `${game.official ? "Tagesrätsel" : "Übung"} #${game.packNumber}`}
           </Badge>
-          <span className="text-sm text-ink-soft">{formatDateDe(game.packDate)}</span>
+          {game.mode !== "party" && <span className="text-sm text-ink-soft">{formatDateDe(game.packDate)}</span>}
         </div>
       </div>
       <div className="mt-1">
         <ProgressSegments total={ROUNDS_PER_GAME} resolved={resolved} reachable={reachable} current={view} onSelect={onView} />
       </div>
-      {!game.official && <p className="text-sm text-ink-soft">Übung: verändert deine Tageswertung nicht.</p>}
+      {game.mode === "practice" && <p className="text-sm text-ink-soft">Übung: verändert deine Tageswertung nicht.</p>}
+      {game.mode === "party" && <p className="text-sm text-ink-soft">Party: alle spielen dieselben fünf Ereignisse. Verändert deine Tageswertung nicht.</p>}
     </div>
   );
 }
@@ -203,16 +212,16 @@ function GameSkeleton() {
   );
 }
 
-function LoadProblem({ error, onRetry }: { error: { code?: string; message: string }; onRetry: () => void }) {
-  const missing = error.code === "KEIN_PAKET" || error.code === "NICHT_VERFUEGBAR";
+function LoadProblem({ error, onRetry, partyCode }: { error: { code?: string; message: string }; onRetry: () => void; partyCode?: string }) {
+  const missing = error.code === "KEIN_PAKET" || error.code === "NICHT_VERFUEGBAR" || (!!partyCode && (error.code === "PARTY_UNBEKANNT" || error.code === "PARTY_ABGELAUFEN"));
   return (
     <div className="mx-auto max-w-xl px-4 py-16 text-center" role="alert">
       <h1 className="text-3xl font-semibold">{missing ? "Hier gibt es gerade nichts zu spielen" : "Das Spiel konnte nicht geladen werden"}</h1>
       <p className="mt-3 text-ink-soft">{error.message}</p>
       <div className="mt-6 flex flex-wrap justify-center gap-3">
         {!missing && <Button onClick={onRetry}>Erneut versuchen</Button>}
-        <Link href="/archiv" className={buttonVariants({ variant: "secondary" })}>
-          Zum Rätselarchiv
+        <Link href={partyCode ? "/party" : "/archiv"} className={buttonVariants({ variant: "secondary" })}>
+          {partyCode ? "Zur Party-Seite" : "Zum Rätselarchiv"}
         </Link>
       </div>
     </div>
