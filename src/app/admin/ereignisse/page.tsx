@@ -31,15 +31,15 @@ export default async function EventsAdmin({ searchParams }: { searchParams: Prom
       </nav>
       {noPhoto && <p className="mt-3 max-w-3xl text-sm text-ink-soft">Diese Einträge haben (noch) kein Foto. Sie können nicht geprüft, freigegeben oder eingeplant werden, bevor ein passendes, rechtlich geprüftes Foto hinterlegt ist.</p>}
       <div className="mt-6 overflow-x-auto rounded-card border border-line bg-card shadow-card">
-        <table className="w-full min-w-[44rem] text-left text-sm">
+        <table className="w-full text-left text-sm">
           <thead className="bg-paper-2/70 text-ink-soft">
             <tr>
               <th scope="col" className="px-4 py-3">Titel</th>
               <th scope="col" className="px-4 py-3">Jahr</th>
-              <th scope="col" className="px-4 py-3">Thema</th>
-              <th scope="col" className="px-4 py-3">Stufe</th>
-              <th scope="col" className="px-4 py-3">Status</th>
-              <th scope="col" className="px-4 py-3">Version</th>
+              <th scope="col" className="hidden px-4 py-3 sm:table-cell">Thema</th>
+              <th scope="col" className="hidden px-4 py-3 md:table-cell">Stufe</th>
+              <th scope="col" className="hidden px-4 py-3 sm:table-cell">Status</th>
+              <th scope="col" className="hidden px-4 py-3 md:table-cell">Version</th>
             </tr>
           </thead>
           <tbody>
@@ -49,12 +49,17 @@ export default async function EventsAdmin({ searchParams }: { searchParams: Prom
                   <Link className="text-ink underline underline-offset-2" href={`/admin/ereignisse/${e.id}`}>{e.neutral_title}</Link>
                   {e.is_demo && <Badge tone="warn" className="ml-2">Demo</Badge>}
                   {!e.image_id && <Badge tone="warn" className="ml-2">Kein Foto</Badge>}
+                  {/* Smartphone: Thema und Status stehen unter dem Titel */}
+                  <div className="mt-1 flex flex-wrap items-center gap-2 text-xs font-normal text-ink-soft sm:hidden">
+                    <span>{CATEGORIES[e.category as CategoryKey]}</span>
+                    <Badge tone={e.status === "veroeffentlicht" ? "good" : e.status === "freigegeben" || e.status === "eingeplant" ? "accent" : "neutral"}>{EVENT_STATUS_LABELS[e.status]}</Badge>
+                  </div>
                 </td>
                 <td className="px-4 py-3 tabular-nums">{e.correct_year}</td>
-                <td className="px-4 py-3">{CATEGORIES[e.category as CategoryKey]}</td>
-                <td className="px-4 py-3">{DIFFICULTY_LABELS[e.difficulty]}</td>
-                <td className="px-4 py-3"><Badge tone={e.status === "veroeffentlicht" ? "good" : e.status === "freigegeben" || e.status === "eingeplant" ? "accent" : "neutral"}>{EVENT_STATUS_LABELS[e.status]}</Badge></td>
-                <td className="px-4 py-3 tabular-nums">v{e.version}</td>
+                <td className="hidden px-4 py-3 sm:table-cell">{CATEGORIES[e.category as CategoryKey]}</td>
+                <td className="hidden px-4 py-3 md:table-cell">{DIFFICULTY_LABELS[e.difficulty]}</td>
+                <td className="hidden px-4 py-3 sm:table-cell"><Badge tone={e.status === "veroeffentlicht" ? "good" : e.status === "freigegeben" || e.status === "eingeplant" ? "accent" : "neutral"}>{EVENT_STATUS_LABELS[e.status]}</Badge></td>
+                <td className="hidden px-4 py-3 tabular-nums md:table-cell">v{e.version}</td>
               </tr>
             ))}
             {events.length === 0 && <tr><td colSpan={6} className="px-4 py-6 text-ink-soft">Keine Ereignisse.</td></tr>}

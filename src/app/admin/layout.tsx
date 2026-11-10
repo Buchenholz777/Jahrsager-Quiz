@@ -26,20 +26,21 @@ export default async function AdminLayout({ children }: { children: React.ReactN
   return (
     <div className="min-h-[70vh]">
       <div className="border-b border-line bg-ink text-paper">
-        <div className="mx-auto flex max-w-6xl flex-wrap items-center gap-x-6 gap-y-2 px-4 py-3 sm:px-6">
-          <Link href="/admin" className="text-paper"><Logo className="h-14 md:h-14" /></Link>
-          <span className="rounded-full bg-sun px-2.5 py-0.5 text-xs font-semibold">Redaktion</span>
+        {/* Smartphone: Kopfzeile (Logo, Abmelden) und darunter eine waagerecht wischbare Navigationsleiste; ab md in einer Zeile */}
+        <div className="mx-auto grid max-w-6xl grid-cols-[auto_1fr_auto] items-center gap-x-3 gap-y-1 px-4 py-2 sm:px-6 md:flex md:flex-wrap md:gap-x-6 md:py-3">
+          <Link href="/admin" className="text-paper"><Logo className="h-10 md:h-14" /></Link>
+          <span className="justify-self-start rounded-full bg-sun px-2.5 py-0.5 text-xs font-semibold">Redaktion</span>
           {authed && (
-            <nav aria-label="Redaktion" className="flex flex-1 flex-wrap items-center gap-1 text-sm">
-              {LINKS.map(([h, l]) => (
-                <Link key={h} href={h} className="rounded-full px-3 py-2 hover:bg-white/10">{l}</Link>
-              ))}
-            </nav>
+            <form action={logoutAction} className="md:order-last">
+              <button className="min-h-11 rounded-full border border-paper/40 px-4 text-sm hover:bg-white/10" type="submit">Abmelden</button>
+            </form>
           )}
           {authed && (
-            <form action={logoutAction}>
-              <button className="rounded-full border border-paper/40 px-4 py-2 text-sm hover:bg-white/10" type="submit">Abmelden</button>
-            </form>
+            <nav aria-label="Redaktion" className="-mx-4 col-span-3 flex gap-1 overflow-x-auto px-4 pb-1 text-sm [scrollbar-width:none] sm:-mx-6 sm:px-6 md:mx-0 md:flex-1 md:flex-wrap md:overflow-visible md:p-0 [&::-webkit-scrollbar]:hidden">
+              {LINKS.map(([h, l]) => (
+                <Link key={h} href={h} className="inline-flex min-h-11 shrink-0 items-center rounded-full px-3 hover:bg-white/10">{l}</Link>
+              ))}
+            </nav>
           )}
         </div>
       </div>
