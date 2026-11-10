@@ -61,7 +61,19 @@ export async function getTodayPack(db: Db, at: Date = clockNow()): Promise<Today
   const today = todayKey(at);
   await publishDuePacks(db, today);
   await ensureDemoPackForToday(db, today);
-  const pack = await getPackByDate(db, today);
+  let pack = await getPackByDate(db, today);
+  if (!pack && !demoAllowed()) {
+    // Selbstheilung: fehlt das Rätsel von heute (z. B. Planungslauf nicht gelaufen oder Vorrat knapp), wird es aus dem geprüften Pool angelegt.
+    try {
+      const { planPacks } = await import("../pipeline/plan");
+      await planPacks(db, { days: 1, now: at });
+      await publishDuePacks(db, today);
+      pack = await getPackByDate(db, today);
+    } catch {
+      /* z. B. gleichzeitige Anlage durch eine zweite Anfrage: unten erneut lesen */
+      pack = await getPackByDate(db, today);
+    }
+  }
   if (!pack) return null;
   const events = await getPackEvents(db, pack.id);
   if (events.length !== ROUNDS_PER_GAME) return null;

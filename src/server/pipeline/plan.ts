@@ -4,7 +4,7 @@ import type { Db, Queryable } from "../db/client";
 import { schedulePack } from "../services/packs";
 import type { EventRow } from "../types";
 import { ROUNDS_PER_GAME } from "@/lib/constants";
-import { pickDiversePack, type SelEvent } from "./select";
+import { pickDiversePack, pickLeastBad, type SelEvent } from "./select";
 
 /** Pool: automatisch oder manuell freigegebene, ungesperrte Produktionsereignisse, die noch in keinem Paket vorkommen. */
 export async function poolEvents(db: Queryable): Promise<EventRow[]> {
@@ -60,7 +60,9 @@ export async function planPacks(db: Db, opts: { days: number; now?: Date; rnd?: 
   for (let i = 0; i < opts.days; i++) {
     const date = addDays(start, i);
     if (await db.one("select 1 from daily_packs where pack_date = $1", [date])) continue;
-    const pick = pickDiversePack(pool.map(toSel), history, opts.rnd);
+    let pick = pickDiversePack(pool.map(toSel), history, opts.rnd);
+    // Nur für heute: lieber ein weniger ausgewogenes Rätsel aus geprüften Ereignissen als gar keines.
+    if (!pick.set && i === 0) pick = pickLeastBad(pool.map(toSel), history, opts.rnd);
     if (!pick.set) {
       missing.push(date);
       warnings.push(`${date}: ${pick.reasons.join(" ")}`);

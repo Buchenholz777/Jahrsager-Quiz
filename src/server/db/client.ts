@@ -147,13 +147,19 @@ const g = globalThis as unknown as { __zsDb?: Promise<Db> };
  * Hinweis: Eine `transaction` ist hier nicht atomar – die Anweisungen laufen nacheinander einzeln.
  * Mehrschrittige Schreibvorgänge, die atomar sein müssen, sind deshalb als einzelne SQL-Anweisung formuliert.
  */
+/** app_sql reicht Parameter als Text durch: JavaScript-Listen müssen daher als Postgres-Array-Literal ({"a","b"}) übergeben werden. */
+export function pgArrayLiteral(items: unknown[]): string {
+  const esc = (x: unknown) => String(x).replace(/\\/g, "\\\\").replace(/"/g, '\\"');
+  return "{" + items.map((x) => (x === null || x === undefined ? "NULL" : `"${esc(x)}"`)).join(",") + "}";
+}
+
 export function createHttpDb(baseUrl: string, serviceKey: string): Db {
   const endpoint = baseUrl.replace(/\/+$/, "") + "/rest/v1/rpc/app_sql";
   async function call(sql: string, params?: unknown[]): Promise<{ rows: unknown[]; count: number }> {
     const res = await fetch(endpoint, {
       method: "POST",
       headers: { apikey: serviceKey, "content-type": "application/json" },
-      body: JSON.stringify({ stmts: [{ sql, params: (params ?? []).map((p) => (p === undefined ? null : p)) }] }),
+      body: JSON.stringify({ stmts: [{ sql, params: (params ?? []).map((p) => (p === undefined ? null : Array.isArray(p) ? pgArrayLiteral(p) : p)) }] }),
     });
     const text = await res.text();
     let body: unknown;

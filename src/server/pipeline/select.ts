@@ -154,3 +154,24 @@ export function distribution(events: SelEvent[], labels: Record<string, string>)
     similarGroups: [...topic].filter(([, c]) => c > 1).map(([t, c]) => ({ topic: t, n: c })).sort((a, b) => b.n - a.n),
   };
 }
+
+/**
+ * Notfall-Auswahl für das Rätsel von HEUTE: Gibt es keine Kombination, die alle Vielfaltsregeln erfüllt, wird die Kombination mit den
+ * wenigsten Regelverstößen genommen – ein ausgewogenes Rätsel ist gut, ein fehlendes Tagesrätsel ist schlechter.
+ * Es werden weiterhin nur freigegebene Ereignisse verwendet (der Pool kommt aus dem geprüften Bestand).
+ */
+export function pickLeastBad(pool: SelEvent[], history: SelEvent[], rnd: () => number = Math.random, trials = 3000): PickResult {
+  if (pool.length < ROUNDS_PER_GAME) return { set: null, warnings: [], reasons: [`Pool zu klein (${pool.length} Ereignisse).`] };
+  let best: { set: SelEvent[]; viol: string[]; score: number } | null = null;
+  for (let t = 0; t < trials; t++) {
+    const idx = new Set<number>();
+    while (idx.size < ROUNDS_PER_GAME) idx.add(Math.floor(rnd() * pool.length));
+    const set = [...idx].map((i) => pool[i]);
+    if (new Set(set.map((e) => e.category)).size < 3) continue; // absolute Untergrenze (wie bei der Paketprüfung)
+    const viol = packViolations(set, history, false);
+    const score = scoreSet(set, history);
+    if (!best || viol.length < best.viol.length || (viol.length === best.viol.length && score < best.score)) best = { set, viol, score };
+  }
+  if (!best) return { set: null, warnings: [], reasons: ["Auch für die Notfall-Auswahl fehlen Themenvielfalt (mind. 3 Themenfelder)."] };
+  return { set: best.set, warnings: ["Notfall-Auswahl (Vielfaltsregeln nicht vollständig erfüllbar): " + (best.viol.join(" ") || "keine Verstöße")], reasons: [] };
+}
