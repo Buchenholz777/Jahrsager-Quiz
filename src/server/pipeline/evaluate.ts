@@ -1,6 +1,7 @@
 import type { AuditEntry } from "../types";
 import type { CardDraft } from "./ai";
 import { validateDraft } from "./ai";
+import { checkSignificance, SITELINKS_REJECT_BELOW, type Bedeutung } from "@/lib/bedeutung";
 import { AUTO_TECHNICAL_EDITS, buildAttribution, classifyEdits, type ImageEdits, type ImageRights, type RightsStatus } from "@/lib/bildrechte";
 import { auditEntry, evaluateLicense, parseCreativeCommons, type CommonsMeta, type LicenseDecision } from "./license";
 
@@ -67,6 +68,8 @@ export interface AssessInput {
   minExternal?: number;
   /** Bearbeitungsvermerke (Standard: technische Anpassung ohne Zuschnitt) */
   edits?: string[];
+  /** Anzahl der Wikipedia-Sprachversionen des Ereignisses (Indiz internationaler Beachtung) */
+  sitelinks?: number;
 }
 export interface Assessment {
   decision: PipelineDecision;
@@ -74,6 +77,8 @@ export interface Assessment {
   audit: AuditEntry[];
   /** Rechtedaten und Bildnachweis des geprüften Bildes */
   rights: ImageRights;
+  /** Bewertung der weltgeschichtlichen Bedeutung (nur mit Textentwurf) */
+  bedeutung: Bedeutung | null;
 }
 
 /**
@@ -145,6 +150,28 @@ export function assess(i: AssessInput): Assessment {
   audit.push(auditEntry("quellen", src ? "ok" : "manuell", [src ? `${hosts.size} unabhängige externe Quelle(n) (mind. ${needExt}).` : `Nur ${hosts.size} unabhängige externe Quelle(n) auf der Allowlist (mind. ${needExt}); Wikipedia/Wikidata gelten nicht als unabhängig.`], { wikipedia: i.wikipediaUrl, extern: i.externalSources }));
   if (!src) manual.push(`Weniger als ${needExt} unabhängige Faktenquellen.`);
 
+  // 6a Weltgeschichtliche Bedeutung, eindeutiges Jahr, Bildbezug (Pflichtkriterium; die KI kann nur herabstufen)
+  let bedeutung: Bedeutung | null = null;
+  if (i.draft) {
+    const s = i.draft.significance;
+    bedeutung = {
+      verdict: s?.verdict ?? "unklar",
+      reason: s?.reason ?? "",
+      crossBorderEffects: s?.cross_border_effects,
+      yearUnambiguous: s?.year_unambiguous,
+      imageSpecificity: i.draft.image_check?.specificity ?? "unklar",
+      sitelinks: i.sitelinks,
+      checkedBy: "auto",
+      checkedAt: new Date().toISOString(),
+    };
+    const sig = checkSignificance(bedeutung);
+    audit.push(auditEntry("bedeutung", sig.result === "ok" ? "ok" : sig.result === "abgelehnt" ? "abgelehnt" : "manuell", sig.result === "ok" ? [`Weltgeschichtlich bedeutsam: ${bedeutung.reason}`] : sig.reasons, { urteil: bedeutung.verdict, sprachversionen: i.sitelinks ?? null, bildbezug: bedeutung.imageSpecificity, jahrEindeutig: bedeutung.yearUnambiguous ?? null }));
+    if (sig.result === "abgelehnt") reject.push(...sig.reasons);
+    else if (sig.result === "zurueckgestellt") manual.push(...sig.reasons);
+  } else if (i.sitelinks !== undefined && i.sitelinks < SITELINKS_REJECT_BELOW) {
+    reject.push(`Relevanzprüfung: Nur ${i.sitelinks} Wikipedia-Sprachversionen – kaum internationale Beachtung, kein belegter weltgeschichtlicher Rang.`);
+  }
+
   // 7 Inhalte (KI-Entwurf formal prüfen, Bild-Veto)
   if (!i.draft) {
     manual.push("Kein Textentwurf vorhanden.");
@@ -169,5 +196,5 @@ export function assess(i: AssessInput): Assessment {
   audit.push(auditEntry("entscheidung", decision === "auto_approved" ? "ok" : decision === "rejected" ? "abgelehnt" : "manuell", [...reject, ...manual, ...(decision === "auto_approved" ? ["Alle Auto-Freigabe-Regeln erfüllt."] : [])]));
   rights.status = DECISION_STATUS[decision];
   audit.push(auditEntry("rechtepruefung", decision === "auto_approved" ? "ok" : decision === "rejected" ? "abgelehnt" : "manuell", [`Status: ${DECISION_STATUS[decision]}`, `Grundlage: ${rights.basis || "–"}`], { geprueftAm: rights.rightsCheckedAt, lizenz: `${rights.license}`, version: rights.licenseVersion, quelle: rights.originalSourceUrl, nachweis: attribution.full }));
-  return { decision, reasons: [...reject, ...manual], audit, rights };
+  return { decision, reasons: [...reject, ...manual], audit, rights, bedeutung };
 }

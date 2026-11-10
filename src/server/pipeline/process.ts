@@ -53,7 +53,7 @@ export async function processCandidate(db: Queryable, c: Candidate, deps: Deps, 
   }
 
   // Vorab ohne KI: harte Ablehnungen kosten keine Tokens.
-  const pre = assess({ eventDate: c.date, meta, wikipediaUrl: c.articleUrl, externalSources: external, draft: null, duplicate: dup?.slug ?? null, minWidth: opts.minWidth });
+  const pre = assess({ eventDate: c.date, meta, wikipediaUrl: c.articleUrl, externalSources: external, draft: null, duplicate: dup?.slug ?? null, minWidth: opts.minWidth, sitelinks: c.sitelinks });
   if (pre.decision === "rejected") {
     await markSeen(db, c.sourceId, "rejected", pre.reasons.join(" | "));
     return { sourceId: c.sourceId, decision: "rejected", reason: pre.reasons.join(" | ") };
@@ -72,7 +72,7 @@ export async function processCandidate(db: Queryable, c: Candidate, deps: Deps, 
     }
     throw e;
   }
-  const a = assess({ eventDate: c.date, meta, wikipediaUrl: c.articleUrl, externalSources: external, draft, duplicate: null, minWidth: opts.minWidth });
+  const a = assess({ eventDate: c.date, meta, wikipediaUrl: c.articleUrl, externalSources: external, draft, duplicate: null, minWidth: opts.minWidth, sitelinks: c.sitelinks });
   if (a.decision === "rejected") {
     await markSeen(db, c.sourceId, "rejected", a.reasons.join(" | "));
     return { sourceId: c.sourceId, decision: "rejected", reason: a.reasons.join(" | ") };
@@ -140,7 +140,7 @@ export async function processCandidate(db: Queryable, c: Candidate, deps: Deps, 
     image_license_url: meta.licenseUrl,
     image_source_url: meta.pageUrl,
     image_edits: "Automatischer Import: " + AUTO_TECHNICAL_EDITS.join(" "),
-    research: { bildrechte: a.rights },
+    research: { bildrechte: a.rights, ...(a.bedeutung ? { bedeutung: a.bedeutung } : {}) },
     checks: auto ? { rights: true, facts: true, photoMatchesEvent: true } : {},
     image_status: auto ? "freigegeben" : "zu_pruefen",
   };

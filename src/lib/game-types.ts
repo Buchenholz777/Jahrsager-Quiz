@@ -30,6 +30,8 @@ export interface RoundReveal {
   licenseUrl: string;
   sourceUrl: string;
   isDemo: boolean;
+  /** Belegte Begründung der weltgeschichtlichen Bedeutung (ein Satz), soweit redaktionell erfasst */
+  significance?: string;
 }
 
 export interface RoundResult {

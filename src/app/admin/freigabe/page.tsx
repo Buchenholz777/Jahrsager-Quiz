@@ -8,6 +8,7 @@ import { approveAllAction, approveQuickAction } from "../actions";
 import { DeleteButton } from "./delete-button";
 import type { AuditEntry, EventRow } from "@/server/types";
 import { buildAttribution, missingRights, RIGHTS_STATUS_LABEL } from "@/lib/bildrechte";
+import { checkSignificance, VERDICT_LABEL } from "@/lib/bedeutung";
 
 export const metadata = { title: "Freigabe-Assistent" };
 export const dynamic = "force-dynamic";
@@ -47,6 +48,8 @@ export default async function FreigabeAssistent({ searchParams }: { searchParams
         const audit = (e.audit ?? []) as AuditEntry[];
         const reasons = audit.filter((a) => a.decision === "manuell" || a.decision === "abgelehnt").flatMap((a) => a.rules);
         const open = (e.research?.openPoints ?? []) as string[];
+        const bed = e.research?.bedeutung;
+        const sig = bed ? checkSignificance(bed) : null;
         const rights = e.research?.bildrechte;
         const attribution = rights ? buildAttribution(rights) : null;
         const rightsAudit = audit.filter((a) => ["lizenz", "bearbeitung", "personenrechte", "rechtepruefung", "bildnachweis"].includes(a.step));
@@ -92,8 +95,29 @@ export default async function FreigabeAssistent({ searchParams }: { searchParams
                     <ul className="list-disc pl-5">{[...reasons, ...open].map((r, i) => <li key={i}>{r}</li>)}</ul>
                   </div>
                 )}
+                <div className="rounded-card border border-line bg-paper p-3" data-testid="bedeutung-info">
+                  <p><strong>Weltgeschichtliche Bedeutung:</strong> {bed ? VERDICT_LABEL[bed.verdict] : "noch nicht erfasst"}{bed?.checkedBy === "auto" && " (automatisch bewertet)"}</p>
+                  {bed?.reason && <p className="mt-1">{bed.reason}</p>}
+                  <ul className="mt-1 list-disc pl-5 text-ink-soft">
+                    {bed?.sitelinks !== undefined && <li>Internationale Beachtung: {bed.sitelinks} Wikipedia-Sprachversionen</li>}
+                    {bed?.imageSpecificity && <li>Bildbezug: {bed.imageSpecificity}</li>}
+                    {bed?.yearUnambiguous !== undefined && <li>Jahr eindeutig belegt: {bed.yearUnambiguous ? "ja" : "nein"}</li>}
+                  </ul>
+                  {sig && sig.result !== "ok" && <ul className="mt-1 list-disc pl-5 font-semibold">{sig.reasons.map((r, i) => <li key={i}>{r}</li>)}</ul>}
+                </div>
                 <form action={approveQuickAction} className="space-y-3 border-t border-line pt-3">
                   <input type="hidden" name="id" value={e.id} />
+                  <label className="block">
+                    <span className="font-medium">Warum hat das Ereignis Weltgeschichte geschrieben? (ein konkreter Satz, Pflicht für die Freigabe)</span>
+                    <textarea name="significance_reason" rows={2} defaultValue={bed?.reason ?? ""} className="mt-1 w-full rounded-lg border border-line bg-card p-2" />
+                  </label>
+                  <label className="block">
+                    <span className="font-medium">Urteil</span>
+                    <select name="significance_verdict" defaultValue={bed?.verdict === "nicht_weltgeschichtlich" ? "nicht_weltgeschichtlich" : "weltgeschichtlich"} className="mt-1 w-full rounded-lg border border-line bg-card p-2">
+                      <option value="weltgeschichtlich">Weltgeschichtlich bedeutsam (Quellen geprüft)</option>
+                      <option value="nicht_weltgeschichtlich">Nicht weltgeschichtlich (nicht freigeben)</option>
+                    </select>
+                  </label>
                   <label className="block">
                     <span className="font-medium">Alternativtext (am Bild geprüft, ohne Jahr/Namen)</span>
                     <textarea name="image_alt" required minLength={5} rows={2} defaultValue={e.image_alt} className="mt-1 w-full rounded-lg border border-line bg-card p-2" />

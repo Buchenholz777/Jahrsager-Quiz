@@ -89,6 +89,16 @@ export function EventForm({ event }: { event: EventRow | null }) {
         <Field label="Was geschah? (2–3 Sätze)"><textarea name="explanation_what" required rows={3} defaultValue={e?.explanation_what} className={input} /></Field>
         <Field label="Warum ist es bedeutsam?"><textarea name="explanation_why" required rows={3} defaultValue={e?.explanation_why} className={input} /></Field>
         <Field label="Ein Detail zum Mitnehmen"><textarea name="explanation_detail" required rows={2} defaultValue={e?.explanation_detail} className={input} /></Field>
+        <Field label="Weltgeschichtliche Bedeutung: ein konkreter Satz, was sich durch das Ereignis verändert hat (Pflicht für die Freigabe)">
+          <textarea name="significance_reason" rows={2} defaultValue={e?.research?.bedeutung?.reason} placeholder="z. B. Mit dem Fall der Mauer endete die Teilung Europas und der Kalte Krieg." className={input} />
+        </Field>
+        <Field label="Urteil">
+          <select name="significance_verdict" defaultValue={e?.research?.bedeutung?.verdict ?? "weltgeschichtlich"} className={input}>
+            <option value="weltgeschichtlich">Weltgeschichtlich bedeutsam (Quellen geprüft)</option>
+            <option value="unklar">Unklar – zurückstellen</option>
+            <option value="nicht_weltgeschichtlich">Nicht weltgeschichtlich</option>
+          </select>
+        </Field>
         <Field label="Historischer Hintergrund (für die Wissensseite)"><textarea name="background" rows={4} defaultValue={e?.background} className={input} /></Field>
         <Field label="Faktenquellen" hint="Eine pro Zeile: „Titel | https://url“. Erfinde keine Quellen.">
           <textarea name="sources" rows={4} defaultValue={sources} className={input} />

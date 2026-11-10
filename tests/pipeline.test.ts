@@ -48,7 +48,8 @@ const draft = (over: Partial<CardDraft> = {}): CardDraft => ({
   explanation_what: words(70),
   explanation_why: words(20),
   explanation_detail: words(12),
-  image_check: { matches_event: "yes", persons_visible: false, caption_or_date_visible: false, quality_ok: true, note: "" },
+  significance: { verdict: "weltgeschichtlich", reason: "Die erste bemannte Mondlandung markiert einen Meilenstein der Raumfahrt und veränderte weltweit das Bild menschlicher Möglichkeiten.", cross_border_effects: true, year_unambiguous: true },
+  image_check: { matches_event: "yes", specificity: "ereignisspezifisch", persons_visible: false, caption_or_date_visible: false, quality_ok: true, note: "" },
   ...over,
 });
 const base = (over: Partial<AssessInput> = {}): AssessInput => ({
@@ -57,6 +58,7 @@ const base = (over: Partial<AssessInput> = {}): AssessInput => ({
   wikipediaUrl: "https://de.wikipedia.org/wiki/Test",
   externalSources: ["https://www.nasa.gov/x", "https://www.archives.gov/y"],
   draft: draft(),
+  sitelinks: 120,
   duplicate: null,
   ...over,
 });
@@ -100,11 +102,11 @@ describe("Automatische Entscheidung", () => {
     expect(assess(base({ meta: meta({ dateOriginal: "2019-01-01" }) })).decision).toBe("rejected");
     expect(assess(base({ duplicate: "apollo-1969" })).decision).toBe("rejected");
     expect(assess(base({ meta: meta({ width: 640 }) })).decision).toBe("rejected");
-    expect(assess(base({ draft: draft({ image_check: { matches_event: "no", persons_visible: false, caption_or_date_visible: false, quality_ok: true, note: "" } }) })).decision).toBe("rejected");
+    expect(assess(base({ draft: draft({ image_check: { matches_event: "no", specificity: "ereignisspezifisch", persons_visible: false, caption_or_date_visible: false, quality_ok: true, note: "" } }) })).decision).toBe("rejected");
     expect(assess(base({ eventDate: "1890-01-01", meta: meta({ dateOriginal: "1890-01-01" }) })).decision).toBe("rejected");
   });
   it("verweist in die manuelle Prüfung: Personen, unklare Datierung, fehlende Quellen, Zeitspoiler, fehlender Entwurf", () => {
-    expect(assess(base({ draft: draft({ image_check: { matches_event: "yes", persons_visible: true, caption_or_date_visible: false, quality_ok: true, note: "" } }) })).decision).toBe("manual_review");
+    expect(assess(base({ draft: draft({ image_check: { matches_event: "yes", specificity: "ereignisspezifisch", persons_visible: true, caption_or_date_visible: false, quality_ok: true, note: "" } }) })).decision).toBe("manual_review");
     expect(assess(base({ meta: meta({ dateOriginal: "July 1969" }) })).decision).toBe("manual_review");
     expect(assess(base({ meta: meta({ dateOriginal: "" }) })).decision).toBe("manual_review");
     expect(assess(base({ externalSources: [] })).decision).toBe("manual_review");
@@ -124,6 +126,7 @@ const cand = (n: number, over: Partial<Candidate> = {}): Candidate => ({
   commonsFile: `Test${n}.jpg`,
   articleUrl: `https://de.wikipedia.org/wiki/Test_${n}`,
   articleTitle: `Test ${n}`,
+  sitelinks: 120,
   ...over,
 });
 function fakeDeps(over: Partial<Deps> = {}, m: Partial<CommonsMeta> = {}): Deps {
@@ -168,7 +171,7 @@ describe("Kandidatenverarbeitung", () => {
   });
   it("legt Zweifelsfälle als Entwurf zur manuellen Prüfung an (Personen sichtbar)", async () => {
     const db = await createMemoryDb();
-    const deps = fakeDeps({ draft: async () => draft({ image_check: { matches_event: "yes", persons_visible: true, caption_or_date_visible: false, quality_ok: true, note: "" } }) });
+    const deps = fakeDeps({ draft: async () => draft({ image_check: { matches_event: "yes", specificity: "ereignisspezifisch", persons_visible: true, caption_or_date_visible: false, quality_ok: true, note: "" } }) });
     expect((await processCandidate(db, cand(4), deps)).decision).toBe("manual_review");
     const ev = (await db.one<{ status: string; image_status: string; checks: object }>("select status, image_status, checks from events where source_id = 'Q4'"))!;
     expect(ev).toMatchObject({ status: "entwurf", image_status: "zu_pruefen", checks: {} });

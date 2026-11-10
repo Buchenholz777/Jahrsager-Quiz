@@ -42,6 +42,17 @@ export async function logoutAction() {
 }
 
 const cb = (fd: FormData, k: string) => fd.get(k) === "on";
+
+/** Übernimmt die vom Admin eingetragene weltgeschichtliche Bedeutung (Begründung und Urteil) in die Rechercheangaben. */
+function withBedeutung(research: EventInput["research"] | undefined, fd: FormData): EventInput["research"] {
+  const reason = String(fd.get("significance_reason") ?? "").trim();
+  if (!fd.has("significance_reason")) return research ?? {};
+  const verdictRaw = String(fd.get("significance_verdict") ?? "weltgeschichtlich");
+  const verdict = (["weltgeschichtlich", "nicht_weltgeschichtlich", "unklar"] as const).find((v) => v === verdictRaw) ?? "unklar";
+  const before = research?.bedeutung;
+  if (!reason && !before) return research ?? {};
+  return { ...(research ?? {}), bedeutung: { ...(before ?? {}), verdict, reason, checkedBy: "admin", checkedAt: new Date().toISOString() } };
+}
 const optStr = (v: unknown) => {
   const s = String(v ?? "").trim();
   return s === "" ? null : s;
@@ -128,6 +139,7 @@ export async function saveEventAction(_prev: FormState, fd: FormData): Promise<F
       ...image,
       image_status: imageStatus,
       checks: { rights: cb(fd, "check_rights"), facts: cb(fd, "check_facts"), photoMatchesEvent: cb(fd, "check_photo") },
+      research: withBedeutung(existing?.research, fd),
       tags: String(fd.get("tags") ?? "").split(",").map((t) => t.trim().toLowerCase()).filter(Boolean),
       knowledge_enabled: cb(fd, "knowledge_enabled"),
       homepage_showcase: cb(fd, "homepage_showcase"),
@@ -214,6 +226,7 @@ export async function approveQuickAction(fd: FormData) {
     const input = {
       ...ev,
       image_alt: String(fd.get("image_alt") ?? "").trim(),
+      research: withBedeutung(ev.research, fd),
       image_status: "freigegeben",
       checks: { rights: true, facts: true, photoMatchesEvent: true },
       homepage_showcase: cb(fd, "homepage_showcase"),

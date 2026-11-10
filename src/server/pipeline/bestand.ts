@@ -17,6 +17,8 @@ export interface BestandEvent {
   has_source_url: boolean;
   is_demo: boolean;
   blocked: boolean;
+  /** Begründung der weltgeschichtlichen Bedeutung (research.bedeutung.reason), soweit erfasst */
+  bedeutung?: string | null;
 }
 
 export interface BestandReport {
@@ -32,6 +34,10 @@ export interface BestandReport {
   byCategory: Record<string, number>;
   byRegion: Record<string, number>;
   gaps: string[];
+  /** Stichprobe spielbarer Ereignisse mit Region, Jahrzehnt, Thema und Begründung */
+  sample: { slug: string; region: string; decade: string; category: string; reason: string }[];
+  /** spielbare Ereignisse ohne erfasste Begründung der Bedeutung (älterer Bestand: nachträglich in der Redaktion ergänzen) */
+  withoutReason: number;
 }
 
 const tagsOf = (e: BestandEvent): string[] => (Array.isArray(e.tags) ? (e.tags as string[]) : []);
@@ -86,7 +92,14 @@ export function analyseBestand(events: BestandEvent[]): BestandReport {
   for (let d = Math.floor(MIN_YEAR / 10) * 10; d <= MAX_YEAR; d += 10) if (!byDecade[`${d}er`]) gaps.push(`Jahrzehnt ${d}er ohne Ereignis`);
   const withoutDate = unique.filter((e) => !e.exact_date).length;
   if (withoutDate) gaps.push(`${withoutDate} Ereignisse ohne exaktes Datum (nur Jahr belegt)`);
+  const sample = [...unique]
+    .sort((a, b) => (a.id < b.id ? -1 : 1))
+    .filter((_, i, all) => i % Math.max(1, Math.ceil(all.length / 8)) === 0)
+    .slice(0, 8)
+    .map((e) => ({ slug: e.slug, region: e.region || "ohne Region", decade: `${Math.floor(e.correct_year / 10) * 10}er`, category: e.category, reason: (e.bedeutung ?? "").trim() }));
   return {
+    sample,
+    withoutReason: unique.filter((e) => !(e.bedeutung ?? "").trim()).length,
     total: events.length,
     playable: unique.length,
     completeGames: Math.floor(unique.length / ROUNDS_PER_GAME),
@@ -106,7 +119,7 @@ export async function loadBestand(db: Queryable): Promise<BestandEvent[]> {
     `select id, slug, status, category, correct_year, region, topic_key, source_id, exact_date, neutral_title, tags,
        (image_id is not null and not image_is_placeholder) as has_image,
        exists (select 1 from jsonb_array_elements(sources) s where s->>'url' like 'http%') as has_source_url,
-       is_demo, blocked
+       is_demo, blocked, research->'bedeutung'->>'reason' as bedeutung
      from events`,
   );
 }
@@ -127,5 +140,8 @@ export function formatBestand(r: BestandReport): string {
     `Nach Thema: ${line(r.byCategory)}`,
     `Nach Region: ${line(r.byRegion)}`,
     `Lücken: ${r.gaps.join("; ") || "–"}`,
+    `Spielbare Ereignisse ohne erfasste Begründung der weltgeschichtlichen Bedeutung: ${r.withoutReason} von ${r.playable}`,
+    "Stichprobe (Region · Jahrzehnt · Thema → Begründung):",
+    ...r.sample.map((s) => `  ${s.slug}: ${s.region} · ${s.decade} · ${s.category} → ${s.reason || "KEINE Begründung erfasst"}`),
   ].join("\n");
 }

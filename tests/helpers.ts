@@ -35,6 +35,7 @@ export function eventInput(over: Partial<EventInput> = {}): EventInput {
     explanation_why: "Warum es wichtig war.",
     explanation_detail: "Ein Detail.",
     sources: [{ label: "Quelle", url: "https://example.org/quelle" }],
+    research: { bedeutung: { verdict: "weltgeschichtlich", reason: "Das Testereignis veränderte nachweislich die Verhältnisse in mehreren Ländern und markiert einen Wendepunkt.", checkedBy: "admin" } },
     image_id: "phtest",
     image_ext: "svg",
     image_width: 1200,

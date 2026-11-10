@@ -73,6 +73,7 @@ function toReveal(e: EventRow) {
     licenseUrl: e.image_license_url,
     sourceUrl: e.image_source_url,
     isDemo: e.is_demo,
+    significance: e.research?.bedeutung?.reason?.trim() || undefined,
   };
 }
 

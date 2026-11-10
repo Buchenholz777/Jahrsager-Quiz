@@ -55,6 +55,8 @@ export interface Research {
   openPoints?: string[];
   /** Rechtedaten und Bildnachweis (src/lib/bildrechte.ts) */
   bildrechte?: import("@/lib/bildrechte").ImageRights;
+  /** Weltgeschichtliche Bedeutung: Urteil, Begründung in einem Satz, Bild- und Jahresbezug (src/lib/bedeutung.ts) */
+  bedeutung?: import("@/lib/bedeutung").Bedeutung;
 }
 
 export interface EventRow {

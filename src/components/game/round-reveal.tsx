@@ -91,7 +91,7 @@ export function RoundReveal({
                 </div>
               </div>
               <p className="mt-3 text-[0.95rem] leading-relaxed text-ink" data-testid="context-sentence">
-                {firstSentence}
+                {r.reveal.significance ?? firstSentence}
                 {firstSource && (
                   <>
                     {" "}

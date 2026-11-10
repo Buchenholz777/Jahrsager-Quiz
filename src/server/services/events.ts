@@ -1,5 +1,6 @@
 import { CATEGORY_KEYS, type EventStatus } from "@/lib/constants";
 import { findTimeHints } from "@/lib/hints";
+import { significanceProblemsForApproval } from "@/lib/bedeutung";
 import type { Queryable } from "../db/client";
 import { AppError, EDITABLE_FIELDS, type EventInput, type EventRow } from "../types";
 
@@ -142,6 +143,8 @@ export function eventProblems(e: EventRow, stage: "review" | "approval"): string
     if (!e.image_license.trim()) p.push("Bildlizenz fehlt.");
     if (!e.image_source_url.trim()) p.push("Originalfundstelle des Bildes fehlt.");
     if (!e.is_demo) {
+      // Pflichtkriterium: konkrete weltgeschichtliche Bedeutung (ein Satz), eindeutiges Jahr, ereignisspezifisches Foto
+      p.push(...significanceProblemsForApproval(e.research?.bedeutung));
       if (!e.sources.some((s) => s.url && /^https?:\/\//.test(s.url))) p.push("Mindestens eine Faktenquelle mit URL ist erforderlich.");
     }
   }

@@ -17,8 +17,17 @@ export interface CardDraft {
   explanation_what: string;
   explanation_why: string;
   explanation_detail: string;
+  /** Weltgeschichtliche Bedeutung (Pflichtkriterium), nur aus dem Auszug begründet */
+  significance?: {
+    verdict: "weltgeschichtlich" | "nicht_weltgeschichtlich" | "unklar";
+    reason: string;
+    cross_border_effects: boolean;
+    year_unambiguous: boolean;
+  };
   image_check: {
     matches_event: "yes" | "no" | "unclear";
+    /** ereignisspezifisch = zeigt das Ereignis, seine unmittelbaren Folgen oder einen unverwechselbaren Moment; generisch = austauschbares Motiv */
+    specificity?: "ereignisspezifisch" | "generisch" | "unklar";
     persons_visible: boolean;
     caption_or_date_visible: boolean;
     quality_ok: boolean;
@@ -56,8 +65,9 @@ Regeln: Verwende ausschließlich Informationen aus dem Auszug und dem sichtbaren
 Vor dem Tipp sichtbare Felder (neutral_title, description, image_alt) dürfen KEINE Jahreszahl, kein Datum, keinen Jahrzehnt- oder Jahrhundertbezug und keine zeitlich verräterischen Epochennamen enthalten.
 description: 30-55 Wörter, beschreibt neutral, was auf dem Bild zu sehen ist und worum es geht. explanation_what: 60-100 Wörter, Auflösung "Was geschah?". explanation_why: Bedeutung. explanation_detail: ein interessantes Detail aus dem Auszug.
 category aus: ${CATEGORY_KEYS.join(", ")}. difficulty: 1 (bekannt), 2 (mittel), 3 (knifflig). Nutze Raumfahrt NUR für echte Raumfahrt-/Astronomieereignisse. region aus: ${Object.keys(REGIONS).join(", ")}; country: deutscher Ländername oder leer; subcategory: kurzer Begriff; tags: 2-5 kleingeschriebene Schlagwörter; topic_key: kurzer Schlüssel für das konkrete Thema (z. B. "apollo", "olympia-1936"), damit ähnliche Ereignisse erkannt werden.
-image_check: Beurteile ehrlich, ob das Foto das Ereignis zeigt ("yes"/"no"/"unclear"), ob Personen erkennbar sind, ob Beschriftung oder Datum im Bild das Jahr verrät, ob die Qualität reicht.
-Antworte NUR mit einem JSON-Objekt mit genau diesen Feldern: insufficient, category, difficulty, subcategory, tags, region, country, topic_key, neutral_title, description, image_alt, public_title, explanation_what, explanation_why, explanation_detail, image_check{matches_event, persons_visible, caption_or_date_visible, quality_ok, note}.`;
+significance: Prüfe streng, ob das Ereignis Weltgeschichte geschrieben hat. Nur ein konkretes Ereignis mit eindeutigem Jahr, das nachweisbare Folgen über Ländergrenzen hinweg hatte oder als historischer Wendepunkt von weltweiter Bedeutung gilt, ist "weltgeschichtlich". Ein Ereignis darf an einem einzigen Ort stattgefunden haben. NICHT weltgeschichtlich ("nicht_weltgeschichtlich"): routinemäßige Wahlen, Pressekonferenzen, gewöhnliche Regierungswechsel, gewöhnliche Stürme/Hochwasser/Wetterrekorde ohne internationale Tragweite, lokale Rekorde, kurzfristiges Medienecho, reine Bekanntheit. Reicht der Auszug für ein sicheres Urteil nicht, setze "unklar". reason: EIN konkreter Satz (12-40 Wörter) aus dem Auszug, was sich durch das Ereignis verändert hat oder welchen bleibenden Meilenstein es markiert; keine Floskeln wie "bekannt" oder "viel beachtet". cross_border_effects: true nur, wenn der Auszug Folgen über Ländergrenzen hinweg belegt. year_unambiguous: false, wenn der Auszug widersprüchliche oder mehrdeutige Jahresangaben enthält.
+image_check: Beurteile ehrlich, ob das Foto das Ereignis zeigt ("yes"/"no"/"unclear"), ob Personen erkennbar sind, ob Beschriftung oder Datum im Bild das Jahr verrät, ob die Qualität reicht. specificity: "ereignisspezifisch", wenn das Foto das Ereignis, seine unmittelbaren Folgen oder einen unverwechselbaren Moment daraus zeigt; "generisch", wenn das Motiv austauschbar wäre (beliebiges Wahllokal, Wahlurne, Pressepodium, Menschenmenge ohne Bezug, Landschaft); sonst "unklar".
+Antworte NUR mit einem JSON-Objekt mit genau diesen Feldern: insufficient, category, difficulty, subcategory, tags, region, country, topic_key, neutral_title, description, image_alt, public_title, explanation_what, explanation_why, explanation_detail, significance{verdict, reason, cross_border_effects, year_unambiguous}, image_check{matches_event, specificity, persons_visible, caption_or_date_visible, quality_ok, note}.`;
 
 export async function draftCard(
   input: { title: string; date: string; extract: string; imageJpegBase64: string },

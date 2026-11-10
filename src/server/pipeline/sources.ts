@@ -1,3 +1,4 @@
+import { SITELINKS_REJECT_BELOW } from "@/lib/bedeutung";
 import type { CommonsMeta } from "./license";
 
 // Wikimedia verlangt eine identifizierbare Kennung mit gültigem Kontakt: PIPELINE_CONTACT (E-Mail oder URL) setzen.
@@ -27,6 +28,8 @@ export interface Candidate {
   articleTitle: string;
   /** Commons-Kategorie des Ereignisses (Wikidata P373), Quelle für die Bild-Suche je Ereignis */
   commonsCategory?: string;
+  /** Anzahl der Wikipedia-Sprachversionen (Wikidata): objektives Indiz internationaler Beachtung */
+  sitelinks?: number;
 }
 
 /** Zusätzliche Ereignistypen für die US-Variante: Naturereignisse, Katastrophen, Raumflüge. */
@@ -55,13 +58,14 @@ export async function findCandidates(limit: number, offset = 0, opts: DiscoveryO
   const from = Math.max(1900, opts.fromYear ?? 1900);
   const to = Math.min(2020, opts.toYear ?? 2020);
   const types = opts.variant === "us" ? [...EVENT_TYPES, ...US_EXTRA_TYPES] : opts.variant && opts.variant in TOPIC_TYPES ? TOPIC_TYPES[opts.variant as keyof typeof TOPIC_TYPES] : EVENT_TYPES;
-  const q = `SELECT ?item ?date ?image ?article ?cat WHERE {
+  const q = `SELECT ?item ?date ?image ?article ?cat ?links WHERE {
     VALUES ?t { ${types.map((t) => "wd:" + t).join(" ")} }
     ?item wdt:P31 ?t .
     ${opts.variant === "us" ? "?item wdt:P17 wd:Q30 ." : ""}
     ?item p:P585 ?st . ?st psv:P585 ?v . ?v wikibase:timeValue ?date ; wikibase:timePrecision 11 .
     FILTER(?date >= "${from}-01-01T00:00:00Z"^^xsd:dateTime && ?date < "${to + 1}-01-01T00:00:00Z"^^xsd:dateTime)
     ?item wdt:P18 ?image .
+    ?item wikibase:sitelinks ?links . FILTER(?links >= ${SITELINKS_REJECT_BELOW})
     OPTIONAL { ?item wdt:P373 ?cat }
     ?article schema:about ?item ; schema:isPartOf <https://de.wikipedia.org/> .
   } LIMIT ${limit} OFFSET ${offset}`;
@@ -75,6 +79,7 @@ export async function findCandidates(limit: number, offset = 0, opts: DiscoveryO
     articleUrl: b.article.value,
     articleTitle: decodeURIComponent(b.article.value.split("/wiki/").pop()!).replace(/_/g, " "),
     commonsCategory: b.cat?.value,
+    sitelinks: b.links ? Number(b.links.value) : undefined,
   }));
 }
 

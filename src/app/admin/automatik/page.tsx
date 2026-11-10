@@ -33,6 +33,9 @@ export default async function AutomatikAdmin() {
   const manual = await q("pipeline_state = 'manual_review' and not blocked");
   const auto = await q("pipeline_state = 'auto_approved' and not blocked");
   const blocked = await q("blocked");
+  const seen = await db.query<{ source_id: string; decision: string; reason: string; seen_at: string }>(
+    "select source_id, decision, reason, seen_at::text as seen_at from pipeline_seen where decision in ('rejected', 'manual_review') and reason <> '' order by seen_at desc limit 40",
+  );
   const tile = (label: string, value: number | string, warn = false) => (
     <Card className={`p-4 ${warn ? "border-2 border-sun" : ""}`}>
       <p className="text-sm text-ink-soft">{label}</p>
@@ -56,6 +59,20 @@ export default async function AutomatikAdmin() {
         {tile("Fehlgeschlagene Läufe (letzte 10)", s.lastErrors, s.lastErrors > 0)}
       </div>
       <p className="text-sm text-ink-soft">Ziel: {s.target} Ereignisse im Vorrat.</p>
+
+      <Card className="p-5">
+        <h2 className="text-xl font-semibold">Zuletzt abgelehnt oder zurückgestellt (mit Grund)</h2>
+        <p className="mt-1 text-sm text-ink-soft">Kandidaten, die die Relevanz-, Jahres-, Bild-, Quellen- oder Rechteprüfung nicht bestanden haben. „Abgelehnt“ wird nicht angelegt, „Zurückgestellt“ liegt im Freigabe-Assistenten.</p>
+        <ul className="mt-3 space-y-2 text-sm">
+          {seen.map((r) => (
+            <li key={r.source_id} className="rounded-card border border-line p-3">
+              <p><strong>{r.decision === "rejected" ? "Abgelehnt" : r.decision === "manual_review" ? "Zurückgestellt" : r.decision}</strong> · <a className="underline" href={`https://www.wikidata.org/wiki/${r.source_id}`} target="_blank" rel="noopener noreferrer">{r.source_id}</a> · {formatDateDe(r.seen_at.slice(0, 10))}</p>
+              <p className="mt-1 text-ink-soft">{r.reason.split(" | ").join(" · ")}</p>
+            </li>
+          ))}
+          {seen.length === 0 && <li className="text-ink-soft">Noch keine Einträge.</li>}
+        </ul>
+      </Card>
 
       <Card className="p-5">
         <h2 className="text-xl font-semibold">Themenvielfalt</h2>
