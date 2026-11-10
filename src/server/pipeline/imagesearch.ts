@@ -15,7 +15,7 @@ export async function findEventImage(c: Candidate, load: (cat: string) => Promis
     if (Math.max(m.width, m.height) < 1200 || Math.min(m.width, m.height) < 792) return false;
     const d = parseCommonsDay(m.dateOriginal);
     if (!d || d.y !== ey || d.m !== em || d.d !== ed) return false;
-    return licenseUsable(m, ey); // auch CC BY 4.0 mit erfüllten Herkunftsregeln (Freigabe wird danach vollständig geprüft)
+    return licenseUsable(m, ey, c.date); // auch CC BY 4.0 mit erfüllten Herkunftsregeln (Freigabe wird danach vollständig geprüft)
   });
   ok.sort((a, b) => b.width * b.height - a.width * a.height);
   return ok[0] ?? null;

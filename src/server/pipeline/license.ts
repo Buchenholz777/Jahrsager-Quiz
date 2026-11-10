@@ -81,20 +81,46 @@ const INSTITUTIONS =
   /(wellcome collection|te papa|museum of new zealand|museovirasto|finnish heritage agency|riksantikvarie|swedish national heritage board|nationaal archief|rijksmuseum|national library of (norway|australia|new zealand)|nasjonalbiblioteket|europeana|smithsonian|metropolitan museum|archives new zealand|alexander turnbull library|state library (of|victoria)|deutsche fotothek)/i;
 const OWN_WORK = /(own work|eigenes werk|selbst fotografiert|self-photographed)/i;
 
+const MONTH_NAMES = ["jan", "feb", "mar", "apr", "may|mai", "jun", "jul", "aug", "sep", "oct|okt", "nov", "dec|dez"];
+
+/** Prüft, ob ein Commons-Datumstext genau den ISO-Tag (YYYY-MM-DD) benennt (ISO-Form oder „20 July 1969“ / „20. Juli 1969“). */
+export function sameDay(text: string, iso: string): boolean {
+  const [y, mo, d] = iso.slice(0, 10).split("-").map(Number);
+  if (text.includes(iso.slice(0, 10))) return true;
+  const re = new RegExp(`(^|\\D)0?${d}\\.?\\s+(${MONTH_NAMES[mo - 1]})[a-zä]*\\.?,?\\s+${y}(\\D|$)`, "i");
+  return re.test(text);
+}
+
 export interface Provenance {
   ok: boolean;
   basis: string;
   problems: string[];
+  /** unabhängige Bestätigungen der Herkunft (neben der Grundlage) */
+  signals: string[];
 }
 
+export interface ProvenanceCtx {
+  eventYear?: number;
+  /** YYYY-MM-DD des belegten Ereignisses */
+  eventDate?: string;
+}
+
+/** Mindestzahl unabhängiger Bestätigungen zusätzlich zur Grundlage (Institution bzw. eigenes Werk). */
+export const MIN_CORROBORATION = 2;
+
 /**
- * Herkunftsprüfung für CC BY 4.0. Eine bloße Lizenzmarkierung genügt nicht: nötig sind benannter Urheber, konkrete Originalquelle, exakte Lizenz mit Link
- * und eine nachvollziehbare Berechtigung zur Lizenzvergabe (institutionelle Herkunft oder eigenes Werk des genannten Urhebers bei zeitlich plausiblem Ereignis).
+ * Herkunftsprüfung für CC BY 4.0. Eine bloße Lizenzmarkierung genügt nicht, und auch die Grundlage allein (bekannte Institution oder „Eigenes Werk“)
+ * reicht nicht: Neben Urheber, Originalquelle, exakter Lizenz mit Link und einer Grundlage der Berechtigung müssen mindestens ${MIN_CORROBORATION}
+ * unabhängige Bestätigungen vorliegen (tagesgenaues Aufnahmedatum, ausdrückliche Namensnennungs-Angabe der Quelle, Institution in Urheber- und Credit-Feld,
+ * Urheber mit vollständigem Namen). „Eigenes Werk“ zählt nur bei Ereignissen ab 1995 mit Aufnahme am Ereignistag.
  */
-export function ccByProvenance(m: CommonsMeta, eventYear?: number): Provenance {
+export function ccByProvenance(m: CommonsMeta, ctx: number | ProvenanceCtx = {}): Provenance {
+  const c: ProvenanceCtx = typeof ctx === "number" ? { eventYear: ctx } : ctx;
   const problems: string[] = [];
+  const signals: string[] = [];
   const author = (m.artist || "").trim();
-  if (!author || author.length < 3 || UNKNOWN_AUTHOR.test(author)) problems.push("Kein identifizierbarer Urheber bzw. Rechteinhaber.");
+  const authorOk = !!author && author.length >= 3 && !UNKNOWN_AUTHOR.test(author);
+  if (!authorOk) problems.push("Kein identifizierbarer Urheber bzw. Rechteinhaber.");
   if (!/^https?:\/\/commons\.wikimedia\.org\/wiki\/File:/i.test(m.pageUrl || "")) problems.push("Keine konkrete Originalquelle (Dateiseite) vorhanden.");
   if (!/^https?:\/\//i.test(m.url || "")) problems.push("Keine Original-Datei-URL.");
   if (!(m.credit || "").trim() && !author) problems.push("Keine Quellenangabe (Credit).");
@@ -103,25 +129,32 @@ export function ccByProvenance(m: CommonsMeta, eventYear?: number): Provenance {
   if (!/^https?:\/\/creativecommons\.org\/licenses\/by\/4\.0/i.test(m.licenseUrl || "")) problems.push("Kein Link zum Lizenztext (CC BY 4.0).");
   if ((m.restrictions || "").trim()) problems.push(`Zusätzliche Einschränkung laut Commons: ${m.restrictions.trim()}`);
   if (AGENCY.test(`${m.artist} ${m.credit}`)) problems.push("Agentur-/Bildarchiv-Angabe: Berechtigung zur Lizenzvergabe nicht nachvollziehbar.");
+  if (m.copyrighted === false) problems.push("Widersprüchliche Rechteinformation: Commons führt das Werk als nicht urheberrechtlich geschützt, aber unter CC BY lizenziert.");
+
+  // Bestätigungen (unabhängig von der Grundlage)
+  const dayMatch = !!c.eventDate && sameDay(m.dateOriginal || "", c.eventDate);
+  if (dayMatch) signals.push("Aufnahmedatum entspricht dem Ereignistag");
+  if (m.attributionRequired === true && (m.attribution || "").trim()) signals.push("Quelle verlangt ausdrücklich Namensnennung (Attribution angegeben)");
+  const instArtist = INSTITUTIONS.exec(m.artist || "")?.[0];
+  const instCredit = INSTITUTIONS.exec(m.credit || "")?.[0];
+  if (instArtist && instCredit) signals.push("Institution in Urheber- und Credit-Feld genannt");
+  if (authorOk && /^\p{L}[\p{L}.'’-]+(\s+\p{L}[\p{L}.'’-]+)+/u.test(author)) signals.push("Urheber mit vollständigem Namen");
 
   const hay = `${m.artist} ${m.credit}`;
   const inst = INSTITUTIONS.exec(hay)?.[0];
   let basis = "";
   if (inst) basis = `Institutionelle Herkunft: ${inst}`;
   else if (OWN_WORK.test(m.credit || "")) {
-    const taken = /\b(19\d{2}|20[012]\d)\b/.exec(m.dateOriginal || "")?.[1];
-    if (eventYear !== undefined && eventYear >= 1995 && taken && Number(taken) === eventYear && author) {
-      basis = "Eigenes Werk des genannten Urhebers (Aufnahme im Ereignisjahr, Ereignis ab 1995)";
-    } else {
-      problems.push("„Eigenes Werk“ bei einem Ereignis vor 1995 oder ohne passendes Aufnahmejahr: Berechtigung des Uploaders nicht nachvollziehbar.");
-    }
+    if (c.eventYear !== undefined && c.eventYear >= 1995 && dayMatch && authorOk) basis = "Eigenes Werk des genannten Urhebers (Aufnahme am Ereignistag, Ereignis ab 1995)";
+    else problems.push("„Eigenes Werk“ nur bei Ereignissen ab 1995 mit Aufnahme am Ereignistag und benanntem Urheber: Berechtigung des Uploaders sonst nicht nachvollziehbar.");
   } else {
     problems.push("Herkunft/Berechtigung zur Lizenzvergabe nicht nachvollziehbar (weder bekannte Institution noch eigenes Werk).");
   }
-  return { ok: problems.length === 0 && !!basis, basis, problems };
+  if (basis && signals.length < MIN_CORROBORATION) problems.push(`Grundlage allein genügt nicht: nur ${signals.length} von mindestens ${MIN_CORROBORATION} unabhängigen Bestätigungen (${signals.join("; ") || "keine"}).`);
+  return { ok: problems.length === 0 && !!basis, basis, problems, signals };
 }
 
-export function evaluateLicense(m: CommonsMeta, ctx: { eventYear?: number; auto?: LicenseClass[] } = {}): LicenseDecision {
+export function evaluateLicense(m: CommonsMeta, ctx: { eventYear?: number; eventDate?: string; auto?: LicenseClass[] } = {}): LicenseDecision {
   const reasons: string[] = [];
   const auto = ctx.auto ?? autoLicenseClasses();
   const lic = (m.license || "").trim();
@@ -138,15 +171,15 @@ export function evaluateLicense(m: CommonsMeta, ctx: { eventYear?: number; auto?
   if (cc && cc.family !== "other") {
     const klass = `cc-${cc.family}-${cc.version}` as LicenseClass;
     if (cc.family === "by" && cc.version === "4.0") {
-      const prov = ccByProvenance(m, ctx.eventYear);
+      const prov = ccByProvenance(m, { eventYear: ctx.eventYear, eventDate: ctx.eventDate });
       if (!prov.ok) return { allowed: false, manual: true, licenseClass: klass, rulesMet: false, reasons: [`CC BY 4.0: Regeln nicht vollständig erfüllt: ${prov.problems.join(" ")}`] };
-      if (auto.includes("cc-by-4.0")) return { allowed: true, manual: false, licenseClass: klass, rulesMet: true, basis: prov.basis, reasons: [`CC BY 4.0: alle Automatikregeln erfüllt. ${prov.basis}.`] };
+      if (auto.includes("cc-by-4.0")) return { allowed: true, manual: false, licenseClass: klass, rulesMet: true, basis: `${prov.basis}; Bestätigungen: ${prov.signals.join("; ")}`, reasons: [`CC BY 4.0: alle Automatikregeln erfüllt. ${prov.basis}.`] };
       return {
         allowed: false,
         manual: true,
         licenseClass: klass,
         rulesMet: true,
-        basis: prov.basis,
+        basis: `${prov.basis}; Bestätigungen: ${prov.signals.join("; ")}`,
         reasons: [`CC BY 4.0: Automatikregeln erfüllt (${prov.basis}); unbeaufsichtigte Freigabe noch nicht geschaltet – zusätzliche Rechteprüfung.`],
       };
     }
@@ -176,8 +209,8 @@ export function evaluateLicense(m: CommonsMeta, ctx: { eventYear?: number; auto?
 }
 
 /** Für die Bildsuche: Die Lizenz ist nach allen Regeln nutzbar (auch wenn die Freigabe noch eine Prüfung braucht). */
-export const licenseUsable = (m: CommonsMeta, eventYear?: number) => {
-  const d = evaluateLicense(m, { eventYear });
+export const licenseUsable = (m: CommonsMeta, eventYear?: number, eventDate?: string) => {
+  const d = evaluateLicense(m, { eventYear, eventDate });
   return d.allowed || (d.manual && d.rulesMet === true);
 };
 

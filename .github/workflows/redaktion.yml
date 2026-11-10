@@ -34,6 +34,12 @@ jobs:
         env:
           DATABASE_URL: ${{ secrets.DATABASE_URL }}
           DATABASE_SSL: "true"
+      - name: Ablehnungsgründe auswerten (nur Lesen, Ergebnis im Protokoll)
+        continue-on-error: true
+        run: npm run ablehnungen
+        env:
+          DATABASE_URL: ${{ secrets.DATABASE_URL }}
+          DATABASE_SSL: "true"
       - name: Recherche und Planung
         run: npm run pipeline -- all --max 80
         env:
@@ -43,6 +49,8 @@ jobs:
           SUPABASE_URL: https://eawkxaracebrailcwvku.supabase.co
           SUPABASE_SERVICE_KEY: ${{ secrets.SUPABASE_SERVICE_KEY }}
           ANTHROPIC_API_KEY: ${{ secrets.ANTHROPIC_API_KEY }}
+          # CC BY 4.0 unbeaufsichtigt freigeben: standardmäßig AUS (nur nach fachlicher Freigabe, siehe docs/LIZENZPOLITIK.md)
+          AUTO_APPROVE_CC_BY_4: ${{ vars.AUTO_APPROVE_CC_BY_4 || 'false' }}
           PIPELINE_CONTACT: ${{ secrets.PIPELINE_CONTACT }} # gültige Kontaktangabe (E-Mail/URL) für die Wikimedia-Kennung
           # Optional einstellbar (Standard laut docs/CONTENT-ENGINE.md): POOL_TARGET, POOL_BOOST, POOL_WARN, POOL_CRITICAL, POOL_BLOCKER,
           # AI_MAX_CALLS_PER_RUN, AI_MAX_CALLS_PER_DAY, AI_MAX_CALLS_PER_MONTH, MIN_EXTERNAL_SOURCES

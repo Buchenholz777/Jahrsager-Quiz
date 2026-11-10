@@ -93,7 +93,7 @@ export function assess(i: AssessInput): Assessment {
   if (i.duplicate) reject.push(`Dublette: ${i.duplicate}`);
 
   // 3 Lizenz (strikte Allowlist)
-  const lic = evaluateLicense(i.meta, { eventYear: year });
+  const lic = evaluateLicense(i.meta, { eventYear: year, eventDate: i.eventDate });
   audit.push(auditEntry("lizenz", lic.allowed ? "ok" : lic.manual ? "manuell" : "abgelehnt", lic.reasons, { license: i.meta.license, licenseUrl: i.meta.licenseUrl, artist: i.meta.artist, credit: i.meta.credit, klasse: lic.licenseClass ?? null, grundlage: lic.basis ?? null }));
   if (!lic.allowed) (lic.manual ? manual : reject).push(...lic.reasons);
 

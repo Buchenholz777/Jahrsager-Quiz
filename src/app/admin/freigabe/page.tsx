@@ -7,6 +7,7 @@ import { getDb } from "@/server/db/client";
 import { approveAllAction, approveQuickAction } from "../actions";
 import { DeleteButton } from "./delete-button";
 import type { AuditEntry, EventRow } from "@/server/types";
+import { buildAttribution, missingRights, RIGHTS_STATUS_LABEL } from "@/lib/bildrechte";
 
 export const metadata = { title: "Freigabe-Assistent" };
 export const dynamic = "force-dynamic";
@@ -46,6 +47,9 @@ export default async function FreigabeAssistent({ searchParams }: { searchParams
         const audit = (e.audit ?? []) as AuditEntry[];
         const reasons = audit.filter((a) => a.decision === "manuell" || a.decision === "abgelehnt").flatMap((a) => a.rules);
         const open = (e.research?.openPoints ?? []) as string[];
+        const rights = e.research?.bildrechte;
+        const attribution = rights ? buildAttribution(rights) : null;
+        const rightsAudit = audit.filter((a) => ["lizenz", "bearbeitung", "personenrechte", "rechtepruefung", "bildnachweis"].includes(a.step));
         return (
           <Card key={e.id} className="p-5">
             <div className="grid gap-6 lg:grid-cols-[minmax(0,1fr)_minmax(0,1.1fr)]">
@@ -59,6 +63,25 @@ export default async function FreigabeAssistent({ searchParams }: { searchParams
                 <p><strong>Bildquelle:</strong> <a className="break-all underline" href={e.image_source_url} target="_blank" rel="noopener noreferrer">{e.image_source_url}</a></p>
                 <p><strong>Aufnahmedatum:</strong> {e.photo_date || "unbekannt"}</p>
                 <p><strong>Nachweis:</strong> {e.image_credit_full}</p>
+                <div className="rounded-card border border-line bg-paper p-3" data-testid="rechte-info">
+                  <p><strong>Rechteprüfung:</strong> {rights ? RIGHTS_STATUS_LABEL[rights.status] : "keine automatisch erfasste Rechteprüfung"}{rights?.checkedBy === "auto" && " (automatisch vorbereitet)"}</p>
+                  {rights && (
+                    <ul className="mt-1 list-disc pl-5 text-ink-soft">
+                      <li>Lizenz: {rights.license || "–"}{rights.licenseVersion && ` (Version ${rights.licenseVersion})`} · Prüfgrundlage: {rights.basis || "–"}</li>
+                      <li>Geprüft am: {rights.rightsCheckedAt ? new Date(rights.rightsCheckedAt).toLocaleString("de-DE") : "–"} · Originaldatei: <a className="break-all underline" href={rights.originalFileUrl} target="_blank" rel="noopener noreferrer">{rights.originalFileUrl ? "Link" : "–"}</a></li>
+                      <li>Bearbeitung: {rights.edits.licenseRelevant.length ? rights.edits.licenseRelevant.join("; ") : "nur technisch (Größe, Format, Metadaten)"}</li>
+                      {rights.restrictions.length > 0 && <li>Einschränkungen: {rights.restrictions.join("; ")}</li>}
+                    </ul>
+                  )}
+                  {attribution && attribution.missing.length > 0 && <p className="mt-1 font-semibold">Pflichtangaben fehlen: {attribution.missing.join(", ")}</p>}
+                  {attribution && <p className="mt-1"><strong>Erzeugte Namensnennung:</strong> {attribution.full}</p>}
+                  {rights && missingRights(rights).length === 0 && /cc[ -]by/i.test(rights.license) && <p className="mt-1 text-ink-soft">CC BY: Die Namensnennung wird beim Bild angezeigt; vor der Freigabe Herkunft (Uploader/Institution) kurz gegenprüfen.</p>}
+                  {rightsAudit.length > 0 && (
+                    <details className="mt-1"><summary className="cursor-pointer font-semibold">Prüfprotokoll Rechte ({rightsAudit.length})</summary>
+                      <ul className="mt-1 list-disc pl-5">{rightsAudit.map((a, i) => <li key={i}><strong>{a.step}</strong> ({a.decision}): {a.rules.join(" ")}</li>)}</ul>
+                    </details>
+                  )}
+                </div>
                 <div>
                   <strong>Faktenquellen:</strong>
                   <ul className="list-disc pl-5">{e.sources.map((s) => <li key={s.url}>{s.url ? <a className="underline" href={s.url} target="_blank" rel="noopener noreferrer">{s.label}</a> : s.label}</li>)}</ul>

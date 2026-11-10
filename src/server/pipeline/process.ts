@@ -82,6 +82,20 @@ export async function processCandidate(db: Queryable, c: Candidate, deps: Deps, 
     return { sourceId: c.sourceId, decision: "uebersprungen", reason: "kein Textentwurf (ANTHROPIC_API_KEY fehlt)" };
   }
 
+  // Raumfahrt-Deckel: ab einer Mindestgröße des Vorrats darf der Raumfahrt-Anteil die Obergrenze (Standard 8 %) nicht überschreiten.
+  if (draft.category === "raumfahrt" || (Array.isArray(draft.tags) && draft.tags.includes("raumfahrt"))) {
+    const cap = Number(process.env.SPACE_SHARE_CAP) || 0.08;
+    const st = await db.one<{ space: number; total: number }>(
+      `select count(*) filter (where category = 'raumfahrt' or tags @> '["raumfahrt"]'::jsonb)::int as space, count(*)::int as total
+       from events where status in ('freigegeben','eingeplant','veroeffentlicht') and not is_demo and not homepage_showcase`,
+    );
+    if (st && st.total >= 10 && st.space / st.total >= cap) {
+      const why = `Raumfahrt-Anteil im Vorrat zu hoch (${st.space} von ${st.total}, Obergrenze ${Math.round(cap * 100)} %).`;
+      await markSeen(db, c.sourceId, "rejected", why);
+      return { sourceId: c.sourceId, decision: "rejected", reason: why };
+    }
+  }
+
   const img = await deps.storeImage(meta);
   const year = +c.date.slice(0, 4);
   const sources: Source[] = [

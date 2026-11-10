@@ -30,15 +30,22 @@ export interface Candidate {
 }
 
 /** Zusätzliche Ereignistypen für die US-Variante: Naturereignisse, Katastrophen, Raumflüge. */
-const US_EXTRA_TYPES = ["Q8065", "Q7944", "Q8068", "Q168983", "Q5916", "Q1261499"];
+// Raumflüge (Q5916) bewusst nicht als eigener Suchtyp: Raumfahrt soll den Vorrat nicht dominieren (siehe Raumfahrt-Deckel in process.ts).
+const US_EXTRA_TYPES = ["Q8065", "Q7944", "Q8068", "Q168983", "Q1261499"];
 const EVENT_TYPES = ["Q1190554", "Q1656682", "Q13418847", "Q3839081", "Q273120", "Q40231", "Q124757", "Q178561", "Q2627975"];
+/** Themenspezifische Suchen für unterrepräsentierte Bereiche (Wikidata-Klassen; die Ausbeute je Variante wird im Lauf protokolliert). */
+const TOPIC_TYPES: Record<"sport" | "kultur" | "gesellschaft", string[]> = {
+  sport: ["Q16510064", "Q13406554", "Q18608583"],
+  kultur: ["Q132241", "Q182832", "Q2627975", "Q464980"],
+  gesellschaft: ["Q273120", "Q49773", "Q45382", "Q131569", "Q40231"],
+};
 
 /**
  * Suchvarianten: "breit" (alle Ereignistypen weltweit), "us" (Ereignisse in den USA – dort sind Bilder von Bundesbehörden wie NASA, Militär,
  * National Archives, USGS verbreitet und als Werke der Bundesregierung gemeinfrei). Optional auf einen Zeitraum eingegrenzt.
  */
 export interface DiscoveryOptions {
-  variant?: "breit" | "us";
+  variant?: "breit" | "us" | "sport" | "kultur" | "gesellschaft";
   fromYear?: number;
   toYear?: number;
 }
@@ -47,7 +54,7 @@ export interface DiscoveryOptions {
 export async function findCandidates(limit: number, offset = 0, opts: DiscoveryOptions = {}): Promise<Candidate[]> {
   const from = Math.max(1900, opts.fromYear ?? 1900);
   const to = Math.min(2020, opts.toYear ?? 2020);
-  const types = opts.variant === "us" ? [...EVENT_TYPES, ...US_EXTRA_TYPES] : EVENT_TYPES;
+  const types = opts.variant === "us" ? [...EVENT_TYPES, ...US_EXTRA_TYPES] : opts.variant && opts.variant in TOPIC_TYPES ? TOPIC_TYPES[opts.variant as keyof typeof TOPIC_TYPES] : EVENT_TYPES;
   const q = `SELECT ?item ?date ?image ?article ?cat WHERE {
     VALUES ?t { ${types.map((t) => "wd:" + t).join(" ")} }
     ?item wdt:P31 ?t .

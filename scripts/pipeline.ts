@@ -28,6 +28,19 @@ const mode = args.find((a) => !a.startsWith("--")) ?? "all";
 const apiKey = process.env.ANTHROPIC_API_KEY;
 const thresholds = poolThresholds();
 
+/** Themenspezifische Suchwege haben weniger Treffer: bei leerem Ergebnis mit kleinerem Offset bzw. von vorn erneut versuchen. */
+async function findCandidatesWithFallback(limit: number, maxOffset: number, variant: "sport" | "kultur" | "gesellschaft" | "breit" | "us"): Promise<Candidate[]> {
+  for (const off of [Math.floor(Math.random() * maxOffset), Math.floor(Math.random() * Math.max(1, maxOffset / 5)), 0]) {
+    try {
+      const r = await findCandidates(limit, off, { variant });
+      if (r.length) return r;
+    } catch {
+      /* nächster Versuch */
+    }
+  }
+  return [];
+}
+
 const db = await getDb();
 let failed = false;
 let aiCalls = 0;
@@ -65,8 +78,16 @@ try {
         const rnd = (n: number) => Math.floor(Math.random() * n);
         const batch: Candidate[] = [];
         const seenIds = new Set<string>();
-        for (const part of [await findCandidates(maxPerRun * 2, rnd(150), { variant: "us" }), await findCandidates(maxPerRun, rnd(400))]) {
-          for (const c of part) if (!seenIds.has(c.sourceId)) { seenIds.add(c.sourceId); batch.push(c); }
+        // Themenvielfalt: Sport, Kultur und Gesellschaft werden bevorzugt (abwechselnd eingereiht), danach weltweit und USA.
+        const variants = ["sport", "kultur", "gesellschaft", "breit", "us"] as const;
+        const perVariant = Math.max(8, Math.ceil(maxPerRun / 2));
+        const lists = await Promise.all(variants.map((v) => findCandidatesWithFallback(perVariant, v === "breit" ? 400 : v === "us" ? 150 : 25, v)));
+        console.log("Kandidaten je Suchweg:", Object.fromEntries(variants.map((v, i) => [v, lists[i].length])));
+        for (let k = 0; k < perVariant; k++) {
+          for (const list of lists) {
+            const c = list[k];
+            if (c && !seenIds.has(c.sourceId)) { seenIds.add(c.sourceId); batch.push(c); }
+          }
         }
         let processed = 0;
         for (const c of batch) {
