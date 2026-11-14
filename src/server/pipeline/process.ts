@@ -7,7 +7,7 @@ import { assess, type Assessment } from "./evaluate";
 import type { CommonsMeta } from "./license";
 import { auditEntry } from "./license";
 import { AUTO_TECHNICAL_EDITS, buildAttribution } from "@/lib/bildrechte";
-import { allowedSource, type Candidate, type WikiInfo } from "./sources";
+import { britannicaUrl, pickExternalSources, type Candidate, type WikiInfo } from "./sources";
 
 /** Austauschbare Abhängigkeiten (Netzwerk, Bildverarbeitung, KI) – in Tests durch Attrappen ersetzt. */
 export interface Deps {
@@ -46,11 +46,10 @@ export async function processCandidate(db: Queryable, c: Candidate, deps: Deps, 
   }
 
   const dup = await db.one<{ slug: string }>("select slug from events where image_source_url = $1 or source_id = $2", [meta.pageUrl, c.sourceId]);
-  const external: string[] = [];
-  for (const u of wiki.externalLinks.filter(allowedSource).slice(0, 4)) {
-    if (external.length >= 2) break;
-    if (await deps.reachable(u)) external.push(u);
-  }
+  // Faktenquellen: Links aus deutscher und englischer Wikipedia sowie Britannica (Wikidata), unterschiedliche Domains, nur erreichbare
+  const enWiki = c.enArticleUrl ? await deps.wikipediaInfo(c.enArticleUrl).catch(() => null) : null;
+  const pool = [...wiki.externalLinks, ...(enWiki?.externalLinks ?? []), ...(britannicaUrl(c) ? [britannicaUrl(c)!] : [])];
+  const external = await pickExternalSources(pool, (u) => deps.reachable(u), 2);
 
   // Vorab ohne KI: harte Ablehnungen kosten keine Tokens.
   const pre = assess({ eventDate: c.date, meta, wikipediaUrl: c.articleUrl, externalSources: external, draft: null, duplicate: dup?.slug ?? null, minWidth: opts.minWidth, sitelinks: c.sitelinks });

@@ -30,6 +30,10 @@ export interface Candidate {
   commonsCategory?: string;
   /** Anzahl der Wikipedia-Sprachversionen (Wikidata): objektives Indiz internationaler Beachtung */
   sitelinks?: number;
+  /** englischsprachiger Wikipedia-Artikel (weitere Fundstellen für Faktenquellen) */
+  enArticleUrl?: string;
+  /** Kennung in der Encyclopaedia Britannica (Wikidata P1417): unabhängige Faktenquelle */
+  britannicaId?: string;
 }
 
 /** Zusätzliche Ereignistypen für die US-Variante: Naturereignisse, Katastrophen, Raumflüge. */
@@ -58,7 +62,7 @@ export async function findCandidates(limit: number, offset = 0, opts: DiscoveryO
   const from = Math.max(1900, opts.fromYear ?? 1900);
   const to = Math.min(2020, opts.toYear ?? 2020);
   const types = opts.variant === "us" ? [...EVENT_TYPES, ...US_EXTRA_TYPES] : opts.variant && opts.variant in TOPIC_TYPES ? TOPIC_TYPES[opts.variant as keyof typeof TOPIC_TYPES] : EVENT_TYPES;
-  const q = `SELECT ?item ?date ?image ?article ?cat ?links WHERE {
+  const q = `SELECT ?item ?date ?image ?article ?cat ?links ?en ?brit WHERE {
     VALUES ?t { ${types.map((t) => "wd:" + t).join(" ")} }
     ?item wdt:P31 ?t .
     ${opts.variant === "us" ? "?item wdt:P17 wd:Q30 ." : ""}
@@ -67,8 +71,10 @@ export async function findCandidates(limit: number, offset = 0, opts: DiscoveryO
     ?item wdt:P18 ?image .
     ?item wikibase:sitelinks ?links . FILTER(?links >= ${SITELINKS_REJECT_BELOW})
     OPTIONAL { ?item wdt:P373 ?cat }
+    OPTIONAL { ?en schema:about ?item ; schema:isPartOf <https://en.wikipedia.org/> }
+    OPTIONAL { ?item wdt:P1417 ?brit }
     ?article schema:about ?item ; schema:isPartOf <https://de.wikipedia.org/> .
-  } LIMIT ${limit} OFFSET ${offset}`;
+  } ORDER BY DESC(?links) LIMIT ${limit} OFFSET ${offset}`; // weltweit bekannteste Ereignisse zuerst (internationale Beachtung)
   const res = await politeFetch("https://query.wikidata.org/sparql?" + new URLSearchParams({ query: q }), { headers: { Accept: "application/sparql-results+json" } });
   if (!res.ok) throw new Error(`Wikidata-SPARQL: HTTP ${res.status}`);
   const json = (await res.json()) as { results: { bindings: Record<string, { value: string }>[] } };
@@ -80,6 +86,8 @@ export async function findCandidates(limit: number, offset = 0, opts: DiscoveryO
     articleTitle: decodeURIComponent(b.article.value.split("/wiki/").pop()!).replace(/_/g, " "),
     commonsCategory: b.cat?.value,
     sitelinks: b.links ? Number(b.links.value) : undefined,
+    enArticleUrl: b.en?.value,
+    britannicaId: b.brit?.value,
   }));
 }
 
@@ -159,7 +167,7 @@ export async function wikipediaInfo(articleUrl: string): Promise<WikiInfo | null
   const title = decodeURIComponent(articleUrl.split("/wiki/").pop()!).replace(/_/g, " ");
   const api =
     "https://de.wikipedia.org/w/api.php?" +
-    new URLSearchParams({ action: "query", titles: title, prop: "extracts|extlinks", exintro: "1", explaintext: "1", exlimit: "1", ellimit: "60", redirects: "1", format: "json", formatversion: "2" });
+    new URLSearchParams({ action: "query", titles: title, prop: "extracts|extlinks", exintro: "1", explaintext: "1", exlimit: "1", ellimit: "500", redirects: "1", format: "json", formatversion: "2" });
   const res = await politeFetch(api);
   if (!res.ok) return null;
   const p = ((await res.json()) as { query?: { pages?: { extract?: string; extlinks?: { url: string }[]; missing?: boolean }[] } }).query?.pages?.[0];
@@ -172,10 +180,45 @@ export const SOURCE_ALLOWLIST = [
   "nasa.gov", "archives.gov", "loc.gov", "bundesarchiv.de", "bpb.de", "bundestag.de", "bundesregierung.de", "whitehouse.gov",
   "britannica.com", "si.edu", "olympics.com", "nobelprize.org", "un.org", "europarl.europa.eu", "dhm.de", "hdg.de", "bnf.fr",
   "europeana.eu", "trumanlibrary.org", "jfklibrary.org", "esa.int", "nih.gov", "genome.gov", "unesco.org", "icrc.org", "usgs.gov", "noaa.gov", "nps.gov",
+  // Museen, Archive, Fachinstitutionen und öffentlich-rechtliche Medien (Faktenquellen, keine Bildquellen)
+  "history.state.gov", "nationalarchives.gov.uk", "ushmm.org", "yadvashem.org", "smithsonianmag.com", "who.int", "cern.ch", "iaea.org", "nato.int",
+  "europa.eu", "ecb.europa.eu", "worldathletics.org", "fifa.com", "uefa.com", "tagesschau.de", "bbc.co.uk", "bbc.com", "deutschlandfunk.de", "zdf.de",
+  "bpb.de", "lemo.dhm.de", "gedenkstaette-flossenbuerg.de", "stiftung-denkmal.de", "lpb-bw.de", "sachsen.de", "berlin.de", "bundeskanzler.de",
+  // anerkannte Qualitätsmedien und Fachquellen (Faktenquellen zu Ereignissen)
+  "nytimes.com", "theguardian.com", "washingtonpost.com", "reuters.com", "apnews.com", "economist.com", "time.com", "nationalgeographic.com", "history.com",
+  "spiegel.de", "zeit.de", "faz.net", "sueddeutsche.de", "lemonde.fr", "elpais.com", "nature.com", "science.org", "scientificamerican.com", "jstor.org",
 ];
+
+/** Institutionelle Domain-Endungen (Behörden, Hochschulen, Parlamente): gelten als Faktenquellen ohne Einzelaufnahme in die Liste. */
+const INSTITUTION_SUFFIXES = [".gov", ".mil", ".edu", ".gov.uk", ".ac.uk", ".gv.at", ".admin.ch", ".gouv.fr", ".bund.de", ".gov.au", ".govt.nz", ".gc.ca"];
+
+/** Wählt bis zu `max` erreichbare Quellen aus UNTERSCHIEDLICHEN Domains (zwei Links derselben Institution zählen nur einmal). */
+export async function pickExternalSources(urls: string[], check: (u: string) => Promise<boolean>, max = 2): Promise<string[]> {
+  const out: string[] = [];
+  const hosts = new Set<string>();
+  for (const u of urls.filter(allowedSource)) {
+    let h = "";
+    try {
+      h = new URL(u).hostname.replace(/^www\./, "").split(".").slice(-2).join(".");
+    } catch {
+      continue;
+    }
+    if (hosts.has(h)) continue;
+    if (await check(u)) {
+      out.push(u);
+      hosts.add(h);
+    }
+    if (out.length >= max) break;
+  }
+  return out;
+}
+
+/** Zusätzliche Quellenkandidaten aus Wikidata: Britannica-Eintrag. */
+export const britannicaUrl = (c: Candidate) => (c.britannicaId ? `https://www.britannica.com/${c.britannicaId}` : null);
 export const allowedSource = (url: string) => {
   try {
     const h = new URL(url).hostname.replace(/^www\./, "");
+    if (INSTITUTION_SUFFIXES.some((x) => h.endsWith(x))) return true;
     return SOURCE_ALLOWLIST.some((d) => h === d || h.endsWith("." + d));
   } catch {
     return false;
@@ -186,7 +229,9 @@ export async function reachable(url: string): Promise<boolean> {
   try {
     let r = await politeFetch(url, { method: "HEAD" }, 2);
     if (r.status === 405 || r.status === 403) r = await politeFetch(url, { method: "GET" }, 2);
-    return r.ok;
+    if (r.ok) return true;
+    // Vertrauenswürdige Domains sperren automatische Abrufe oft (Bot-Schutz: 401/403/429/999): Der Link stammt aus Wikipedia/Wikidata, die Seite gilt als vorhanden.
+    return [401, 403, 429, 999].includes(r.status) && allowedSource(url);
   } catch {
     return false;
   }
